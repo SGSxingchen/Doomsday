@@ -1,0 +1,45 @@
+{
+  "message.doomsday.prefix": "§b[十日终焉] ",
+  "message.doomsday.player_join": "§e玩家 %s §e加入了游戏",
+  "message.doomsday.player_leave": "§e玩家 %s §e离开了游戏",
+  "curios.identifier.function": "功能",
+  
+  "item.doomsday.soul_compass": "魂指南针",
+  "item.doomsday.soul_clock": "魂钟",
+  "item.doomsday.echo_ball": "回响球",
+  "item.doomsday.dao": "道",
+  "item.doomsday.eye": "眼球",
+  "item.doomsday.moldy_eye": "霉变的眼球",
+  "item.doomsday.chisel": "凿子",
+  "item.doomsday.belief_points": "信念点数",
+  "item.doomsday.bombs": "爆燃弹",
+  
+  "item.doomsday.shenjun_helmet": "神君头盔",
+  "item.doomsday.shenjun_chestplate": "神君胸甲",
+  "item.doomsday.shenjun_leggings": "神君护腿",
+  "item.doomsday.shenjun_boots": "神君靴子",
+  
+  "block.doomsday.afterglow_lamp": "余念灯",
+  "block.doomsday.field_block": "场地方块",
+  
+  "effect.doomsday.left_eye_blind": "左眼失明",
+  "effect.doomsday.right_eye_blind": "右眼失明",
+  "effect.doomsday.full_blind": "全盲",
+  "effect.doomsday.flash": "爆闪",
+  
+  "item.doomsday.soul_compass.tooltip": "一个能显示方向的神秘指南针",
+  "item.doomsday.soul_clock.tooltip": "一个能显示时间的神秘钟表",
+  "itemGroup.doomsday": "十日终焉",
+  "screen.doomsday.echo_status": "回响状态",
+  "gui.doomsday.sanity": "理智值: %d",
+  "key.doomsday.open_echo_screen": "打开回响界面",
+  "key.categories.doomsday": "十日终焉",
+  "key.doomsday.use_echo": "使用回响",
+  "key.doomsday.toggle_continuous_echo": "切换持续性回响",
+  "key.doomsday.next_echo": "下一个回响",
+  "key.doomsday.previous_echo": "上一个回响",
+  "message.doomsday.echo_selected": "已选择回响：%s",
+  "message.doomsday.echo_cannot_use": "无法使用回响：%s",
+  "message.doomsday.no_echo_selected": "未选择任何回响",
+  "message.doomsday.echo_not_continuous": "该回响不是持续性回响：%s"
+} 
