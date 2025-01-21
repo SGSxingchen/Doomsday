@@ -1,0 +1,83 @@
+{
+    "sanity_limits": {
+      "max": 900,
+      "min": 0,
+      "critical_high": 800,
+      "critical_low": 200
+    },
+    "natural_change": {
+      "regen_rate": 1,
+      "drain_rate": 1,
+      "regen_interval": 100,
+      "drain_interval": 100
+    },
+    "_comment": "注意：如果玩家的理智值同时落在多个区间内，这些区间的health_modifier将会叠加",
+    "thresholds": [
+      {
+        "range": {
+          "min": 800,
+          "max": 1000
+        },
+        "effects": [
+          {
+            "type": "minecraft:regeneration",
+            "duration": 100,
+            "amplifier": 0
+          },
+          {
+            "type": "minecraft:night_vision",
+            "duration": 400,
+            "amplifier": 0
+          }
+        ],
+        "health_modifier": 4
+      },
+      {
+        "range": {
+          "min": 500,
+          "max": 799
+        },
+        "effects": [
+          {
+            "type": "minecraft:strength",
+            "duration": 100,
+            "amplifier": 0
+          }
+        ],
+        "health_modifier": 0
+      },
+      {
+        "range": {
+          "min": 200,
+          "max": 499
+        },
+        "effects": [
+          {
+            "type": "minecraft:weakness",
+            "duration": 100,
+            "amplifier": 0
+          }
+        ],
+        "health_modifier": -2
+      },
+      {
+        "range": {
+          "min": 0,
+          "max": 199
+        },
+        "effects": [
+          {
+            "type": "minecraft:weakness",
+            "duration": 100,
+            "amplifier": 1
+          },
+          {
+            "type": "minecraft:blindness",
+            "duration": 100,
+            "amplifier": 0
+          }
+        ],
+        "health_modifier": -4
+      }
+    ]
+  }
