@@ -1,12 +1,14 @@
-package org.lanstard.doomsday.sanity;
+package org.lanstard.doomsday.common.sanity;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lanstard.doomsday.Doomsday;
-import org.lanstard.doomsday.sanity.config.SanityConfig;
-import org.lanstard.doomsday.sanity.config.SanityConfigData;
+import org.lanstard.doomsday.common.sanity.config.SanityConfig;
+import org.lanstard.doomsday.common.sanity.config.SanityConfigData;
 
 @Mod.EventBusSubscriber(modid = Doomsday.MODID)
 public class SanityEffectManager {
@@ -23,32 +25,42 @@ public class SanityEffectManager {
     }
     
     private static void applyEffects(ServerPlayer player, int sanity) {
-//        SanityConfigData config = SanityConfig.getConfig();
-//        float baseMaxHealth = 20.0f;
-//        float totalHealthModifier = 0;
-//
-//        // 应用所有匹配区间的效果
-//        for (SanityConfigData.ThresholdEffect threshold : config.thresholds) {
-//            if (sanity >= threshold.range.min && sanity <= threshold.range.max) {
-//                // 应用效果
-//                for (SanityConfigData.EffectEntry effect : threshold.effects) {
-//                    player.addEffect(new MobEffectInstance(
-//                        effect.getMobEffect(),
-//                        effect.duration,
-//                        effect.amplifier
-//                    ));
-//                }
-//
-//                // 累加生命值修改器
-//                totalHealthModifier += threshold.health_modifier;
-//            }
-//        }
-//
-//        // 一次性应用最终的生命值上限修改
-//        float newMaxHealth = Math.max(1.0f, baseMaxHealth + totalHealthModifier); // 确保生命值上限不小于1
-//        if (player.getAttribute(Attributes.MAX_HEALTH).getBaseValue() != newMaxHealth) {
-//            player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(newMaxHealth);
-//        }
+       SanityConfigData config = SanityConfig.getConfig();
+       float totalHealthModifier = 0;
+
+       // 应用所有匹配区间的效果
+       for (SanityConfigData.ThresholdEffect threshold : config.thresholds) {
+           if (sanity >= threshold.range.min && sanity <= threshold.range.max) {
+               // 应用效果
+               for (SanityConfigData.EffectEntry effect : threshold.effects) {
+                   player.addEffect(new MobEffectInstance(
+                       effect.getMobEffect(),
+                       effect.duration,
+                       effect.amplifier
+                   ));
+               }
+
+               // 累加生命值修改器
+               totalHealthModifier += threshold.health_modifier;
+           }
+       }
+
+       // 使用属性修改器来应用生命值变化
+       var attribute = player.getAttribute(Attributes.MAX_HEALTH);
+       var modifierId = java.util.UUID.fromString("b9c99a89-f5c9-4624-9d38-4a1f5d5a2e3a"); // 固定UUID用于识别这个修改器
+       
+       // 移除旧的修改器（如果存在）
+       attribute.removePermanentModifier(modifierId);
+       
+       // 只有在有修改时才添加修改器
+       if (totalHealthModifier != 0) {
+           attribute.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+               modifierId,
+               "Sanity Health Modifier",
+               totalHealthModifier,
+               net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION
+           ));
+       }
     }
     
     private static void handleNaturalChange(ServerPlayer player, int sanity) {

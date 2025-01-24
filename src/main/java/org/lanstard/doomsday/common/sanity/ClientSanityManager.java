@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.sanity;
+package org.lanstard.doomsday.common.sanity;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;

@@ -15,33 +15,44 @@ public class CreativeTabRegister {
 
     public static final RegistryObject<CreativeModeTab> DOOMSDAY_TAB = CREATIVE_MODE_TABS.register("doomsday_tab",
             () -> CreativeModeTab.builder()
-                    .icon(() -> new ItemStack(ItemRegister.CREATIVE_TAB_ICON.get()))
+                    .icon(() -> new ItemStack(ModItem.CREATIVE_TAB_ICON.get()))
                     .title(Component.translatable("itemGroup.doomsday"))
                     .displayItems((parameters, output) -> {
                         // 工具
-                        output.accept(ItemRegister.SOUL_COMPASS.get());
-                        output.accept(ItemRegister.SOUL_CLOCK.get());
-                        output.accept(ItemRegister.CHISEL.get());
+                        output.accept(ModItem.SOUL_COMPASS.get());
+                        output.accept(ModItem.SOUL_CLOCK.get());
+                        output.accept(ModItem.CHISEL.get());
+                        output.accept(ModItem.WRENCH.get());
                         
                         // 方块
-                        output.accept(ItemRegister.AFTERGLOW_LAMP.get());
-                        output.accept(ItemRegister.FIELD_BLOCK.get());
+                        output.accept(ModItem.AFTERGLOW_LAMP.get());
+                        output.accept(ModItem.FIELD_BLOCK.get());
                         
                         // 回响相关物品
-                        output.accept(ItemRegister.ECHO_BALL.get());
+                        output.accept(ModItem.ECHO_BALL.get());
                         
                         // 其他物品
-                        output.accept(ItemRegister.DAO.get());
-                        output.accept(ItemRegister.EYE.get());
-                        output.accept(ItemRegister.MOLDY_EYE.get());
-                        output.accept(ItemRegister.BELIEF_POINTS.get());
-                        output.accept(ItemRegister.BOMBS.get());
+                        output.accept(ModItem.DAO.get());
+                        output.accept(ModItem.EYE.get());
+                        output.accept(ModItem.MOLDY_EYE.get());
+                        output.accept(ModItem.BELIEF_POINTS.get());
+                        output.accept(ModItem.BOMBS.get());
+                        output.accept(ModItem.FIRE_BOMB.get());
+                        output.accept(ModItem.MEDKIT.get());
+                        output.accept(ModItem.WHITE_COAT.get());
+                        output.accept(ModItem.GROWTH_SEED.get());
                         
                         // 添加神君盔甲
-                        output.accept(ItemRegister.SHENJUN_HELMET.get());
-                        output.accept(ItemRegister.SHENJUN_CHESTPLATE.get());
-                        output.accept(ItemRegister.SHENJUN_LEGGINGS.get());
-                        output.accept(ItemRegister.SHENJUN_BOOTS.get());
+                        output.accept(ModItem.SHENJUN_HELMET.get());
+                        output.accept(ModItem.SHENJUN_CHESTPLATE.get());
+                        output.accept(ModItem.SHENJUN_LEGGINGS.get());
+                        output.accept(ModItem.SHENJUN_BOOTS.get());
+                        
+                        // 添加生物刷怪蛋
+                        output.accept(ModSpawnEggs.SHENJUN_SPAWN_EGG.get());
+                        output.accept(ModSpawnEggs.PUPPET_SPAWN_EGG.get());
+                        output.accept(ModSpawnEggs.MUA_SPAWN_EGG.get());
+                        output.accept(ModSpawnEggs.LOUYI_SPAWN_EGG.get());
                     })
                     .build()
     );

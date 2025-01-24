@@ -52,7 +52,7 @@ public class ZhiKongEcho extends Echo {
             
             // 如果不是免费释放且理智不足，则关闭效果
             if (!freeCost && currentSanity < CONTINUOUS_SANITY_COST) {
-                setActive(false);
+                setActiveAndUpdate(player, false);
                 onDeactivate(player);
                 player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神已竭，滞空之力消散..."));
                 return;
@@ -67,9 +67,11 @@ public class ZhiKongEcho extends Echo {
         // 根据是否蹲下应用不同效果
         if (player.isShiftKeyDown()) {
             // 缓降效果
+            player.removeEffect(MobEffects.LEVITATION);
             player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, EFFECT_DURATION, EFFECT_AMPLIFIER, false, true));
         } else {
             // 漂浮效果
+            player.removeEffect(MobEffects.SLOW_FALLING);
             player.addEffect(new MobEffectInstance(MobEffects.LEVITATION, EFFECT_DURATION, EFFECT_AMPLIFIER, false, true));
         }
     }
@@ -104,11 +106,11 @@ public class ZhiKongEcho extends Echo {
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，滞空之力显现..."));
             }
             
-            setActive(true);
+            setActiveAndUpdate(player, true);
             onActivate(player);
         } else {
             // 直接关闭，不需要检查理智值
-            setActive(false);
+            setActiveAndUpdate(player, false);
             onDeactivate(player);
         }
     }

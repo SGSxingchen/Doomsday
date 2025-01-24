@@ -52,10 +52,10 @@ public class YanPinEcho extends Echo {
 
     @Override
     protected boolean doCanUse(ServerPlayer player) {
-        // 检查冷却时间
-        if (System.currentTimeMillis() < cooldownEndTime) {
-            long remainingSeconds = (cooldownEndTime - System.currentTimeMillis()) / 1000;
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...赝品之力尚未恢复，剩余" + remainingSeconds + "秒..."));
+        long timeMs = cooldownEndTime - System.currentTimeMillis();
+        if (timeMs > 0) {
+            long remainingSeconds = timeMs / 20 / 50;
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...赝品之力尚需" + remainingSeconds + "秒恢复..."));
             return false;
         }
 

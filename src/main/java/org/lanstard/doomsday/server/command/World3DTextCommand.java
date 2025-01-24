@@ -16,7 +16,7 @@ import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.server.command.EnumArgument;
 import org.lanstard.doomsday.Doomsday;
-import org.lanstard.doomsday.client.render.World3DTextPreset;
+import org.lanstard.doomsday.client.renderer.world3DText.World3DTextPreset;
 import org.lanstard.doomsday.network.NetworkManager;
 import org.lanstard.doomsday.network.packet.SpawnWorld3DTextPacket;
 

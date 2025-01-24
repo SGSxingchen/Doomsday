@@ -82,6 +82,7 @@ public class BaoShanEcho extends Echo {
 
         // 设置冷却
         cooldownEndTime = System.currentTimeMillis() + COOLDOWN * 50;
+        updateState(player);
         
         // 发送消息
         if (isFree) {

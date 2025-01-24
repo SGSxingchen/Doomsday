@@ -10,5 +10,8 @@ public class EntitySetup {
     @SubscribeEvent
     public static void registerAttributes(EntityAttributeCreationEvent event) {
         event.put(ModEntities.SHENJUN.get(), ShenJunEntity.createAttributes().build());
+        event.put(ModEntities.LOUYI.get(), LouyiEntity.createAttributes().build());
+        event.put(ModEntities.PUPPET.get(), PuppetEntity.createAttributes().build());
+        event.put(ModEntities.MUA.get(), MuaEntity.createAttributes().build());
     }
-} 
+}

@@ -6,9 +6,13 @@ import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 import org.lanstard.doomsday.network.NetworkManager;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class OpPermissionPacket {
+    private static final Map<UUID, Boolean> lastPermissionState = new HashMap<>();
     private boolean isOp;
 
     public OpPermissionPacket() {}
@@ -34,11 +38,19 @@ public class OpPermissionPacket {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
-                boolean isOp = player.hasPermissions(2);
-                NetworkManager.getChannel().sendTo(new OpPermissionPacket(isOp),
-                        player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
-            } else {
-
+                boolean currentOpState = player.hasPermissions(2);
+                UUID playerId = player.getUUID();
+                
+                // 如果权限状态发生变化或是首次检查，就发送更新
+                Boolean lastState = lastPermissionState.get(playerId);
+                if (lastState == null || lastState != currentOpState) {
+                    lastPermissionState.put(playerId, currentOpState);
+                    NetworkManager.getChannel().sendTo(
+                        new OpPermissionPacket(currentOpState),
+                        player.connection.connection,
+                        NetworkDirection.PLAY_TO_CLIENT
+                    );
+                }
             }
         });
         ctx.get().setPacketHandled(true);

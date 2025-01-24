@@ -2,7 +2,7 @@ package org.lanstard.doomsday.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
-import org.lanstard.doomsday.client.DuoXinPoStatusManager;
+import org.lanstard.doomsday.client.manage.DuoXinPoStatusManager;
 
 import java.util.function.Supplier;
 

@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.echo.effect;
+package org.lanstard.doomsday.common.echo.effect;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;

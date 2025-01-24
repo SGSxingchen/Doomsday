@@ -3,6 +3,7 @@ package org.lanstard.doomsday.common.echo.preset;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
@@ -21,10 +22,10 @@ import java.util.Random;
 public class ZhaoZaiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.ZHAOZAI;
     private static final int RANGE = 10;                       // 影响范围
-    private static final int WITHER_DURATION = 30 * 20;       // 凋零效果持续时间（30秒）
+    private static final int WITHER_DURATION = 15 * 20;       // 凋零效果持续时间（15秒）
     private static final int WITHER_AMPLIFIER = 0;            // 凋零效果等级（1级）
     private static final int GLOWING_DURATION = 30 * 20;      // 发光效果持续时间（30秒）
-    private static final int CHECK_INTERVAL = 5 * 20;         // 检查间隔（5秒）
+    private static final int CHECK_INTERVAL = 10 * 20;         // 检查间隔（10秒）
     private static final float BASE_SUCCESS_RATE = 0.05f;     // 基础成功率（5%）
     private static final float SUCCESS_RATE_INCREMENT = 0.01f; // 失败后成功率增加（1%）
     
@@ -35,8 +36,6 @@ public class ZhaoZaiEcho extends Echo {
     private static final float PARTICLE_SIZE = 1.0F;
     
     private int tickCounter = 0;
-    private boolean isNight = false;
-    private long lastDayTime = 0;
     private float currentSuccessRate = BASE_SUCCESS_RATE;
     private final Random random = new Random();
 
@@ -73,9 +72,12 @@ public class ZhaoZaiEcho extends Echo {
             if (random.nextFloat() < currentSuccessRate) {
                 // 成功触发效果
                 AABB box = player.getBoundingBox().inflate(RANGE);
-                List<ServerPlayer> nearbyPlayers = level.getEntitiesOfClass(ServerPlayer.class, box);
+                List<LivingEntity> nearbyPlayers = level.getEntitiesOfClass(LivingEntity.class, box);
                 
-                for (ServerPlayer target : nearbyPlayers) {
+                for (LivingEntity target : nearbyPlayers) {
+                    if (target == player) {
+                        continue;
+                    }
                     if (currentIsNight) {
                         // 夜晚：凋零效果
                         target.addEffect(new MobEffectInstance(MobEffects.WITHER, WITHER_DURATION, WITHER_AMPLIFIER, false, true));
@@ -96,16 +98,16 @@ public class ZhaoZaiEcho extends Echo {
                 currentSuccessRate = BASE_SUCCESS_RATE;
                 
                 // 显示触发信息
-                String effectType = currentIsNight ? "凋零" : "发光";
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灾厄显现，" + effectType + "效果已触发..."));
+                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灾厄显现..."));
             } else {
                 // 失败，增加下次成功率
                 currentSuccessRate += SUCCESS_RATE_INCREMENT;
                 
                 // 显示当前成功率
-                int percentage = Math.round(currentSuccessRate * 100);
+                // int percentage = Math.round(currentSuccessRate * 100);
                 // player.sendSystemMessage(Component.literal("§7[十日终焉] §f...灾厄积蓄中，当前触发概率：" + percentage + "%..."));
             }
+            updateState(player);
         }
     }
 

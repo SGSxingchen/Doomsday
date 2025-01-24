@@ -1,7 +1,6 @@
 package org.lanstard.doomsday.client;
 
-import org.lanstard.doomsday.echo.Echo;
-import org.lanstard.doomsday.echo.EchoType;
+import org.lanstard.doomsday.common.echo.Echo;
 
 import java.util.List;
 
@@ -19,7 +18,13 @@ public class ClientEchoSelector {
     }
     
     public static Echo getCurrentEcho(List<Echo> echoes) {
-        if (echoes.isEmpty()) return null;
+        if (echoes.isEmpty()) {
+            currentEchoIndex = 0;
+            return null;
+        }
+        if (currentEchoIndex >= echoes.size()) {
+            currentEchoIndex = 0;
+        }
         return echoes.get(currentEchoIndex);
     }
     

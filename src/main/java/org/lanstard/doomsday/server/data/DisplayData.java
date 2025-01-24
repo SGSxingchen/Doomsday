@@ -11,7 +11,7 @@ public class DisplayData {
         savedData = server.overworld().getDataStorage().computeIfAbsent(
             DisplaySavedData::new,
             DisplaySavedData::new,
-            "snow_rule_display"
+            "doomsday_display"
         );
     }
     

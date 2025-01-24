@@ -12,6 +12,8 @@ import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import org.joml.Vector3f;
 import net.minecraft.nbt.CompoundTag;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MiQianKunEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.MIQIANKUN;
@@ -59,12 +61,14 @@ public class MiQianKunEcho extends Echo {
         // 更新冷却时间
         if (cooldownTicks > 0) {
             cooldownTicks--;
+            updateState(player);
         }
         
         // 每5秒触发一次效果
         tickCounter++;
         if (tickCounter >= 100) {  // 5秒 = 100刻
             tickCounter = 0;
+            updateState(player);
             
             // 检查理智值和信念值
             int currentSanity = SanityManager.getSanity(player);
@@ -75,7 +79,7 @@ public class MiQianKunEcho extends Echo {
             
             // 如果不是免费释放且理智不足，则关闭效果
             if (!freeCost && currentSanity < CONTINUOUS_SANITY_COST) {
-                setActive(false);
+                setActiveAndUpdate(player, false);
                 onDeactivate(player);
                 player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神已竭，乾坤难觅..."));
                 return;
@@ -98,6 +102,7 @@ public class MiQianKunEcho extends Echo {
             if (!faithTriggered && currentSanity < SANITY_THRESHOLD) {
                 SanityManager.modifyFaith(player, FAITH_GAIN);
                 faithTriggered = true;
+                updateState(player);
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...心神衰竭之际，信念愈发坚定..."));
             }
         }
@@ -105,6 +110,7 @@ public class MiQianKunEcho extends Echo {
         // 检查昼夜反转是否结束
         if (isDayReversed && System.currentTimeMillis() > dayReverseEndTime) {
             isDayReversed = false;
+            updateState(player);
             if (player.level() instanceof ServerLevel serverLevel) {
                 restoreTimeAndWeather(serverLevel);
             }
@@ -169,11 +175,21 @@ public class MiQianKunEcho extends Echo {
     }
 
     private void clearAllBuffs(ServerPlayer player) {
+        // 创建一个新的列表来存储要移除的效果
+        List<MobEffect> effectsToRemove = new ArrayList<>();
+        
+        // 首先收集所有需要移除的效果
         for (MobEffectInstance effect : player.getActiveEffects()) {
             MobEffect mobEffect = effect.getEffect();
-            // 只清除正面效果
-            if (!mobEffect.isBeneficial()) continue;
-            player.removeEffect(mobEffect);
+            // 只清除负面效果
+            if (!mobEffect.isBeneficial()) {
+                effectsToRemove.add(mobEffect);
+            }
+        }
+        
+        // 然后移除收集到的效果
+        for (MobEffect effect : effectsToRemove) {
+            player.removeEffect(effect);
         }
     }
 
@@ -242,10 +258,10 @@ public class MiQianKunEcho extends Echo {
                 SanityManager.modifySanity(player, -TOGGLE_SANITY_COST);
             }
             
-            setActive(true);
+            setActiveAndUpdate(player, true);
             onActivate(player);
         } else {
-            setActive(false);
+            setActiveAndUpdate(player, false);
             onDeactivate(player);
         }
     }
