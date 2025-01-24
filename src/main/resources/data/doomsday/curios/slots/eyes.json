@@ -1,0 +1,8 @@
+{
+  "order": 10,
+  "size": 6,
+  "icon": "doomsday:slot/empty_eye_slot",
+  "add_cosmetic": true,
+  "render_toggle": true,
+  "drop_rule": "DEFAULT"
+} 

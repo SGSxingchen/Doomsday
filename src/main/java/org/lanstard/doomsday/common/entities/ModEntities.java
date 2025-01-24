@@ -16,4 +16,10 @@ public class ModEntities {
             .sized(0.25F, 0.25F)
             .clientTrackingRange(64)
             .build("bombs"));
+
+    public static final RegistryObject<EntityType<ShenJunEntity>> SHENJUN = 
+        ENTITY_TYPES.register("shenjun",
+            () -> EntityType.Builder.of(ShenJunEntity::new, MobCategory.MONSTER)
+                .sized(0.6f, 1.8f) // 可以调整碰撞箱大小
+                .build("shenjun"));
 } 
