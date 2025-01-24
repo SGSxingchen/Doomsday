@@ -6,9 +6,9 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import org.lanstard.doomsday.Doomsday;
 import net.minecraftforge.network.NetworkDirection;
 import org.lanstard.doomsday.client.manage.ClientTimeManager;
-import org.lanstard.doomsday.client.TabListDisplayHide;
+import org.lanstard.doomsday.client.ClientPermissionManager;
 import org.lanstard.doomsday.client.animation.AnimationManage;
-import org.lanstard.doomsday.echo.EchoUpdatePacket;
+import org.lanstard.doomsday.common.echo.EchoUpdatePacket;
 import org.lanstard.doomsday.network.packet.OpPermissionPacket;
 import org.lanstard.doomsday.network.packet.PlayAnimationPacket;
 import org.lanstard.doomsday.network.packet.SpawnScreenTextPacket;
@@ -16,7 +16,7 @@ import org.lanstard.doomsday.network.packet.SpawnWorld3DTextPacket;
 import org.lanstard.doomsday.network.packet.DisplaySettingsPacket;
 import org.lanstard.doomsday.client.data.ClientDisplayData;
 import org.lanstard.doomsday.network.packet.TimeUpdatePacket;
-import org.lanstard.doomsday.sanity.SanityUpdatePacket;
+import org.lanstard.doomsday.common.sanity.SanityUpdatePacket;
 import org.lanstard.doomsday.network.packet.OpenEchoScreenPacket;
 import org.lanstard.doomsday.network.packet.UseEchoPacket;
 import org.lanstard.doomsday.network.packet.ToggleContinuousEchoPacket;
@@ -61,7 +61,7 @@ public class NetworkManager {
                         OpPermissionPacket.handleOpPermissionCheck(msg, ctx);
                     }
                     else if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                        TabListDisplayHide.handleOpPermissionResponse(msg);
+                        ClientPermissionManager.handleOpPermissionResponse(msg);
                         ctx.get().setPacketHandled(true);
                     }
                 })
@@ -128,16 +128,16 @@ public class NetworkManager {
             .consumerMainThread(SanityUpdatePacket::handle)
             .add();
 
-        net.messageBuilder(OpenEchoScreenPacket.class, id())
-            .encoder(OpenEchoScreenPacket::encode)
-            .decoder(OpenEchoScreenPacket::decode)
-            .consumerMainThread((msg, ctx) -> {
-                if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
-                    OpenEchoScreenPacket.handle(msg, ctx);
-                    ctx.get().setPacketHandled(true);
-                }
-            })
-            .add();
+        // net.messageBuilder(OpenEchoScreenPacket.class, id())
+        //     .encoder(OpenEchoScreenPacket::encode)
+        //     .decoder(OpenEchoScreenPacket::decode)
+        //     .consumerMainThread((msg, ctx) -> {
+        //         if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
+        //             OpenEchoScreenPacket.handle(msg, ctx);
+        //             ctx.get().setPacketHandled(true);
+        //         }
+        //     })
+        //     .add();
 
         net.messageBuilder(ToggleContinuousEchoPacket.class, id())
             .encoder(ToggleContinuousEchoPacket::encode)

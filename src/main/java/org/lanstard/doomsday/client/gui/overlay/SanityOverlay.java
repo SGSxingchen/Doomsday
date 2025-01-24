@@ -6,12 +6,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 import org.lanstard.doomsday.Doomsday;
-import org.lanstard.doomsday.sanity.ClientSanityManager;
+import org.lanstard.doomsday.common.sanity.ClientSanityManager;
 
 public class SanityOverlay {
-    private static final ResourceLocation TEXTURE = new ResourceLocation(Doomsday.MODID, "textures/gui/sanity_bg.png");
-    private static final int BASE_BG_WIDTH = 100;
-    private static final int BASE_BG_HEIGHT = 20;
+
+    private static final int ICON_SIZE = 32; // 图标大小
     private static final int TEXT_COLOR = 0xFFFFFF;
     
     public static final IGuiOverlay HUD_SANITY = ((gui, guiGraphics, partialTick, screenWidth, screenHeight) -> {
@@ -20,38 +19,38 @@ public class SanityOverlay {
         
         render(guiGraphics, screenWidth, screenHeight);
     });
+
+    private static ResourceLocation getSanityIcon(int sanity) {
+        int percentage = (sanity * 100) / 1000;
+        int level = (percentage / 10) * 100;
+        if (level > 1000) level = 1000;
+        if (level < 0) level = 0;
+        return new ResourceLocation(Doomsday.MODID, "textures/gui/san/" + level + ".png");
+    }
     
     private static void render(GuiGraphics guiGraphics, int screenWidth, int screenHeight) {
         Minecraft minecraft = Minecraft.getInstance();
-        float scale = (float)minecraft.getWindow().getGuiScale();
+        int sanity = ClientSanityManager.getSanity();
         
-        int bgWidth = (int)(BASE_BG_WIDTH * (scale / 2));
-        int bgHeight = (int)(BASE_BG_HEIGHT * (scale / 2));
+        // 获取物品栏的Y位置（在屏幕底部）
+        int hotbarY = screenHeight - 23;
         
-        String sanityText = "理智值: " + ClientSanityManager.getSanity();
+        // 计算图标位置（物品栏右侧，但稍微靠内一些）
+        // 物品栏最右边的槽位宽度是182，我们在它右边留一点间距
+        int x = (screenWidth / 2) + 91 + 8; // 91是物品栏一半的宽度，8是间距
+        int y = hotbarY - ICON_SIZE - 2;
         
-        // 放在右上角
-        int x = screenWidth - bgWidth - 5;
-        int y = (int)(5 * (scale / 2));
-        
-        guiGraphics.pose().pushPose();
-        
-        float scaleRatio = scale / 2;
-        guiGraphics.pose().scale(scaleRatio, scaleRatio, 1.0F);
-        
-        float adjustedX = x / scaleRatio;
-        float adjustedY = y / scaleRatio;
-        
+        // 渲染图标
         RenderSystem.enableBlend();
-        // guiGraphics.blit(TEXTURE, (int)adjustedX, (int)adjustedY, 0, 0, 
-        //                 BASE_BG_WIDTH, BASE_BG_HEIGHT, BASE_BG_WIDTH, BASE_BG_HEIGHT);
+        ResourceLocation iconTexture = getSanityIcon(sanity);
+        guiGraphics.blit(iconTexture, x, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         
+        // 渲染文字
+        String sanityText = String.valueOf(sanity);
         int textWidth = minecraft.font.width(sanityText);
-        float textX = adjustedX + (BASE_BG_WIDTH - textWidth) / 2;
-        float textY = adjustedY + (BASE_BG_HEIGHT - 8) / 2;
-        
-        guiGraphics.drawString(minecraft.font, sanityText, (int)textX, (int)textY, TEXT_COLOR, true);
-        
-        guiGraphics.pose().popPose();
+        guiGraphics.drawString(minecraft.font, sanityText, 
+                             x + (ICON_SIZE - textWidth) / 2,
+                             y + ICON_SIZE + 2, 
+                             TEXT_COLOR, true);
     }
 } 

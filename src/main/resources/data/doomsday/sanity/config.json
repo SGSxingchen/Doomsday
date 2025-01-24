@@ -1,6 +1,6 @@
 {
     "sanity_limits": {
-      "max": 900,
+      "max": 1000,
       "min": 0,
       "critical_high": 800,
       "critical_low": 200
@@ -18,18 +18,7 @@
           "min": 800,
           "max": 1000
         },
-        "effects": [
-          {
-            "type": "minecraft:regeneration",
-            "duration": 100,
-            "amplifier": 0
-          },
-          {
-            "type": "minecraft:night_vision",
-            "duration": 400,
-            "amplifier": 0
-          }
-        ],
+        "effects": [],
         "health_modifier": 4
       },
       {
@@ -39,7 +28,7 @@
         },
         "effects": [
           {
-            "type": "minecraft:strength",
+            "type": "night_vision",
             "duration": 100,
             "amplifier": 0
           }
@@ -58,11 +47,11 @@
             "amplifier": 0
           }
         ],
-        "health_modifier": -2
+        "health_modifier": -4
       },
       {
         "range": {
-          "min": 0,
+          "min": 1,
           "max": 199
         },
         "effects": [
@@ -70,14 +59,28 @@
             "type": "minecraft:weakness",
             "duration": 100,
             "amplifier": 1
+          }
+        ],
+        "health_modifier": -8
+      },
+      {
+        "range": {
+          "min": 0,
+          "max": 0
+        },
+        "effects": [
+          {
+            "type": "minecraft:wither",
+            "duration": 100,
+            "amplifier": 2
           },
           {
             "type": "minecraft:blindness",
-            "duration": 100,
-            "amplifier": 0
+            "duration": 200,
+            "amplifier": 1
           }
         ],
-        "health_modifier": -4
+        "health_modifier": -16
       }
     ]
   }

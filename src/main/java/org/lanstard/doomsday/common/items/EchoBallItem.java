@@ -11,32 +11,26 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
 import net.minecraft.world.level.Level;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.level.ServerPlayer;
+import org.lanstard.doomsday.client.ClientPermissionManager;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoManager;
-import org.lanstard.doomsday.client.ClientPermissionManager;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 import top.theillusivec4.curios.api.SlotContext;
 import javax.annotation.Nullable;
 import java.util.List;
 import top.theillusivec4.curios.api.CuriosCapability;
-import org.lanstard.doomsday.config.DoomsdayConfig;
-import org.lanstard.doomsday.common.sanity.SanityManager;
-import net.minecraft.world.entity.Entity;
 import java.util.ArrayList;
 
-public class EyeItem extends Item implements ICurioItem {
+public class EchoBallItem extends Item implements ICurioItem {
     private static final String TAG_ECHOES = "StoredEchoes";
     private static final String TAG_PLAYER_NAME = "PlayerName";
-    private static final String TAG_CREATION_TIME = "CreationTime";
-    private static final String TAG_MODIFIER_UUID = "ModifierUUID";
-    private static final long DECAY_TIME = 3600000L; // 1小时 = 3600000毫秒
 
-    public EyeItem(Properties properties) {
-        super(properties.rarity(Rarity.COMMON).stacksTo(1));
+    public EchoBallItem(Properties properties) {
+        super(properties.rarity(Rarity.EPIC).stacksTo(1));
     }
 
     @Override
@@ -47,26 +41,26 @@ public class EyeItem extends Item implements ICurioItem {
 
         // 检查是否有嫁接回响
         if (!EchoManager.hasSpecificEcho((ServerPlayer) player, "jiajie")) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你需要嫁接之力才能为他人装配眼球/道..."));
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你需要嫁接之力才能为他人装配眼球/道/回响球..."));
             return InteractionResult.FAIL;
         }
 
         // 检查是否有回响可以转移
         if (!hasStoredEchoes(stack)) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...这个眼球中没有储存任何回响..."));
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...这个道中没有储存任何眼球/道/回响球..."));
             return InteractionResult.FAIL;
         }
 
         // 尝试装备到目标玩家身上
         if (target instanceof ServerPlayer targetPlayer) {
-            ItemStack eyeStack = stack.copy();
-            if (equipToPlayer(targetPlayer, eyeStack)) {
+            ItemStack daoStack = stack.copy();
+            if (equipToPlayer(targetPlayer, daoStack)) {
                 stack.shrink(1); // 消耗物品
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...成功为目标装配了眼球/道..."));
-                target.sendSystemMessage(Component.literal("§b[十日终焉] §f...你被装配了眼球/道..."));
+                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...成功为目标装配了眼球/道/回响球..."));
+                target.sendSystemMessage(Component.literal("§b[十日终焉] §f...你被装配了眼球/道/回响球..."));
                 return InteractionResult.SUCCESS;
             } else {
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...目标无法装配更多眼球/道..."));
+                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...目标无法装配更多眼球/道/回响球..."));
                 return InteractionResult.FAIL;
             }
         }
@@ -94,8 +88,6 @@ public class EyeItem extends Item implements ICurioItem {
     @Override
     public void onEquip(SlotContext slotContext, ItemStack prevStack, ItemStack stack) {
         if (slotContext.entity() instanceof ServerPlayer player && hasStoredEchoes(stack)) {
-            // 减少最大生命值和理智值
-            reducePlayerStats(player, stack);
             
             // 添加回响效果
             ListTag echoList = getStoredEchoes(stack);
@@ -108,6 +100,7 @@ public class EyeItem extends Item implements ICurioItem {
             }
         }
     }
+
 
     @Override
     public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
@@ -135,24 +128,6 @@ public class EyeItem extends Item implements ICurioItem {
             if (!echosToRemove.isEmpty()) {
                 EchoManager.removeEchoes(player, echosToRemove);
             }
-
-            // 恢复生命值和理智值上限
-            int healthReduction = DoomsdayConfig.ECHO_ITEM_HEALTH_REDUCTION.get();
-            int sanityReduction = DoomsdayConfig.ECHO_ITEM_SANITY_REDUCTION.get();
-
-            // 获取修改器UUID并移除
-            CompoundTag tag = stack.getTag();
-            if (tag != null && tag.contains(TAG_MODIFIER_UUID)) {
-                var modifierId = java.util.UUID.fromString(tag.getString(TAG_MODIFIER_UUID));
-                var attribute = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
-                attribute.removePermanentModifier(modifierId);
-            }
-
-            // 恢复最大理智值
-            SanityManager.modifyMaxSanity(player, sanityReduction);
-
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的生命上限恢复了" + healthReduction + "点..."));
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的理智上限恢复了" + sanityReduction + "点..."));
         }
     }
 
@@ -171,7 +146,7 @@ public class EyeItem extends Item implements ICurioItem {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("item.doomsday.eye.tooltip").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.doomsday.dao.tooltip").withStyle(ChatFormatting.GRAY));
         
         // 显示玩家名字
         String playerName = getPlayerName(stack);
@@ -193,39 +168,12 @@ public class EyeItem extends Item implements ICurioItem {
                     String echoName = echoTag.getString("name");
                     tooltip.add(Component.literal("- " + echoName).withStyle(ChatFormatting.DARK_AQUA));
                 }
-            }
-        }
-
-        // 显示腐烂进度
-        if (Screen.hasControlDown()) {
-            CompoundTag tag = stack.getTag();
-            if (tag != null && tag.contains(TAG_CREATION_TIME)) {
-                long creationTime = tag.getLong(TAG_CREATION_TIME);
-                long elapsedTime = System.currentTimeMillis() - creationTime;
-                int progress = (int) ((float) elapsedTime / DECAY_TIME * 100);
-                progress = Math.min(progress, 100);
-                
-                ChatFormatting color;
-                if (progress < 30) color = ChatFormatting.GREEN;
-                else if (progress < 60) color = ChatFormatting.YELLOW;
-                else if (progress < 90) color = ChatFormatting.GOLD;
-                else color = ChatFormatting.RED;
-                
-                tooltip.add(Component.literal("腐烂进度: " + progress + "%").withStyle(color));
-                
-                // 显示剩余时间
-                if (progress < 100) {
-                    long remainingTime = (DECAY_TIME - elapsedTime) / 1000; // 转换为秒
-                    long minutes = remainingTime / 60;
-                    long seconds = remainingTime % 60;
-                    tooltip.add(Component.literal(String.format("剩余时间: %d分%d秒", minutes, seconds))
-                        .withStyle(ChatFormatting.GRAY));
-                }
+                tooltip.add(Component.translatable("item.doomsday.dao.tooltip.shift").withStyle(ChatFormatting.DARK_PURPLE));
             }
         }
     }
 
-    // 储存回响到眼球中时，同时记录创建时间
+    // 储存回响到道中
     public void storeEcho(ItemStack stack, Echo echo) {
         CompoundTag tag = stack.getOrCreateTag();
         ListTag echoList = getStoredEchoes(stack);
@@ -234,11 +182,6 @@ public class EyeItem extends Item implements ICurioItem {
         }
         echoList.add(echo.toNBT());
         tag.put(TAG_ECHOES, echoList);
-        
-        // 设置创建时间（如果还没有设置）
-        if (!tag.contains(TAG_CREATION_TIME)) {
-            tag.putLong(TAG_CREATION_TIME, System.currentTimeMillis());
-        }
     }
 
     // 设置玩家名字
@@ -268,69 +211,5 @@ public class EyeItem extends Item implements ICurioItem {
     public boolean hasStoredEchoes(ItemStack stack) {
         ListTag echoes = getStoredEchoes(stack);
         return echoes != null && !echoes.isEmpty();
-    }
-
-    private void reducePlayerStats(ServerPlayer player, ItemStack stack) {
-        // 获取配置的减少值
-        int healthReduction = DoomsdayConfig.ECHO_ITEM_HEALTH_REDUCTION.get();
-        int sanityReduction = DoomsdayConfig.ECHO_ITEM_SANITY_REDUCTION.get();
-
-        // 获取或生成UUID
-        CompoundTag tag = stack.getOrCreateTag();
-        String uuidString = tag.getString(TAG_MODIFIER_UUID);
-        java.util.UUID modifierId;
-        if (uuidString.isEmpty()) {
-            modifierId = java.util.UUID.randomUUID();
-            tag.putString(TAG_MODIFIER_UUID, modifierId.toString());
-        } else {
-            modifierId = java.util.UUID.fromString(uuidString);
-        }
-
-        // 使用属性修改器减少最大生命值
-        var attribute = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
-        
-        // 移除旧的修改器（如果存在）
-        attribute.removePermanentModifier(modifierId);
-        
-        // 添加新的修改器
-        attribute.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-            modifierId,
-            "Echo Item Health Reduction",
-            -healthReduction,
-            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION
-        ));
-
-        // 如果当前生命值超过新的最大值，设置为新的最大值
-        if (player.getHealth() > player.getMaxHealth()) {
-            player.setHealth(player.getMaxHealth());
-        }
-
-        // 减少最大理智值
-        SanityManager.modifyMaxSanity(player, -sanityReduction);
-
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你的生命上限减少了" + healthReduction + "点..."));
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你的理智上限减少了" + sanityReduction + "点..."));
-    }
-
-    @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
-        if (!level.isClientSide) {
-            CompoundTag tag = stack.getOrCreateTag();
-            // 如果没有创建时间，设置当前时间
-            if (!tag.contains(TAG_CREATION_TIME)) {
-                tag.putLong(TAG_CREATION_TIME, System.currentTimeMillis());
-            }
-
-            // 检查是否已经过了腐烂时间
-            long creationTime = tag.getLong(TAG_CREATION_TIME);
-            if (System.currentTimeMillis() - creationTime >= DECAY_TIME) {
-                // 转换为腐烂的眼球
-                ItemStack moldyEye = new ItemStack(ModItem.MOLDY_EYE.get());
-                if (entity instanceof Player player) {
-                    player.getInventory().setItem(slotId, moldyEye);
-                    player.sendSystemMessage(Component.literal("§c[十日终焉] §f...一颗眼球腐烂了..."));
-                }
-            }
-        }
     }
 } 

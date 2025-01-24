@@ -15,7 +15,7 @@ import org.lanstard.doomsday.common.echo.EchoPreset;
 public class LiXiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.LIXI;
     private static final int SANITY_COST = 10;               // 理智消耗
-    private static final int COOLDOWN = 5 * 20;              // 5秒冷却
+    private static final int COOLDOWN = 5 * 1;              // 0.25秒冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
     
@@ -54,9 +54,10 @@ public class LiXiEcho extends Echo {
 
     @Override
     protected boolean doCanUse(ServerPlayer player) {
-        // 检查冷却
-        if (System.currentTimeMillis() < cooldownEndTime) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...离析之力尚未恢复..."));
+        long timeMs = cooldownEndTime - System.currentTimeMillis();
+        if (timeMs > 0) {
+            long remainingSeconds = timeMs / 20 / 50;
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...离析之力尚需" + remainingSeconds + "秒恢复..."));
             return false;
         }
 

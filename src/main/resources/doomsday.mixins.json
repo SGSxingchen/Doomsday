@@ -4,9 +4,7 @@
   "package": "org.lanstard.doomsday.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "doomsday.refmap.json",
-  "mixins": [
-    "PlayerListMixin"
-  ],
+  "mixins": [],
   "client": [
     "DisplayHealthRenderMixin"
   ],

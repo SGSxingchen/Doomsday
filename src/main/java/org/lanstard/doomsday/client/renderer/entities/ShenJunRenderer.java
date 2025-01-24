@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.client.renderer;
+package org.lanstard.doomsday.client.renderer.entities;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;

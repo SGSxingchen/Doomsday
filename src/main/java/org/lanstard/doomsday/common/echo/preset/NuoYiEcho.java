@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.InteractionHand;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
@@ -49,13 +50,25 @@ public class NuoYiEcho extends Echo {
     }
 
     @Override
+    public void toggleContinuous(ServerPlayer player) {
+        // 这是一个主动技能，不需要切换
+    }
+
+    @Override
     protected boolean doCanUse(ServerPlayer player) {
         // 检查冷却时间
-        if (System.currentTimeMillis() < cooldownEndTime) {
-            long remainingSeconds = (cooldownEndTime - System.currentTimeMillis()) / 1000;
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...挪移之力尚未恢复，剩余" + remainingSeconds + "秒..."));
+        // if (System.currentTimeMillis() < cooldownEndTime) {
+        //     long remainingSeconds = (cooldownEndTime - System.currentTimeMillis()) / 1000;
+        //     player.sendSystemMessage(Component.literal("§c[十日终焉] §f...挪移之力，剩余" + remainingSeconds + "秒..."));
+        //     return false;
+        // }
+        long timeMs = cooldownEndTime - System.currentTimeMillis();
+        if (timeMs > 0) {
+            long remainingSeconds = timeMs / 20 / 50;
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...挪移之力尚需" + remainingSeconds + "秒恢复..."));
             return false;
         }
+
 
         // 获取目标玩家
         var target = player.level().getNearestPlayer(player, 10);
@@ -82,6 +95,7 @@ public class NuoYiEcho extends Echo {
     @Override
     protected void doUse(ServerPlayer player) {
         var target = player.level().getNearestPlayer(player, 10);
+        if (target == player) return;
         if (target == null) return;  // 安全检查
 
         // 检查理智值和信念值
@@ -106,7 +120,7 @@ public class NuoYiEcho extends Echo {
 
             // 转移物品
             player.setItemInHand(InteractionHand.OFF_HAND, targetItem);
-            target.sendSystemMessage(Component.literal("§c[十日终焉] §f...物品被挪移之力夺走..."));
+            target.sendSystemMessage(Component.literal("§c[十日终焉] §f...？？？..."));
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...成功获取目标物品..."));
 
             // 消耗理智
@@ -122,14 +136,14 @@ public class NuoYiEcho extends Echo {
             }
 
             // 尝试添加到目标背包
-            if (!((ServerPlayer)target).getInventory().add(offhandItem.copy())) {
+            if (!((ServerPlayer)target).getInventory().add(offhandItem)) {
                 player.sendSystemMessage(Component.literal("§c[十日终焉] §f...目标背包已满..."));
                 return;
             }
 
             // 清空副手
             player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
-            target.sendSystemMessage(Component.literal("§b[十日终焉] §f...收到来自挪移之力的馈赠..."));
+            target.sendSystemMessage(Component.literal("§b[十日终焉] §f...？？？..."));
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...物品已转移至目标背包..."));
 
             // 消耗理智

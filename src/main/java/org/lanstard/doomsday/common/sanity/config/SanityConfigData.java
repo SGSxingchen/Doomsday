@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.sanity.config;
+package org.lanstard.doomsday.common.sanity.config;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;

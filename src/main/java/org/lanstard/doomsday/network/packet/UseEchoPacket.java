@@ -3,9 +3,8 @@ package org.lanstard.doomsday.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import org.lanstard.doomsday.echo.Echo;
-import org.lanstard.doomsday.echo.EchoManager;
-import org.lanstard.doomsday.echo.EchoType;
+import org.lanstard.doomsday.common.echo.Echo;
+import org.lanstard.doomsday.common.echo.EchoManager;
 
 import java.util.List;
 import java.util.function.Supplier;

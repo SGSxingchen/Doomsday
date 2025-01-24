@@ -1,9 +1,9 @@
-package org.lanstard.doomsday.sanity;
+package org.lanstard.doomsday.common.sanity;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.level.saveddata.SavedData;
-import org.lanstard.doomsday.sanity.config.SanityConfig;
+import org.lanstard.doomsday.common.sanity.config.SanityConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +13,7 @@ public class SanitySavedData extends SavedData {
     private static final String DATA_NAME = "doomsday_sanity";
     private final Map<UUID, Integer> playerSanity;
     private final Map<UUID, Integer> playerFaith;
+    private final Map<UUID, Integer> playerMaxSanityModifier;
     private static final int BASE_MAX_SANITY = SanityConfig.getConfig().sanity_limits.max;
     private static final int MIN_SANITY = SanityConfig.getConfig().sanity_limits.min;
     private static final int FAITH_SANITY_BONUS = 100;
@@ -20,6 +21,7 @@ public class SanitySavedData extends SavedData {
     public SanitySavedData() {
         this.playerSanity = new HashMap<>();
         this.playerFaith = new HashMap<>();
+        this.playerMaxSanityModifier = new HashMap<>();
     }
     
     public SanitySavedData(CompoundTag tag) {
@@ -30,8 +32,10 @@ public class SanitySavedData extends SavedData {
             UUID playerId = playerTag.getUUID("playerId");
             int sanity = playerTag.getInt("sanity");
             int faith = playerTag.getInt("faith");
+            int maxSanityMod = playerTag.getInt("maxSanityMod");
             playerSanity.put(playerId, sanity);
             playerFaith.put(playerId, faith);
+            playerMaxSanityModifier.put(playerId, maxSanityMod);
         }
     }
     
@@ -44,6 +48,7 @@ public class SanitySavedData extends SavedData {
             playerTag.putUUID("playerId", playerId);
             playerTag.putInt("sanity", entry.getValue());
             playerTag.putInt("faith", playerFaith.getOrDefault(playerId, 0));
+            playerTag.putInt("maxSanityMod", playerMaxSanityModifier.getOrDefault(playerId, 0));
             playerList.add(playerTag);
         }
         tag.put("players", playerList);
@@ -66,7 +71,8 @@ public class SanitySavedData extends SavedData {
     
     public int getMaxSanity(UUID playerId) {
         int faith = getFaith(playerId);
-        return BASE_MAX_SANITY + (faith * FAITH_SANITY_BONUS);
+        int modifier = playerMaxSanityModifier.getOrDefault(playerId, 0);
+        return Math.max(100, BASE_MAX_SANITY + (faith * FAITH_SANITY_BONUS) + modifier);
     }
     
     public int getSanity(UUID playerId) {
@@ -86,5 +92,11 @@ public class SanitySavedData extends SavedData {
     
     public boolean hasSufficientFaith(UUID playerId) {
         return getFaith(playerId) >= 10;
+    }
+    
+    public void modifyMaxSanity(UUID playerId, int delta) {
+        int currentMod = playerMaxSanityModifier.getOrDefault(playerId, 0);
+        playerMaxSanityModifier.put(playerId, currentMod + delta);
+        this.setDirty();
     }
 } 

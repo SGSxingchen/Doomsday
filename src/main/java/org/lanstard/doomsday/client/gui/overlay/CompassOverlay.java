@@ -3,7 +3,7 @@ package org.lanstard.doomsday.client.gui.overlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
-import org.lanstard.doomsday.common.items.ItemRegister;
+import org.lanstard.doomsday.common.items.ModItem;
 import top.theillusivec4.curios.api.CuriosApi;
 
 public class CompassOverlay {
@@ -13,7 +13,7 @@ public class CompassOverlay {
         
         boolean hasSoulCompass = CuriosApi.getCuriosInventory(mc.player)
             .map(handler -> handler.findFirstCurio(item -> 
-                item.getItem() == ItemRegister.SOUL_COMPASS.get()).isPresent())
+                item.getItem() == ModItem.SOUL_COMPASS.get()).isPresent())
             .orElse(false);
             
         if (!hasSoulCompass) return;
