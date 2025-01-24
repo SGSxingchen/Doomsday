@@ -6,9 +6,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.lanstard.doomsday.Doomsday;
-import org.lanstard.doomsday.echo.ClientEchoManager;
-import org.lanstard.doomsday.echo.Echo;
-import org.lanstard.doomsday.sanity.ClientSanityManager;
+import org.lanstard.doomsday.client.manage.ClientEchoManager;
+import org.lanstard.doomsday.common.echo.Echo;
+import org.lanstard.doomsday.common.sanity.ClientSanityManager;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.echo;
+package org.lanstard.doomsday.common.echo;
 
 public enum EchoType {
     PASSIVE,    // 被动型

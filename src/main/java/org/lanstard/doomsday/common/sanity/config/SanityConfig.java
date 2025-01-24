@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.sanity.config;
+package org.lanstard.doomsday.common.sanity.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

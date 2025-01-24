@@ -18,7 +18,13 @@ import org.lanstard.doomsday.common.items.ModItem;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.animation.Animation;
+import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
+import net.minecraft.server.TickTask;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -37,6 +43,7 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
     private int dashCooldown = 0;
     private boolean isAtJumpPeak = false;
     private Vec3 dashTarget = null;
+    private boolean isAttacking = false;
 
     public LouyiEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -237,9 +244,40 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // controllers.add(
-        //     DefaultAnimations.genericLivingController(this)
-        // );
+        controllers.add(new AnimationController<>(this, "movement", 0, this::moveController));
+        controllers.add(new AnimationController<>(this, "attack", 0, this::attackController));
+    }
+
+    private PlayState moveController(AnimationState<LouyiEntity> event) {
+        if (this.isVehicle()) {
+            return PlayState.STOP;
+        }
+        
+        if (event.isMoving()) {
+            event.getController().setAnimation(RawAnimation.begin().then("WALK", Animation.LoopType.LOOP));
+            return PlayState.CONTINUE;
+        }
+
+        return PlayState.STOP;
+    }
+
+    private PlayState attackController(AnimationState<LouyiEntity> event) {
+        if (this.isAttacking) {
+            event.getController().setAnimation(RawAnimation.begin().then("gongji", Animation.LoopType.PLAY_ONCE));
+            return PlayState.CONTINUE;
+        }
+        return PlayState.STOP;
+    }
+
+    @Override
+    public boolean doHurtTarget(Entity target) {
+        if (super.doHurtTarget(target)) {
+            this.isAttacking = true;
+            // 0.28秒后重置攻击状态（与动画时长匹配）
+            this.level().getServer().tell(new TickTask(6, () -> this.isAttacking = false));
+            return true;
+        }
+        return false;
     }
 
     @Override

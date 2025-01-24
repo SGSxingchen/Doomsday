@@ -10,11 +10,11 @@ import org.lanstard.doomsday.Doomsday;
 
 @Mod.EventBusSubscriber(modid = Doomsday.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class KeyBindings {
-    public static final KeyMapping OPEN_ECHO_SCREEN = new KeyMapping(
-        "key.doomsday.open_echo_screen",
-        InputConstants.KEY_R, // 默认R键
-        "key.categories.doomsday"
-    );
+    // public static final KeyMapping OPEN_ECHO_SCREEN = new KeyMapping(
+    //     "key.doomsday.open_echo_screen",
+    //     InputConstants.KEY_R, // 默认R键
+    //     "key.categories.doomsday"
+    // );
     
     public static final KeyMapping USE_ECHO = new KeyMapping(
         "key.doomsday.use_echo",
@@ -42,7 +42,7 @@ public class KeyBindings {
     
     @SubscribeEvent
     public static void registerKeyBindings(RegisterKeyMappingsEvent event) {
-        event.register(OPEN_ECHO_SCREEN);
+        // event.register(OPEN_ECHO_SCREEN);
         event.register(USE_ECHO);
         event.register(TOGGLE_CONTINUOUS_ECHO);
         event.register(NEXT_ECHO);

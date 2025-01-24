@@ -1,7 +1,7 @@
-package org.lanstard.doomsday.echo.effect;
+package org.lanstard.doomsday.common.echo.effect;
 
 import net.minecraft.server.level.ServerPlayer;
-import org.lanstard.doomsday.sanity.SanityManager;
+import org.lanstard.doomsday.common.sanity.SanityManager;
 
 public class SanityDrainEffect extends EchoEffect {
     private final int drainRate;

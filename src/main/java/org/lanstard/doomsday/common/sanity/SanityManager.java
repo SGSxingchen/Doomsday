@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.sanity;
+package org.lanstard.doomsday.common.sanity;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -73,6 +73,11 @@ public class SanityManager {
         if (sanityData == null) return false;
         return sanityData.hasSufficientFaith(player.getUUID());
     }
+
+    public static boolean hasSufficientSanity(ServerPlayer player, int requiredSanity) {
+        if (sanityData == null) return false;
+        return getSanity(player) >= requiredSanity;
+    }
     
     public static void syncToClient(ServerPlayer player) {
         if (server != null && sanityData != null) {
@@ -93,6 +98,19 @@ public class SanityManager {
                 syncToClient(player);
             }
         }
+    }
+    
+    public static void modifyMaxSanity(ServerPlayer player, int delta) {
+        if (sanityData == null) return;
+        sanityData.modifyMaxSanity(player.getUUID(), delta);
+        
+        int currentSanity = getSanity(player);
+        int maxSanity = getMaxSanity(player);
+        if (currentSanity > maxSanity) {
+            setSanity(player, maxSanity);
+        }
+        
+        syncToClient(player);
     }
     
     @SubscribeEvent

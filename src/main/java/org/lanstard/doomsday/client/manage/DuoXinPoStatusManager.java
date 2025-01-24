@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.client;
+package org.lanstard.doomsday.client.manage;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;

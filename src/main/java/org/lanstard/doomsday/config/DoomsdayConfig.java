@@ -16,11 +16,11 @@ public class DoomsdayConfig {
         
         BUILDER.push("回响装配");
         ECHO_ITEM_HEALTH_REDUCTION = BUILDER
-            .comment("装配回响物品时减少的最大生命值")
+            .comment("装配眼球时减少的最大生命值")
             .defineInRange("healthReduction", 6, 0, 40);
         
         ECHO_ITEM_SANITY_REDUCTION = BUILDER
-            .comment("装配回响物品时减少的最大理智值")
+            .comment("装配眼球时减少的最大理智值")
             .defineInRange("sanityReduction", 200, 0, 1000);
         BUILDER.pop();
 

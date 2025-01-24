@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.client.render;
+package org.lanstard.doomsday.client.renderer.world3DText;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;

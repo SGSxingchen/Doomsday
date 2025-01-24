@@ -1,7 +1,7 @@
 package org.lanstard.doomsday.common.items;
 
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Rarity;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -10,10 +10,15 @@ import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.common.blocks.ModBlocks;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.SpawnEggItem;
-import org.lanstard.doomsday.common.entities.ModEntities;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.level.Level;
+import java.util.List;
+import javax.annotation.Nullable;
 
-public class ItemRegister {
+public class ModItem {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Doomsday.MODID);
     
     public static final RegistryObject<Item> SOUL_COMPASS = ITEMS.register("soul_compass",
@@ -26,19 +31,22 @@ public class ItemRegister {
         () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> ECHO_BALL = ITEMS.register("echo_ball",
-        () -> new Item(new Item.Properties()));
+        () -> new EchoBallItem(new Item.Properties()));
 
     public static final RegistryObject<Item> DAO = ITEMS.register("dao",
-        () -> new Item(new Item.Properties()));
+        () -> new DaoItem(new Item.Properties()));
 
     public static final RegistryObject<Item> EYE = ITEMS.register("eye",
-        () -> new Item(new Item.Properties()));
+        () -> new EyeItem(new Item.Properties()));
 
     public static final RegistryObject<Item> MOLDY_EYE = ITEMS.register("moldy_eye",
-        () -> new Item(new Item.Properties()));
+        () -> new MoldyEyeItem(new Item.Properties()));
 
     public static final RegistryObject<Item> CHISEL = ITEMS.register("chisel",
         () -> new ChiselItem(new Item.Properties().durability(1)));
+
+    public static final RegistryObject<Item> WRENCH = ITEMS.register("wrench",
+        () -> new WrenchItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
 
     public static final RegistryObject<Item> BELIEF_POINTS = ITEMS.register("belief_points",
         () -> new BeliefPointsItem(new Item.Properties()));
@@ -46,12 +54,22 @@ public class ItemRegister {
     public static final RegistryObject<Item> BOMBS = ITEMS.register("bombs",
         () -> new BombsItem(new Item.Properties()));
 
+    public static final RegistryObject<Item> FIRE_BOMB = ITEMS.register("fire_bomb",
+        () -> new FireBombItem(new Item.Properties().stacksTo(16)));
+
     public static final RegistryObject<Item> AFTERGLOW_LAMP = ITEMS.register("afterglow_lamp",
         () -> new BlockItem(ModBlocks.AFTERGLOW_LAMP.get(), new Item.Properties()));
 
     public static final RegistryObject<Item> FIELD_BLOCK = ITEMS.register("field_block",
         () -> new BlockItem(ModBlocks.FIELD_BLOCK.get(), new Item.Properties()));
 
+    public static final RegistryObject<Item> STAR_TICKET = ITEMS.register("star_ticket", () ->
+        new Item(new Item.Properties().rarity(Rarity.UNCOMMON)) {
+            @Override
+            public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+                tooltip.add(Component.translatable("item.doomsday.star_ticket.tooltip").withStyle(ChatFormatting.GRAY));
+            }
+        });
 
     public static final RegistryObject<Item> SHENJUN_HELMET = ITEMS.register("shenjun_helmet",
             () -> new ShenJunArmorItem(ArmorItem.Type.HELMET, new Item.Properties()));
@@ -65,12 +83,24 @@ public class ItemRegister {
     public static final RegistryObject<Item> SHENJUN_BOOTS = ITEMS.register("shenjun_boots",
             () -> new ShenJunArmorItem(ArmorItem.Type.BOOTS, new Item.Properties()));
 
-    // 注册神君的刷怪蛋
-    public static final RegistryObject<SpawnEggItem> SHENJUN_SPAWN_EGG = ITEMS.register("shenjun_spawn_egg",
-            () -> new SpawnEggItem(ModEntities.SHENJUN.get(),
-                    0x4B0082, // 主要颜色（深紫色）
-                    0x800080, // 副颜色（紫色）
-                    new Item.Properties()));
+    public static final RegistryObject<Item> MEDKIT = ITEMS.register("medkit",
+            () -> new MedkitItem());
+
+    public static final RegistryObject<Item> WHITE_COAT = ITEMS.register("white_coat",
+        () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)) {
+            @Override
+            public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+                tooltip.add(Component.translatable("item.doomsday.white_coat.tooltip").withStyle(ChatFormatting.GRAY));
+            }
+        });
+
+    public static final RegistryObject<Item> GROWTH_SEED = ITEMS.register("growth_seed",
+        () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)) {
+            @Override
+            public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+                tooltip.add(Component.translatable("item.doomsday.growth_seed.tooltip").withStyle(ChatFormatting.GRAY));
+            }
+        });
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

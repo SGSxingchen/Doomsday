@@ -7,9 +7,9 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lanstard.doomsday.Doomsday;
-import org.lanstard.doomsday.echo.ClientEchoManager;
-import org.lanstard.doomsday.echo.Echo;
-import org.lanstard.doomsday.echo.EchoType;
+import org.lanstard.doomsday.client.manage.ClientEchoManager;
+import org.lanstard.doomsday.common.echo.Echo;
+import org.lanstard.doomsday.common.echo.EchoType;
 import org.lanstard.doomsday.network.NetworkManager;
 import org.lanstard.doomsday.network.packet.OpenEchoScreenPacket;
 import org.lanstard.doomsday.network.packet.UseEchoPacket;
@@ -24,10 +24,10 @@ public class ClientEvents {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null) return;
         
-        // 检查打开回响界面的按键
-        if (KeyBindings.OPEN_ECHO_SCREEN.consumeClick()) {
-            NetworkManager.sendToServer(new OpenEchoScreenPacket());
-        }
+        // // 检查打开回响界面的按键
+        // if (KeyBindings.OPEN_ECHO_SCREEN.consumeClick()) {
+        //     NetworkManager.sendToServer(new OpenEchoScreenPacket());
+        // }
         
         // 检查切换回响的按键
         if (KeyBindings.NEXT_ECHO.consumeClick()) {

@@ -15,7 +15,7 @@
 					"name": "Head",
 					"pivot": [0, 24, 0],
 					"cubes": [
-						{"origin": [-4, 7, -12], "size": [8, 8, 8], "inflate": 1, "pivot": [0, 11, -8], "rotation": [30, 0, 0], "uv": [0, 0]},
+						{"origin": [-4, 7, -12], "size": [8, 8, 8], "inflate": 1, "pivot": [-1, 14, -3], "rotation": [30, 0, 0], "uv": [0, 0]},
 						{"origin": [-4, 24, -4], "size": [8, 8, 8], "inflate": 0.5, "uv": [32, 0]}
 					]
 				},

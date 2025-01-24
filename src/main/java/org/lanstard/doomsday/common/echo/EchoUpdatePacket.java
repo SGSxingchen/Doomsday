@@ -1,8 +1,9 @@
-package org.lanstard.doomsday.echo;
+package org.lanstard.doomsday.common.echo;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
+import org.lanstard.doomsday.client.manage.ClientEchoManager;
 
 import java.util.function.Supplier;
 

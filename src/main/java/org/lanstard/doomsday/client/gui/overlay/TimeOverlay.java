@@ -8,7 +8,7 @@ import org.lanstard.doomsday.Doomsday;
 import top.theillusivec4.curios.api.CuriosApi;
 import net.minecraft.resources.ResourceLocation;
 import org.lanstard.doomsday.client.manage.ClientTimeManager;
-import org.lanstard.doomsday.common.items.ItemRegister;
+import org.lanstard.doomsday.common.items.ModItem;
 
 public class TimeOverlay {
     private static final ResourceLocation TEXTURE = new ResourceLocation(Doomsday.MODID, "textures/gui/time_bg.png");
@@ -23,7 +23,7 @@ public class TimeOverlay {
         
         boolean hasSoulClock = CuriosApi.getCuriosInventory(mc.player)
             .map(handler -> handler.findFirstCurio(item -> 
-                item.getItem() == ItemRegister.SOUL_CLOCK.get()).isPresent())
+                item.getItem() == ModItem.SOUL_CLOCK.get()).isPresent())
             .orElse(false);
             
         if (!hasSoulClock) return;
@@ -49,7 +49,7 @@ public class TimeOverlay {
         guiGraphics.pose().pushPose();
         
         // 设置缩放
-        float scaleRatio = scale / 2;
+        float scaleRatio = scale / 3;
         guiGraphics.pose().scale(scaleRatio, scaleRatio, 1.0F);
         
         // 调整绘制坐标以适应缩放

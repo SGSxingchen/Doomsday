@@ -21,6 +21,10 @@ import org.lanstard.doomsday.common.entities.ShenJunEntity;
 import org.lanstard.doomsday.common.items.ModItem;
 import net.minecraft.nbt.CompoundTag;
 import org.joml.Vector3f;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.common.MinecraftForge;
 
 import java.util.List;
 import java.util.UUID;
@@ -67,13 +71,37 @@ public class YuShenJunEcho extends Echo {
 
     @Override
     public void onUpdate(ServerPlayer player) {
-        if (!isActive()) return;
-        
+        // 更新召唤的实体
+        if (summonedEntityId != null && player.level() instanceof ServerLevel serverLevel) {
+            if (System.currentTimeMillis() >= summonEndTime) {
+                removeSummonedEntity(player);
+                return;
+            }
+            
+            Optional.ofNullable(serverLevel.getEntity(summonedEntityId))
+                .ifPresent(entity -> {
+                    // 计算新位置
+                    Vec3 lookAngle = player.getLookAngle();
+                    Vec3 newPos = player.position().add(-lookAngle.x * 2, 0, -lookAngle.z * 2);
+                    
+                    // 设置实体位置和朝向
+                    entity.setPos(newPos.x, newPos.y, newPos.z);
+                    entity.setYRot(player.getYRot());
+                    entity.setXRot(player.getXRot());
+                    
+                    // 发送位置和旋转更新包
+                    serverLevel.getServer().getPlayerList().broadcastAll(
+                        new ClientboundTeleportEntityPacket(entity)
+                    );
+                });
+        }
+
         // 更新冷却时间
         if (cooldownTicks > 0) {
             cooldownTicks--;
         }
         
+        if (!isActive()) return;
         // 每秒(20刻)消耗理智并检查是否需要停用
         tickCounter++;
         if (tickCounter >= 20) {
@@ -83,7 +111,7 @@ public class YuShenJunEcho extends Echo {
             int currentSanity = SanityManager.getSanity(player);
             if (currentSanity < CONTINUOUS_SANITY_COST) {
                 // 理智不足，自动关闭效果
-                setActive(false);
+                setActiveAndUpdate(player, false);
                 onDeactivate(player);
                 player.sendSystemMessage(Component.literal("§c[十日终焉] §f...御神之力已竭，难以为继..."));
                 return;
@@ -92,31 +120,19 @@ public class YuShenJunEcho extends Echo {
             // 消耗理智值
             SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
         }
+
         
-        // 更新召唤物位置和检查持续时间
-        if (summonedEntityId != null) {
-            if (System.currentTimeMillis() >= summonEndTime) {
-                removeSummonedEntity(player);
-            } else if (owner != null) {
-                // 更新神君位置到玩家背后
-                ServerLevel serverLevel = (ServerLevel) player.level();
-                Optional.ofNullable(serverLevel.getEntity(summonedEntityId))
-                    .ifPresent(entity -> {
-                        Vec3 lookAngle = owner.getLookAngle();
-                        Vec3 newPos = owner.position().add(-lookAngle.x * 2, 0, -lookAngle.z * 2);
-                        entity.setPos(newPos.x, newPos.y, newPos.z);
-                        // 让神君面向与玩家相同的方向
-                        entity.setYRot(owner.getYRot());
-                        entity.setXRot(owner.getXRot());
-                    });
-            }
-        }
     }
 
     @Override
     public void onDeactivate(ServerPlayer player) {
         player.sendSystemMessage(Component.literal("§b[十日终焉] §f...御神之力消散，神君庇护不再..."));
         removeSummonedEntity(player);
+        // 移除护甲
+        player.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+        player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+        player.setItemSlot(EquipmentSlot.LEGS, ItemStack.EMPTY);
+        player.setItemSlot(EquipmentSlot.FEET, ItemStack.EMPTY);
         tickCounter = 0;
     }
 
@@ -158,15 +174,14 @@ public class YuShenJunEcho extends Echo {
             if (shenJun != null) {
                 shenJun.setPos(pos.x, pos.y, pos.z);
                 shenJun.setNoGravity(true);
-                // 由于是Monster类的子类，可以直接设置noAi
                 shenJun.setNoAi(true);
-                // 设置实体大小
                 shenJun.setScale(3.0f);
                 
                 serverLevel.addFreshEntity(shenJun);
                 summonedEntityId = shenJun.getUUID();
                 summonEndTime = System.currentTimeMillis() + SUMMON_DURATION * 50;
                 owner = player;
+                updateState(player); // 更新状态
                 
                 // 生成召唤特效
                 spawnSummonParticles(serverLevel, pos);
@@ -186,24 +201,17 @@ public class YuShenJunEcho extends Echo {
         cooldownTicks = COOLDOWN;
     }
 
-    @Override
-    public void toggleContinuous(ServerPlayer player) {
-        if (!isActive()) {
-            // 检查理智值是否足够
-            int currentSanity = SanityManager.getSanity(player);
-            if (currentSanity < TOGGLE_SANITY_COST) {
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以开启御神之力..."));
-                return;
-            }
-            
-            // 消耗开启消耗
-            SanityManager.modifySanity(player, -TOGGLE_SANITY_COST);
-            setActive(true);
-            onActivate(player);
-        } else {
-            // 直接关闭，不需要检查理智值
-            setActive(false);
-            onDeactivate(player);
+    private void removeSummonedEntity(ServerPlayer player) {
+        if (summonedEntityId != null && player.level() instanceof ServerLevel serverLevel) {
+            Optional.ofNullable(serverLevel.getEntity(summonedEntityId))
+                .ifPresent(entity -> {
+                    spawnDespawnParticles(serverLevel, entity.position());
+                    entity.discard();
+                });
+            summonedEntityId = null;
+            summonEndTime = 0;
+            owner = null;
+            updateState(player); // 更新状态
         }
     }
 
@@ -214,24 +222,29 @@ public class YuShenJunEcho extends Echo {
         ItemStack leggings = new ItemStack(ModItem.SHENJUN_LEGGINGS.get());
         ItemStack boots = new ItemStack(ModItem.SHENJUN_BOOTS.get());
         
+        // 设置护甲不可移除标签
+        CompoundTag helmetTag = helmet.getOrCreateTag();
+        CompoundTag chestplateTag = chestplate.getOrCreateTag();
+        CompoundTag leggingsTag = leggings.getOrCreateTag();
+        CompoundTag bootsTag = boots.getOrCreateTag();
+        
+        helmetTag.putBoolean("Unbreakable", true);
+        chestplateTag.putBoolean("Unbreakable", true);
+        leggingsTag.putBoolean("Unbreakable", true);
+        bootsTag.putBoolean("Unbreakable", true);
+        
+        // 添加Curse of Binding诅咒
+        helmet.enchant(net.minecraft.world.item.enchantment.Enchantments.BINDING_CURSE, 1);
+        chestplate.enchant(net.minecraft.world.item.enchantment.Enchantments.BINDING_CURSE, 1);
+        leggings.enchant(net.minecraft.world.item.enchantment.Enchantments.BINDING_CURSE, 1);
+        boots.enchant(net.minecraft.world.item.enchantment.Enchantments.BINDING_CURSE, 1);
+        
         player.setItemSlot(EquipmentSlot.HEAD, helmet);
         player.setItemSlot(EquipmentSlot.CHEST, chestplate);
         player.setItemSlot(EquipmentSlot.LEGS, leggings);
         player.setItemSlot(EquipmentSlot.FEET, boots);
         
         player.sendSystemMessage(Component.literal("§b[十日终焉] §f...神君铠甲附着于身..."));
-    }
-    
-    private void removeSummonedEntity(ServerPlayer player) {
-        if (summonedEntityId != null && player.level() instanceof ServerLevel serverLevel) {
-            Optional.ofNullable(serverLevel.getEntity(summonedEntityId))
-                .ifPresent(entity -> {
-                    spawnDespawnParticles(serverLevel, entity.position());
-                    entity.discard();
-                });
-            summonedEntityId = null;
-            owner = null;
-        }
     }
     
     private void spawnSummonParticles(ServerLevel level, Vec3 pos) {
@@ -287,5 +300,27 @@ public class YuShenJunEcho extends Echo {
             echo.summonEndTime = tag.getLong("summon_end_time");
         }
         return echo;
+    }
+
+    @Override
+    public void toggleContinuous(ServerPlayer player) {
+        if (!isActive()) {
+            // 检查理智值
+            int currentSanity = SanityManager.getSanity(player);
+            if (currentSanity < TOGGLE_SANITY_COST) {
+                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展御神之法..."));
+                return;
+            }
+            
+            // 消耗理智值
+            SanityManager.modifySanity(player, -TOGGLE_SANITY_COST);
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + TOGGLE_SANITY_COST + "点心神，施展御神之法..."));
+            
+            setActiveAndUpdate(player, true);
+            onActivate(player);
+        } else {
+            setActiveAndUpdate(player, false);
+            onDeactivate(player);
+        }
     }
 } 
