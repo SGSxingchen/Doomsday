@@ -3,8 +3,8 @@ package org.lanstard.doomsday.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkEvent;
-import org.lanstard.doomsday.client.render.World3DTextPreset;
-import org.lanstard.doomsday.client.render.World3DTextRenderer;
+import org.lanstard.doomsday.client.renderer.world3DText.World3DTextPreset;
+import org.lanstard.doomsday.client.renderer.world3DText.World3DTextRenderer;
 
 import java.util.UUID;
 import java.util.function.Supplier;

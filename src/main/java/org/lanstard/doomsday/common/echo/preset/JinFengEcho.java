@@ -1,194 +1,254 @@
 package org.lanstard.doomsday.common.echo.preset;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.LivingEntity;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.core.particles.ParticleTypes;
+import org.joml.Vector3f;
 
-import java.util.List;
+import java.util.*;
 
 public class JinFengEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.JINFENG;
-    private static final int SANITY_COST = 200;              // 理智消耗
-    private static final int COOLDOWN = 1200;                // 1分钟冷却
-    private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
-    private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
-    private static final int EFFECT_DURATION = 100;          // 效果持续时间（5秒）
-    private static final double PUSH_RANGE = 10.0;           // 推动范围
-    private static final double PUSH_STRENGTH = 3.0;         // 推动力度
+    private static final int SANITY_COST = 150;               // 理智消耗
+    private static final int COOLDOWN = 1200;                 // 1分钟冷却
+    private static final int EFFECT_DURATION = 100;           // 5秒持续时间
+    private static final int PUSH_RANGE = 10;                 // 推动范围
+    private static final float PUSH_STRENGTH = 1.0F;          // 推动力度
+    private static final int FREE_COST_THRESHOLD = 300;       // 免费释放阈值
+    private static final int MIN_BELIEF = 10;                 // 最小信念要求
+    
+    // 粒子效果相关
+    private static final float WIND_RED = 0.9F;
+    private static final float WIND_GREEN = 0.9F;
+    private static final float WIND_BLUE = 1.0F;
+    private static final float PARTICLE_SIZE = 0.5F;
     
     private long cooldownEndTime = 0;
+    private Vec3 activePosition = null;              // 激活的领域中心位置
+    private Vec3 pushDirection = null;               // 推动方向
+    private int remainingDuration = 0;              // 剩余持续时间
+    private final Random random = new Random();
 
     public JinFengEcho() {
-        super(
-            PRESET.name().toLowerCase(),
-            PRESET.getDisplayName(),
-            PRESET.getType(),
-            PRESET.getActivationType(),
-            SANITY_COST,  // 主动技能消耗
-            0            // 无被动消耗
-        );
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), PRESET.getActivationType(), SANITY_COST, 0);
     }
 
     @Override
     public void onActivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...我听到了劲风的回响..."));
+        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...劲风呼啸，听风而动..."));
     }
 
     @Override
     public void onUpdate(ServerPlayer player) {
-        // 纯主动技能，无需更新
-    }
-
-    @Override
-    public void onDeactivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的回响消散了..."));
-    }
-
-    @Override
-    public void toggleContinuous(ServerPlayer player) {
-        // 这是一个主动技能，不需要切换
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...劲风只能主动引导..."));
+        if (activePosition == null || remainingDuration <= 0) return;
+        
+        activePosition = player.position();
+        ServerLevel level = (ServerLevel) player.level();
+        
+        // 生成领域边缘粒子
+        spawnDomainParticles(level, activePosition);
+        
+        // 获取领域内的生物并推动
+        AABB box = new AABB(
+            activePosition.x - PUSH_RANGE, activePosition.y - PUSH_RANGE, activePosition.z - PUSH_RANGE,
+            activePosition.x + PUSH_RANGE, activePosition.y + PUSH_RANGE, activePosition.z + PUSH_RANGE
+        );
+        
+        List<LivingEntity> entities = level.getEntitiesOfClass(
+            LivingEntity.class,
+            box,
+            entity -> entity != player
+        );
+        
+        // 对领域内的生物应用推力
+        for (LivingEntity entity : entities) {
+            // 计算到中心的方向向量
+            Vec3 toCenter = entity.position().subtract(activePosition);
+            double distance = toCenter.length();
+            
+            if (distance > PUSH_RANGE) {
+                continue;
+            }
+            
+            // 计算推力方向和强度
+            double strengthMultiplier = 1.0 - (distance / PUSH_RANGE); // 距离越近推力越大
+            Vec3 pushVec = toCenter.normalize().scale(PUSH_STRENGTH * strengthMultiplier);
+            
+            // 设置实体运动
+            // 注意：我们不直接设置y轴的值，让实体自然下落
+            entity.setDeltaMovement(
+                pushVec.x,
+                entity.getDeltaMovement().y + pushVec.y, // 保持原有的垂直速度
+                pushVec.z
+            );
+            
+            // 如果实体在地面上，给一个向上的初速度使其离地
+            if (entity.onGround()) {
+                entity.setDeltaMovement(
+                    entity.getDeltaMovement().x,
+                    0.8, // 给一个适中的向上初速度
+                    entity.getDeltaMovement().z
+                );
+            }
+            
+            // 生成推动效果的粒子
+            spawnPushParticles(level, entity.position(), pushVec);
+        }
+        
+        remainingDuration--;
+        if (remainingDuration <= 0) {
+            activePosition = null;
+            pushDirection = null;
+        }
     }
 
     @Override
     protected boolean doCanUse(ServerPlayer player) {
-        // 检查冷却时间
         if (System.currentTimeMillis() < cooldownEndTime) {
             long remainingSeconds = (cooldownEndTime - System.currentTimeMillis()) / 1000;
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...劲风之力尚未恢复，剩余" + remainingSeconds + "秒..."));
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...劲风未息，需等待" + remainingSeconds + "秒..."));
             return false;
         }
 
-        // 检查理智值和信念值
+        // 检查信念和理智，判断是否免费释放
         int currentSanity = SanityManager.getSanity(player);
-        int faith = SanityManager.getFaith(player);
-        boolean freeCost = faith >= MIN_FAITH_REQUIREMENT && currentSanity < FREE_COST_THRESHOLD;
-
-        // 如果不是免费释放且理智不足
-        if (!freeCost && currentSanity < SANITY_COST) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以引动劲风之力..."));
+        
+        if (SanityManager.getFaith(player) >= MIN_BELIEF && currentSanity < FREE_COST_THRESHOLD) {
+            return true;
+        }
+        
+        // 检查理智是否足够
+        if (currentSanity < SANITY_COST) {
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以引动劲风..."));
             return false;
         }
-
+        
         return true;
     }
 
     @Override
     protected void doUse(ServerPlayer player) {
-        // 检查理智值和信念值
+        // 检查是否免费释放
         int currentSanity = SanityManager.getSanity(player);
-        int faith = SanityManager.getFaith(player);
-        boolean freeCost = faith >= MIN_FAITH_REQUIREMENT && currentSanity < FREE_COST_THRESHOLD;
-
-        // 获取玩家位置和朝向
-        Vec3 pos = player.position();
-        Vec3 lookVec = player.getLookAngle();
+        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && currentSanity < FREE_COST_THRESHOLD;
         
-        // 计算检测范围
-        AABB box = new AABB(
-            pos.x - PUSH_RANGE, pos.y - PUSH_RANGE, pos.z - PUSH_RANGE,
-            pos.x + PUSH_RANGE, pos.y + PUSH_RANGE, pos.z + PUSH_RANGE
-        );
-        
-        // 获取范围内的所有生物
-        List<LivingEntity> entities = player.level().getEntitiesOfClass(
-            LivingEntity.class,
-            box,
-            entity -> entity != player && entity.isAlive()
-        );
-        
-        // 对每个生物应用推力
-        for (LivingEntity entity : entities) {
-            // 计算与玩家的方向向量
-            Vec3 directionVec = lookVec.normalize();
-            
-            // 设置实体的运动方向和速度
-            entity.setDeltaMovement(
-                directionVec.x * PUSH_STRENGTH,
-                0.5,  // 轻微向上推动
-                directionVec.z * PUSH_STRENGTH
-            );
-            
-            // 防止摔落伤害
-            entity.fallDistance = 0;
-        }
-        
-        // 生成粒子效果
-        if (player.level() instanceof ServerLevel serverLevel) {
-            double particleSpread = 2.0;
-            // 对每个被推动的实体生成粒子效果
-            for (LivingEntity entity : entities) {
-                Vec3 entityPos = entity.position();
-                Vec3 particleStartPos = pos.add(lookVec.scale(2)); // 从玩家前方2格开始
-                Vec3 particleDirection = entityPos.subtract(particleStartPos).normalize();
-                
-                // 为每个实体生成一条粒子路径
-                for (int i = 0; i < 20; i++) {
-                    // 随机偏移起始位置
-                    double offsetX = player.getRandom().nextGaussian() * particleSpread;
-                    double offsetY = player.getRandom().nextGaussian() * particleSpread;
-                    double offsetZ = player.getRandom().nextGaussian() * particleSpread;
-                    
-                    // 计算粒子速度（朝向目标）
-                    double speedX = particleDirection.x * 0.5;
-                    double speedY = particleDirection.y * 0.5;
-                    double speedZ = particleDirection.z * 0.5;
-                    
-                    serverLevel.sendParticles(
-                        ParticleTypes.DOLPHIN,  // 使用海豚粒子（青色）
-                        particleStartPos.x + offsetX,
-                        particleStartPos.y + offsetY,
-                        particleStartPos.z + offsetZ,
-                        0,  // 粒子数量（使用速度控制）
-                        speedX,
-                        speedY,
-                        speedZ,
-                        0.5  // 粒子速度
-                    );
-                }
-            }
-            
-            // 如果没有目标，也生成一些向前的粒子
-            if (entities.isEmpty()) {
-                Vec3 particleStartPos = pos.add(lookVec.scale(2));
-                for (int i = 0; i < 30; i++) {
-                    double offsetX = player.getRandom().nextGaussian() * particleSpread;
-                    double offsetY = player.getRandom().nextGaussian() * particleSpread;
-                    double offsetZ = player.getRandom().nextGaussian() * particleSpread;
-                    
-                    serverLevel.sendParticles(
-                        ParticleTypes.DOLPHIN,
-                        particleStartPos.x + offsetX,
-                        particleStartPos.y + offsetY,
-                        particleStartPos.z + offsetZ,
-                        0,
-                        lookVec.x * 0.5,
-                        lookVec.y * 0.5,
-                        lookVec.z * 0.5,
-                        0.5
-                    );
-                }
-            }
-        }
-
         // 消耗理智
-        if (!freeCost) {
+        if (!isFree) {
             SanityManager.modifySanity(player, -SANITY_COST);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + SANITY_COST + "点心神，劲风已起..."));
-        } else {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，劲风已起..."));
+        }
+
+        // 设置领域中心和推动方向
+        activePosition = player.position();
+        pushDirection = player.getLookAngle();
+        remainingDuration = EFFECT_DURATION;
+
+        // 生成初始粒子效果
+        if (player.level() instanceof ServerLevel serverLevel) {
+            spawnInitialParticles(serverLevel, activePosition, pushDirection);
         }
 
         // 设置冷却
-        cooldownEndTime = System.currentTimeMillis() + (COOLDOWN * 50);
+        cooldownEndTime = System.currentTimeMillis() + COOLDOWN * 50;
+        
+        // 发送消息
+        if (isFree) {
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引风，劲风涌动..."));
+        } else {
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...心随风动，劲风涌出..."));
+        }
+
+        updateState(player);
+    }
+
+    private void spawnDomainParticles(ServerLevel level, Vec3 center) {
+        DustParticleOptions windParticle = new DustParticleOptions(
+            new Vector3f(WIND_RED, WIND_GREEN, WIND_BLUE),
+            PARTICLE_SIZE
+        );
+        
+        // 生成圆形领域边缘粒子
+        for (int i = 0; i < 16; i++) {
+            double angle = 2.0 * Math.PI * i / 16;
+            double x = center.x + PUSH_RANGE * Math.cos(angle);
+            double z = center.z + PUSH_RANGE * Math.sin(angle);
+            
+            level.sendParticles(windParticle,
+                x, center.y + 0.1, z,
+                1, 0, 0.1, 0, 0.05);
+        }
+    }
+
+    private void spawnInitialParticles(ServerLevel level, Vec3 pos, Vec3 direction) {
+        DustParticleOptions windParticle = new DustParticleOptions(
+            new Vector3f(WIND_RED, WIND_GREEN, WIND_BLUE),
+            PARTICLE_SIZE
+        );
+        
+        // 在玩家前方生成锥形粒子效果
+        double spread = Math.PI / 4; // 45度扩散角
+        for (int i = 0; i < 50; i++) {
+            double distance = 1 + random.nextDouble() * PUSH_RANGE;
+            double angle = random.nextDouble() * 2 * Math.PI;
+            double pitch = random.nextDouble() * spread - spread/2;
+            
+            double dx = Math.cos(angle) * Math.cos(pitch);
+            double dy = Math.sin(pitch);
+            double dz = Math.sin(angle) * Math.cos(pitch);
+            
+            Vec3 particlePos = pos.add(
+                direction.x * distance + dx,
+                direction.y * distance + dy + 1,
+                direction.z * distance + dz
+            );
+            
+            level.sendParticles(windParticle,
+                particlePos.x, particlePos.y, particlePos.z,
+                1, 0, 0, 0, 0.1);
+        }
+    }
+
+    private void spawnPushParticles(ServerLevel level, Vec3 pos, Vec3 direction) {
+        DustParticleOptions windParticle = new DustParticleOptions(
+            new Vector3f(WIND_RED, WIND_GREEN, WIND_BLUE),
+            PARTICLE_SIZE * 0.5F
+        );
+        
+        // 在推动路径上生成粒子
+        for (int i = 0; i < 3; i++) {
+            double offset = random.nextDouble() * 2 - 1;
+            Vec3 particlePos = pos.add(
+                direction.x + offset * 0.3,
+                direction.y + offset * 0.3 + 1,
+                direction.z + offset * 0.3
+            );
+            
+            level.sendParticles(windParticle,
+                particlePos.x, particlePos.y, particlePos.z,
+                1, 0, 0, 0, 0.05);
+        }
+    }
+
+    @Override
+    public void onDeactivate(ServerPlayer player) {
+        activePosition = null;
+        pushDirection = null;
+        remainingDuration = 0;
+        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...劲风消散..."));
+        updateState(player);
+    }
+
+    @Override
+    public void toggleContinuous(ServerPlayer player) {
+        // 这是一个主动技能，不需要切换持续状态
     }
 
     @Override

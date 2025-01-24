@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
-import org.lanstard.doomsday.sanity.SanityManager;
+import org.lanstard.doomsday.common.sanity.SanityManager;
 
 public class BeliefPointsItem extends Item {
     public BeliefPointsItem(Properties properties) {

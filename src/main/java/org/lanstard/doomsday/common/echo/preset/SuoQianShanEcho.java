@@ -159,6 +159,9 @@ public class SuoQianShanEcho extends Echo {
             markedPosition = player.position();
             markedDimensionKey = player.level().dimension().location().toString();
             
+            // 保存状态
+            updateState(player);
+            
             // 生成标记点粒子效果
             if (player.level() instanceof ServerLevel serverLevel) {
                 spawnMarkParticles(serverLevel, markedPosition);
@@ -261,11 +264,11 @@ public class SuoQianShanEcho extends Echo {
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，千山可达..."));
             }
             
-            setActive(true);
+            setActiveAndUpdate(player, true);
             onActivate(player);
         } else {
             // 直接关闭，不需要检查理智值
-            setActive(false);
+            setActiveAndUpdate(player, false);
             onDeactivate(player);
         }
     }

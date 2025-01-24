@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.echo;
+package org.lanstard.doomsday.common.echo;
 
 public enum ActivationType {
     TRIGGER,    // 契机获得

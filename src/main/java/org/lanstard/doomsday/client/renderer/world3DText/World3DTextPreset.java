@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.client.render;
+package org.lanstard.doomsday.client.renderer.world3DText;
 
 import net.minecraft.world.phys.Vec3;
 

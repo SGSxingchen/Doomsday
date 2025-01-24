@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.echo;
+package org.lanstard.doomsday.common.echo;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;

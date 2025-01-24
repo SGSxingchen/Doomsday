@@ -14,6 +14,8 @@ import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import net.minecraft.nbt.CompoundTag;
 import org.joml.Vector3f;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 
 import java.util.List;
 import java.util.Random;
@@ -21,7 +23,8 @@ import java.util.Random;
 public class HuoShuiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.HUOSHUI;
     private static final int RANGE = 10;                       // 影响范围
-    private static final int FIRE_COUNT = 30;                  // 火焰数量
+    private static final int FIRE_COUNT = 30;                  // 每次生成的火焰数量
+    private static final int FIRE_DURATION = 100;              // 火焰生成持续时间(5秒)
     private static final int SANITY_REDUCTION = 50;           // 理智降低量
     private static final int NORMAL_COOLDOWN = 72000;         // 60分钟冷却
     private static final int LOW_SANITY_COOLDOWN = 12000;     // 10分钟冷却
@@ -35,8 +38,13 @@ public class HuoShuiEcho extends Echo {
     private static final float DARK_BLUE = 0.2F;
     private static final float PARTICLE_SIZE = 1.0F;
     
+    private static final int SANITY_COST = 0;
+    private static final int MIN_BELIEF = 10;
+    private static final int FREE_COST_THRESHOLD = 300;
+    
     private long lastDayTime = 0;
     private long cooldownEndTime = 0;
+    private int fireGenerationDuration = 0;                   // 火焰生成剩余时间
     private final Random random = new Random();
 
     public HuoShuiEcho() {
@@ -58,74 +66,96 @@ public class HuoShuiEcho extends Echo {
 
     @Override
     public void onUpdate(ServerPlayer player) {
-        Level level = player.level();
-        long currentTime = level.getDayTime() % 24000;
+        if (!isActive()) return;
+
+        // 获取当前时间
+        long currentDayTime = player.level().getDayTime() % 24000;
         
-        // 检查昼夜变化
-        if (lastDayTime != currentTime) {
-            // 夜晚降临
-            if (isTimeAround(currentTime, NIGHT_TIME)) {
-                spawnRandomFires(player);
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...夜幕降临，祸水引火..."));
-            }
-            // 白天降临
-            else if (isTimeAround(currentTime, DAY_TIME)) {
+        // 检查是否是夜晚时分（18000）或白天时分（6000）
+        boolean isNightTime = Math.abs(currentDayTime - 18000) < 100;
+        boolean isDayTime = Math.abs(currentDayTime - 6000) < 100;
+        
+        // 只有当lastDayTime不在同一时间段时才触发效果
+        if ((isNightTime || isDayTime) && !isInSameTimePhase(lastDayTime, currentDayTime)) {
+            if (isNightTime) {
+                // 开始火焰生成周期
+                fireGenerationDuration = FIRE_DURATION;
+                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...祸水之力涌动，火焰四起..."));
+            } else {
+                // 白天效果：降低理智
                 reduceSanityForNearbyPlayers(player);
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...黎明将至，祸水扰心..."));
+                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...祸水之力涌动，心神动荡..."));
             }
-            lastDayTime = currentTime;
+            // 生成粒子效果
+            if (player.level() instanceof ServerLevel serverLevel) {
+                spawnEffectParticles(serverLevel, player.position());
+            }
+            // 更新上次触发时间
+            lastDayTime = currentDayTime;
+            updateState(player);
+        }
+        
+        // 处理持续火焰生成
+        if (fireGenerationDuration > 0) {
+            spawnRandomFires(player);
+            fireGenerationDuration--;
         }
     }
 
-    private boolean isTimeAround(long currentTime, long targetTime) {
-        // 检查时间是否在目标时间点附近
-        long diff = Math.abs(currentTime - targetTime);
-        return diff <= 100 || diff >= 23900;  // 允许100tick的误差
+    // 检查两个时间点是否在同一个时间相位（白天或夜晚）
+    private boolean isInSameTimePhase(long time1, long time2) {
+        // 检查是否都在夜晚时分（18000）附近
+        boolean bothNight = Math.abs(time1 - 18000) < 100 && Math.abs(time2 - 18000) < 100;
+        // 检查是否都在白天时分（6000）附近
+        boolean bothDay = Math.abs(time1 - 6000) < 100 && Math.abs(time2 - 6000) < 100;
+        return bothNight || bothDay;
     }
 
+    // 生成随机火焰
     private void spawnRandomFires(ServerPlayer player) {
-        Level level = player.level();
-        if (!(level instanceof ServerLevel)) return;
-
-        BlockPos playerPos = player.blockPosition();
-        for (int i = 0; i < FIRE_COUNT; i++) {
-            int x = playerPos.getX() + random.nextInt(RANGE * 2) - RANGE;
-            int z = playerPos.getZ() + random.nextInt(RANGE * 2) - RANGE;
+        ServerLevel level = (ServerLevel) player.level();
+        
+        // 每tick生成较少的火焰，但持续更长时间
+        int firesPerTick = FIRE_COUNT ;
+        
+        for (int i = 0; i < firesPerTick; i++) {
+            int x = player.getBlockX() + random.nextInt(RANGE * 2) - RANGE;
+            int z = player.getBlockZ() + random.nextInt(RANGE * 2) - RANGE;
+            int y = player.getBlockY();
             
-            // 找到最上面的实体方块
-            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, playerPos.getY() + RANGE, z);
-            while (pos.getY() > playerPos.getY() - RANGE) {
-                pos.setY(pos.getY() - 1);
-                if (level.getBlockState(pos).isSolidRender(level, pos)) {
-                    BlockPos firePos = pos.above();
-                    if (level.getBlockState(firePos).isAir()) {
-                        level.setBlock(firePos, Blocks.FIRE.defaultBlockState(), 3);
-                        break;
-                    }
-                }
+            // 找到一个合适的位置放置火焰
+            BlockPos pos = new BlockPos(x, y, z);
+            if (level.getBlockState(pos).isAir() && level.getBlockState(pos.below()).isSolidRender(level, pos)) {
+                level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
             }
         }
         
         // 生成粒子效果
-        spawnEffectParticles((ServerLevel)level, player.position());
+        spawnEffectParticles(level, player.position());
+        
+        updateState(player);
     }
 
+    // 降低附近玩家的理智
     private void reduceSanityForNearbyPlayers(ServerPlayer player) {
-        Level level = player.level();
         AABB box = player.getBoundingBox().inflate(RANGE);
-        List<ServerPlayer> nearbyPlayers = level.getEntitiesOfClass(ServerPlayer.class, box);
+        List<ServerPlayer> nearbyPlayers = player.level().getEntitiesOfClass(
+            ServerPlayer.class,
+            box,
+            p -> p != player
+        );
         
         for (ServerPlayer target : nearbyPlayers) {
-            if (target != player) {
-                SanityManager.modifySanity(target, -SANITY_REDUCTION);
-                target.sendSystemMessage(Component.literal("§c[十日终焉] §f...祸水扰心，理智涣散(" + SANITY_REDUCTION + ")..."));
-            }
+            SanityManager.modifySanity(target, -SANITY_REDUCTION);
+            target.sendSystemMessage(Component.literal("§c[十日终焉] §f...祸水之力侵蚀，心神受损..."));
         }
         
         // 生成粒子效果
-        if (level instanceof ServerLevel serverLevel) {
+        if (player.level() instanceof ServerLevel serverLevel) {
             spawnEffectParticles(serverLevel, player.position());
         }
+        
+        updateState(player);
     }
 
     private void spawnEffectParticles(ServerLevel level, Vec3 pos) {
@@ -160,9 +190,10 @@ public class HuoShuiEcho extends Echo {
 
     @Override
     protected boolean doCanUse(ServerPlayer player) {
-        if (System.currentTimeMillis() < cooldownEndTime) {
-            long remainingSeconds = (cooldownEndTime - System.currentTimeMillis()) / 1000;
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...祸水之力尚未恢复，剩余" + remainingSeconds + "秒..."));
+        long timeMs = cooldownEndTime - System.currentTimeMillis();
+        if (timeMs > 0) {
+            long remainingSeconds = timeMs / 20 / 50;
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...祸水之力尚需" + remainingSeconds + "秒恢复..."));
             return false;
         }
         return true;
@@ -170,30 +201,55 @@ public class HuoShuiEcho extends Echo {
 
     @Override
     protected void doUse(ServerPlayer player) {
-        // 获取玩家指向的实体
-        var target = player.level().getNearestPlayer(player, 10);
-        if (target == null) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...未找到目标..."));
+        // 获取玩家视线中的目标
+        double reach = RANGE;
+        Vec3 eyePosition = player.getEyePosition();
+        Vec3 lookVector = player.getLookAngle();
+        Vec3 endPos = eyePosition.add(lookVector.x * reach, lookVector.y * reach, lookVector.z * reach);
+        
+        EntityHitResult hitResult = ProjectileUtil.getEntityHitResult(
+            player.level(),
+            player,
+            eyePosition,
+            endPos,
+            new AABB(eyePosition, endPos).inflate(1.0),
+            entity -> entity instanceof ServerPlayer && entity != player,
+            0.0f
+        );
+
+        if (hitResult == null || !(hitResult.getEntity() instanceof ServerPlayer target)) {
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...视线中无可救助之人..."));
+            return;
+        }
+        
+        // 检查目标理智是否已满
+        int targetSanity = SanityManager.getSanity(target);
+        int targetMaxSanity = SanityManager.getMaxSanity(target);
+        if (targetSanity >= targetMaxSanity) {
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f..." + target.getName().getString() + "的心神已然充盈..."));
             return;
         }
 
-        // 恢复目标理智
-        int maxSanity = SanityManager.getMaxSanity((ServerPlayer)target);
-        int targetSanity = SanityManager.getSanity((ServerPlayer)target);
-        int recoveryAmount = maxSanity - targetSanity;
+        // 检查是否可以免费释放
+        int currentSanity = SanityManager.getSanity(player);
+        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && currentSanity < FREE_COST_THRESHOLD;
         
-        if (recoveryAmount > 0) {
-            SanityManager.modifySanity((ServerPlayer)target, recoveryAmount);
-            target.sendSystemMessage(Component.literal("§b[十日终焉] §f...祸水之力涌入，理智恢复(" + recoveryAmount + ")..."));
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...祸水之力已助" + target.getName().getString() + "恢复理智..."));
-            
-            // 设置冷却时间
-            int playerSanity = SanityManager.getSanity(player);
-            long cooldown = playerSanity < LOW_SANITY_THRESHOLD ? LOW_SANITY_COOLDOWN : NORMAL_COOLDOWN;
-            cooldownEndTime = System.currentTimeMillis() + (cooldown * 50); // 转换为毫秒
-        } else {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...目标理智已满..."));
+        // 消耗理智
+        if (!isFree) {
+            SanityManager.modifySanity(player, -SANITY_COST);
         }
+
+        // 恢复目标理智
+        SanityManager.modifySanity(target, targetMaxSanity - targetSanity);
+        
+        // 设置冷却时间
+        int currentSanityAfterUse = SanityManager.getSanity(player);
+        cooldownEndTime = System.currentTimeMillis() + 
+            (currentSanityAfterUse < LOW_SANITY_THRESHOLD ? LOW_SANITY_COOLDOWN : NORMAL_COOLDOWN) * 50; // 转换为毫秒
+        
+        // 发送信息
+        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...已为" + target.getName().getString() + "恢复心神..."));
+        target.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的心神被" + player.getName().getString() + "恢复了..."));
     }
 
     @Override
@@ -201,6 +257,7 @@ public class HuoShuiEcho extends Echo {
         CompoundTag tag = super.toNBT();
         tag.putLong("lastDayTime", lastDayTime);
         tag.putLong("cooldownEndTime", cooldownEndTime);
+        tag.putInt("fireGenerationDuration", fireGenerationDuration);
         return tag;
     }
     
@@ -209,6 +266,7 @@ public class HuoShuiEcho extends Echo {
         echo.setActive(tag.getBoolean("isActive"));
         echo.lastDayTime = tag.getLong("lastDayTime");
         echo.cooldownEndTime = tag.getLong("cooldownEndTime");
+        echo.fireGenerationDuration = tag.getInt("fireGenerationDuration");
         return echo;
     }
 } 

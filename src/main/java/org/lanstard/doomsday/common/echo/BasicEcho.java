@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.echo;
+package org.lanstard.doomsday.common.echo;
 
 import net.minecraft.server.level.ServerPlayer;
 

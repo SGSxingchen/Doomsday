@@ -25,10 +25,12 @@ import java.util.List;
 import top.theillusivec4.curios.api.CuriosCapability;
 import org.lanstard.doomsday.config.DoomsdayConfig;
 import org.lanstard.doomsday.common.sanity.SanityManager;
+import java.util.ArrayList;
 
 public class DaoItem extends Item implements ICurioItem {
     private static final String TAG_ECHOES = "StoredEchoes";
     private static final String TAG_PLAYER_NAME = "PlayerName";
+    private static final String TAG_MODIFIER_UUID = "ModifierUUID";
 
     public DaoItem(Properties properties) {
         super(properties.rarity(Rarity.EPIC).stacksTo(1));
@@ -86,33 +88,35 @@ public class DaoItem extends Item implements ICurioItem {
         }).orElse(false);
     }
 
-    @Override
-    public void onEquip(SlotContext slotContext, ItemStack prevStack, ItemStack stack) {
-        if (slotContext.entity() instanceof ServerPlayer player && hasStoredEchoes(stack)) {
-            // 减少最大生命值和理智值
-            reducePlayerStats(player);
-            
-            // 添加回响效果
-            ListTag echoList = getStoredEchoes(stack);
-            for (int i = 0; i < echoList.size(); i++) {
-                CompoundTag echoTag = echoList.getCompound(i);
-                Echo echo = Echo.fromNBT(echoTag);
-                if (echo != null) {
-                    EchoManager.addEcho(player, echo);
-                }
-            }
-        }
-    }
-
-    private void reducePlayerStats(ServerPlayer player) {
+    private void reducePlayerStats(ServerPlayer player, ItemStack stack) {
         // 获取配置的减少值
         int healthReduction = DoomsdayConfig.ECHO_ITEM_HEALTH_REDUCTION.get();
         int sanityReduction = DoomsdayConfig.ECHO_ITEM_SANITY_REDUCTION.get();
 
-        // 减少最大生命值
-        float currentMaxHealth = player.getMaxHealth();
-        player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
-            .setBaseValue(Math.max(1, currentMaxHealth - healthReduction));
+        // 获取或生成UUID
+        CompoundTag tag = stack.getOrCreateTag();
+        String uuidString = tag.getString(TAG_MODIFIER_UUID);
+        java.util.UUID modifierId;
+        if (uuidString.isEmpty()) {
+            modifierId = java.util.UUID.randomUUID();
+            tag.putString(TAG_MODIFIER_UUID, modifierId.toString());
+        } else {
+            modifierId = java.util.UUID.fromString(uuidString);
+        }
+
+        // 使用属性修改器减少最大生命值
+        var attribute = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        
+        // 移除旧的修改器（如果存在）
+        attribute.removePermanentModifier(modifierId);
+        
+        // 添加新的修改器
+        attribute.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+            modifierId,
+            "Echo Item Health Reduction",
+            -healthReduction,
+            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION
+        ));
 
         // 如果当前生命值超过新的最大值，设置为新的最大值
         if (player.getHealth() > player.getMaxHealth()) {
@@ -127,16 +131,67 @@ public class DaoItem extends Item implements ICurioItem {
     }
 
     @Override
-    public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
+    public void onEquip(SlotContext slotContext, ItemStack prevStack, ItemStack stack) {
         if (slotContext.entity() instanceof ServerPlayer player && hasStoredEchoes(stack)) {
+            // 减少最大生命值和理智值
+            reducePlayerStats(player, stack);
+            
+            // 添加回响效果
             ListTag echoList = getStoredEchoes(stack);
             for (int i = 0; i < echoList.size(); i++) {
                 CompoundTag echoTag = echoList.getCompound(i);
                 Echo echo = Echo.fromNBT(echoTag);
                 if (echo != null) {
-                    EchoManager.removeEcho(player, echo);
+                    EchoManager.addEcho(player, echo);
                 }
             }
+        }
+    }
+
+    @Override
+    public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
+        if (slotContext.entity() instanceof ServerPlayer player && hasStoredEchoes(stack)) {
+            // 获取当前存储的回响ID列表
+            ListTag echoList = getStoredEchoes(stack);
+            List<Echo> echosToRemove = new ArrayList<>();
+            
+            // 从玩家当前的回响中找到匹配的回响
+            List<Echo> playerEchoes = EchoManager.getPlayerEchoes(player);
+            for (int i = 0; i < echoList.size(); i++) {
+                CompoundTag echoTag = echoList.getCompound(i);
+                String echoId = echoTag.getString("id");
+                
+                // 在玩家当前的回响中查找匹配的回响
+                for (Echo echo : playerEchoes) {
+                    if (echo.getId().equals(echoId)) {
+                        echosToRemove.add(echo);
+                        break;
+                    }
+                }
+            }
+            
+            // 批量移除找到的回响
+            if (!echosToRemove.isEmpty()) {
+                EchoManager.removeEchoes(player, echosToRemove);
+            }
+
+            // 恢复生命值和理智值上限
+            int healthReduction = DoomsdayConfig.ECHO_ITEM_HEALTH_REDUCTION.get();
+            int sanityReduction = DoomsdayConfig.ECHO_ITEM_SANITY_REDUCTION.get();
+
+            // 获取修改器UUID并移除
+            CompoundTag tag = stack.getTag();
+            if (tag != null && tag.contains(TAG_MODIFIER_UUID)) {
+                var modifierId = java.util.UUID.fromString(tag.getString(TAG_MODIFIER_UUID));
+                var attribute = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+                attribute.removePermanentModifier(modifierId);
+            }
+
+            // 恢复最大理智值
+            SanityManager.modifyMaxSanity(player, sanityReduction);
+
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的生命上限恢复了" + healthReduction + "点..."));
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的理智上限恢复了" + sanityReduction + "点..."));
         }
     }
 

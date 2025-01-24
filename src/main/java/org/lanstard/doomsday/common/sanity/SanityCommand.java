@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.sanity;
+package org.lanstard.doomsday.common.sanity;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -11,7 +11,7 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lanstard.doomsday.Doomsday;
-import org.lanstard.doomsday.sanity.config.SanityConfig;
+import org.lanstard.doomsday.common.sanity.config.SanityConfig;
 
 @Mod.EventBusSubscriber(modid = Doomsday.MODID)
 public class SanityCommand {

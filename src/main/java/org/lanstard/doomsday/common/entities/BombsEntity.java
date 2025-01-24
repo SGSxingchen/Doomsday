@@ -13,7 +13,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.level.ClipContext;
 import org.lanstard.doomsday.common.effects.ModEffects;
-import org.lanstard.doomsday.common.items.ItemRegister;
+import org.lanstard.doomsday.common.items.ModItem;
 
 public class BombsEntity extends ThrowableItemProjectile {
     private int ticksToExplode = 100; // 5秒 = 100刻
@@ -28,7 +28,7 @@ public class BombsEntity extends ThrowableItemProjectile {
 
     @Override
     protected Item getDefaultItem() {
-        return ItemRegister.BOMBS.get();
+        return ModItem.BOMBS.get();
     }
 
     @Override

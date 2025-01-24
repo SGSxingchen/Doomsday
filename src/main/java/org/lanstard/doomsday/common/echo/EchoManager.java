@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.echo;
+package org.lanstard.doomsday.common.echo;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -7,27 +7,21 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkDirection;
 import org.lanstard.doomsday.Doomsday;
-import org.lanstard.doomsday.echo.preset.BreakAllEcho;
+import org.lanstard.doomsday.common.echo.preset.BreakAllEcho;
+import org.lanstard.doomsday.common.events.EchoLifecycleEvents;
 import org.lanstard.doomsday.network.NetworkManager;
-import org.lanstard.doomsday.event.EchoTriggerEvents;
-import org.lanstard.doomsday.sanity.SanityManager;
 import net.minecraft.network.chat.Component;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.Map;
-import java.util.HashMap;
-
+import java.util.ArrayList;
 @Mod.EventBusSubscriber(modid = Doomsday.MODID)
 public class EchoManager {
     private static final String DATA_NAME = "doomsday_echo";
     private static EchoSavedData echoData;
     private static MinecraftServer server;
-    
-    // 新增：用于跟踪回响禁用状态
-    private static Map<UUID, Map<String, Long>> disabledEchoes = new HashMap<>();
 
     public static void init(MinecraftServer server) {
         EchoManager.server = server;
@@ -53,7 +47,7 @@ public class EchoManager {
         echoData.setPlayerData(player.getUUID(), playerData);
         
         // 触发回响获得事件
-        EchoTriggerEvents.onEchoGained(player, echo);
+        EchoLifecycleEvents.onEchoGained(player, echo);
         
         // 同步到客户端
         syncToClient(player);
@@ -68,7 +62,7 @@ public class EchoManager {
         echoData.setPlayerData(player.getUUID(), playerData);
         
         // 触发回响失去事件
-        EchoTriggerEvents.onEchoLost(player, echo);
+        EchoLifecycleEvents.onEchoLost(player, echo);
         
         // 同步到客户端
         syncToClient(player);
@@ -133,67 +127,73 @@ public class EchoManager {
             .collect(Collectors.toList());
     }
 
-    // 在玩家使用回响时扣除理智值
-    public static boolean consumeSanity(ServerPlayer player, Echo echo) {
-        int currentSanity = SanityManager.getSanity(player);
-        int cost = echo.getSanityConsumption();
-        
-        if (currentSanity >= cost) {
-            SanityManager.modifySanity(player, -cost);
-            return true;
+    // 修改：移除理智检查，只保留禁用检查
+    public static boolean canUseEcho(ServerPlayer player, Echo echo) {
+        if (echo.isDisabled()) {
+            player.sendSystemMessage(Component.translatable("message.doomsday.prefix")
+                .append(Component.translatable("message.doomsday.echo_disabled")));
+            return false;
         }
-        return false;
+        return true;
     }
 
-    // 新增：禁用玩家的回响
+    // 修改：禁用玩家的回响
     public static void disableEchoes(ServerPlayer player, int duration) {
-        Map<String, Long> playerDisabled = disabledEchoes.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
-        long endTime = System.currentTimeMillis() + duration * 50; // 转换游戏刻到毫秒
-        
         // 获取玩家所有回响
         List<Echo> echoes = getPlayerEchoes(player);
         for (Echo echo : echoes) {
             if (!(echo instanceof BreakAllEcho)) { // 破万法不会被禁用
-                playerDisabled.put(echo.getId(), endTime);
+                echo.disable(duration);
                 echo.onDeactivate(player); // 临时停用回响
+                updateEcho(player, echo); // 更新状态
             }
         }
+        
+        // 发送整体禁用提示
+        player.sendSystemMessage(Component.translatable("message.doomsday.prefix")
+            .append(Component.translatable("message.doomsday.echo_disabled_all")));
         
         // 同步到客户端
         syncToClient(player);
     }
-    
-    // 新增：检查回响是否被禁用
-    public static boolean isEchoDisabled(ServerPlayer player, Echo echo) {
-        Map<String, Long> playerDisabled = disabledEchoes.get(player.getUUID());
-        if (playerDisabled == null) return false;
-        
-        Long endTime = playerDisabled.get(echo.getId());
-        if (endTime == null) return false;
-        
-        if (System.currentTimeMillis() > endTime) {
-            // 禁用时间已过，移除禁用状态
-            playerDisabled.remove(echo.getId());
-            return false;
-        }
-        
-        return true;
+
+    // 新增：启用回响
+    public static void enableEcho(ServerPlayer player, Echo echo) {
+        echo.enable();
+        updateEcho(player, echo); // 更新状态
+        player.sendSystemMessage(Component.translatable("message.doomsday.prefix")
+            .append(Component.translatable("message.doomsday.echo_enable", echo.getName())));
+        syncToClient(player);
     }
-    
-    // 修改：在canUse检查中加入禁用状态检查
-    public static boolean canUseEcho(ServerPlayer player, Echo echo) {
-        if (isEchoDisabled(player, echo)) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...该回响当前处于禁用状态！"));
-            return false;
-        }
+
+    /**
+     * 更新回声状态
+     * 当回声的内部状态发生变化时调用此方法
+     */
+    public static void updateEcho(ServerPlayer player, Echo echo) {
+        if (echoData == null) return;
         
-        // 检查理智值是否足够
-        int currentSanity = SanityManager.getSanity(player);
-        if (currentSanity < echo.getSanityConsumption()) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...理智值不足，无法使用该回响！"));
-            return false;
+        PlayerEchoData playerData = getPlayerEchoData(player.getUUID());
+        if (playerData.updateEcho(echo)) {
+            echoData.setPlayerData(player.getUUID(), playerData);
+            // 同步到客户端
+            syncToClient(player);
         }
-        
-        return true;
     }
+
+    public static void removeEchoes(ServerPlayer player, List<Echo> echoes) {
+        if (echoData == null) return;
+        
+        PlayerEchoData playerData = getPlayerEchoData(player.getUUID());
+        for (Echo echo : new ArrayList<>(echoes)) {
+            playerData.removeEcho(echo);
+            // 触发回响失去事件
+            EchoLifecycleEvents.onEchoLost(player, echo);
+        }
+        echoData.setPlayerData(player.getUUID(), playerData);
+        
+        // 同步到客户端
+        syncToClient(player);
+    }
+
 } 
