@@ -4,6 +4,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
@@ -17,6 +19,7 @@ public class ManLiEcho extends Echo {
     private static final int MIN_BELIEF = 10;            // 最小信念要求
     private static final int STRENGTH_AMPLIFIER = 1;     // 力量2效果
     private static final int RESISTANCE_AMPLIFIER = 0;   // 抗性1效果
+    private static final int INCREASE_MAX_HEALTH = 40;   // 提升最大生命值
     
     private long cooldownEndTime = 0;                    // 冷却结束时间
 
@@ -71,7 +74,26 @@ public class ManLiEcho extends Echo {
         if (!isFree) {
             SanityManager.modifySanity(player, -SANITY_COST);
         }
-        
+
+        // 使用属性修改器来应用生命值变化
+        var attribute = player.getAttribute(Attributes.MAX_HEALTH);
+        var modifierId = java.util.UUID.fromString("b9c99a89-f5c9-4624-9d38-4a1f5d8b9a91"); // 固定UUID用于识别这个修改器
+
+        // 移除旧的修改器（如果存在）
+        if (attribute != null) {
+            attribute.removePermanentModifier(modifierId);
+        }
+
+        // 只有在有修改时才添加修改器
+        if (attribute != null) {
+            attribute.addPermanentModifier(new AttributeModifier(
+                    modifierId,
+                    "ManliEcho Health Modifier",
+                    INCREASE_MAX_HEALTH,
+                    AttributeModifier.Operation.ADDITION
+            ));
+        }
+
         // 添加效果
         player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, EFFECT_DURATION, STRENGTH_AMPLIFIER, false, true));
         player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, EFFECT_DURATION, RESISTANCE_AMPLIFIER, false, true));

@@ -4,21 +4,19 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import org.lanstard.doomsday.common.echo.Echo;
-import org.lanstard.doomsday.common.echo.EchoType;
-import org.lanstard.doomsday.common.echo.ActivationType;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 
-public class WuGuEcho extends Echo {
+public class WuGouEcho extends Echo {
     private static final int SANITY_COST = 100;
     private static final int SANITY_HEAL = 200;
     private static final int MIN_FAITH = 10;
     private static final int FREE_SANITY_THRESHOLD = 300;
-    private static final int COOLDOWN_TICKS = 1200; // 1分钟 = 60 * 20 ticks
+    private static final int COOL_DOWN_TICKS = 1200; // 1分钟 = 60 * 20 ticks
     private long cooldownEndTime = 0;
     private static final EchoPreset PRESET = EchoPreset.WUGU;
 
-    public WuGuEcho() {
+    public WuGouEcho() {
         super(
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
@@ -46,11 +44,6 @@ public class WuGuEcho extends Echo {
 
     @Override
     public boolean doCanUse(ServerPlayer player) {
-        // 检查冷却时间
-        // if (System.currentTimeMillis() < cooldownEndTime) {
-        //     player.sendSystemMessage(Component.literal("§b[十日终焉] §f...此法尚需时日方可再施展..."));
-        //     return false;
-        // }
         long timeMs = cooldownEndTime - System.currentTimeMillis();
         if (timeMs > 0) {
             long remainingSeconds = timeMs / 20 / 50;
@@ -140,7 +133,7 @@ public class WuGuEcho extends Echo {
             .append(Component.literal(" 点理智")));
 
         // 设置冷却时间
-        cooldownEndTime = System.currentTimeMillis() + (COOLDOWN_TICKS * 50); // 50ms per tick
+        cooldownEndTime = System.currentTimeMillis() + (COOL_DOWN_TICKS * 50); // 50ms per tick
         updateState(player);
     }
 
@@ -156,8 +149,8 @@ public class WuGuEcho extends Echo {
         return tag;
     }
 
-    public static WuGuEcho fromNBT(CompoundTag tag) {
-        WuGuEcho echo = new WuGuEcho();
+    public static WuGouEcho fromNBT(CompoundTag tag) {
+        WuGouEcho echo = new WuGouEcho();
         echo.setActive(tag.getBoolean("isActive"));
         echo.cooldownEndTime = tag.getLong("cooldownEndTime");
         return echo;

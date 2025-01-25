@@ -3,7 +3,6 @@ package org.lanstard.doomsday.common.echo.preset;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.InteractionHand;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
@@ -14,9 +13,9 @@ import java.util.Random;
 
 public class NuoYiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.NUOYI;
-    private static final int GIVE_SANITY_COST = 30;          // 给予物品消耗
-    private static final int TAKE_SANITY_COST = 60;          // 获取物品消耗
-    private static final int COOLDOWN = 1200;                // 1分钟冷却
+    private static final int GIVE_SANITY_COST = 20;          // 给予物品消耗
+    private static final int TAKE_SANITY_COST = 40;          // 获取物品消耗
+    private static final int COOL_DOWN = 30 * 20;                // 30秒冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
     
@@ -153,7 +152,7 @@ public class NuoYiEcho extends Echo {
         }
 
         // 设置冷却
-        cooldownEndTime = System.currentTimeMillis() + (COOLDOWN * 50);
+        cooldownEndTime = System.currentTimeMillis() + (COOL_DOWN * 50);
     }
 
     private ItemStack getRandomItemFromInventory(ServerPlayer player) {

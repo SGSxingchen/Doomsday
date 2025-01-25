@@ -8,7 +8,9 @@ import net.minecraftforge.network.NetworkEvent;
 import org.lanstard.doomsday.client.gui.screen.EchoStatusScreen;
 
 import java.util.function.Supplier;
-
+/**
+ * 暂时弃用
+ * */
 public class OpenEchoScreenPacket {
     public OpenEchoScreenPacket() {}
     

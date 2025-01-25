@@ -1,22 +1,25 @@
 package org.lanstard.doomsday.common.echo.preset;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 
 public class TianXingJianEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.TIANXINGJIAN;
-    private static final int COOLDOWN_TICKS = 2400; // 2分钟
+    private static final int COOL_DOWN_TICKS = 2400; // 2分钟
     private static final int EFFECT_DURATION = 2400; // 2分钟
     private static final int LOW_SANITY_THRESHOLD = 300;
     private static final int FREE_COST_THRESHOLD = 300;          // 免费释放阈值
-    private static final int PASSIVE_EFFECT_DURATION = 3*20; // 3秒，用于刷新永久效果
+    private static final int PASSIVE_EFFECT_DURATION = 3 * 20; // 3秒，用于刷新永久效果
+
+    private static final int INCREASE_MAX_HEALTH = 20;            // 提升最大生命值
     
     private int cooldownTicks = 0;
     
@@ -117,20 +120,50 @@ public class TianXingJianEcho extends Echo {
         if (!freeCost) {
             SanityManager.modifySanity(player, -PRESET.getSanityConsumption());
         }
-        
+        // 使用属性修改器来应用生命值变化
+        var attribute = player.getAttribute(Attributes.MAX_HEALTH);
+        var modifierId = java.util.UUID.fromString("b0f99a89-f5c9-4624-9d38-4a1f5d8b9a91"); // 固定UUID用于识别这个修改器
+
+        // 移除旧的修改器（如果存在）
+        if (attribute != null) {
+            attribute.removePermanentModifier(modifierId);
+        }
+
         // 添加效果
-        if (currentSanity < LOW_SANITY_THRESHOLD) {
+        if (currentSanity < LOW_SANITY_THRESHOLD * 2) {
+
             // 低理智状态下，效果加强且无冷却
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, EFFECT_DURATION, 2));
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 2));
+            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 4));
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, EFFECT_DURATION, 2));
+
+            // 只有在有修改时才添加修改器
+            if (attribute != null) {
+                attribute.addPermanentModifier(new AttributeModifier(
+                        modifierId,
+                        "ManliEcho Health Modifier",
+                        INCREASE_MAX_HEALTH,
+                        AttributeModifier.Operation.ADDITION
+                ));
+            }
+
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...天行健，君子以自强不息！"));
         } else {
             // 正常状态
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, EFFECT_DURATION, 1));
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 1));
+            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION, 2));
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, EFFECT_DURATION, 1));
-            cooldownTicks = COOLDOWN_TICKS;
+
+            // 只有在有修改时才添加修改器
+            if (attribute != null) {
+                attribute.addPermanentModifier(new AttributeModifier(
+                        modifierId,
+                        "ManliEcho Health Modifier",
+                        INCREASE_MAX_HEALTH,
+                        AttributeModifier.Operation.ADDITION
+                ));
+            }
+            cooldownTicks = COOL_DOWN_TICKS;
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...天行之力加持，刚毅不屈..."));
         }
     }

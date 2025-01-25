@@ -23,7 +23,7 @@ import java.util.Random;
 public class HuoShuiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.HUOSHUI;
     private static final int RANGE = 10;                       // 影响范围
-    private static final int FIRE_COUNT = 30;                  // 每次生成的火焰数量
+    private static final int FIRE_COUNT = 20;                  // 每次生成的火焰数量
     private static final int FIRE_DURATION = 100;              // 火焰生成持续时间(5秒)
     private static final int SANITY_REDUCTION = 50;           // 理智降低量
     private static final int NORMAL_COOLDOWN = 72000;         // 60分钟冷却
@@ -121,13 +121,15 @@ public class HuoShuiEcho extends Echo {
         for (int i = 0; i < firesPerTick; i++) {
             int x = player.getBlockX() + random.nextInt(RANGE * 2) - RANGE;
             int z = player.getBlockZ() + random.nextInt(RANGE * 2) - RANGE;
-            int y = player.getBlockY();
-            
-            // 找到一个合适的位置放置火焰
-            BlockPos pos = new BlockPos(x, y, z);
-            if (level.getBlockState(pos).isAir() && level.getBlockState(pos.below()).isSolidRender(level, pos)) {
-                level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
+            for(int j = -5; j < 5; j++){
+                int y = player.getBlockY() + j;
+                // 找到一个合适的位置放置火焰
+                BlockPos pos = new BlockPos(x, y, z);
+                if (level.getBlockState(pos).isAir() && level.getBlockState(pos.below()).isSolidRender(level, pos)) {
+                    level.setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
+                }
             }
+
         }
         
         // 生成粒子效果

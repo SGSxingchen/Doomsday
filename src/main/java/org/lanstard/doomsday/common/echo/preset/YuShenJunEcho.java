@@ -5,11 +5,9 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
@@ -21,10 +19,7 @@ import org.lanstard.doomsday.common.entities.ShenJunEntity;
 import org.lanstard.doomsday.common.items.ModItem;
 import net.minecraft.nbt.CompoundTag;
 import org.joml.Vector3f;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.common.MinecraftForge;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,7 +30,7 @@ public class YuShenJunEcho extends Echo {
     private static final int EFFECT_RANGE = 10;
     private static final int EFFECT_DURATION = 20 * 20; // 20秒
     private static final int SUMMON_DURATION = 20 * 20; // 20秒
-    private static final int COOLDOWN = 60 * 20; // 60秒
+    private static final int COOL_DOWN = 60 * 20; // 60秒
     private static final int ACTIVE_SANITY_COST = 200;
     private static final int TOGGLE_SANITY_COST = 30;
     private static final int CONTINUOUS_SANITY_COST = 1;
@@ -198,7 +193,7 @@ public class YuShenJunEcho extends Echo {
         }
         
         // 设置冷却
-        cooldownTicks = COOLDOWN;
+        cooldownTicks = COOL_DOWN;
     }
 
     private void removeSummonedEntity(ServerPlayer player) {

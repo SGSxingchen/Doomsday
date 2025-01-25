@@ -12,12 +12,15 @@ import net.minecraftforge.network.NetworkDirection;
 import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.network.NetworkManager;
 import org.lanstard.doomsday.network.packet.OpenEchoScreenPacket;
-@Mod.EventBusSubscriber(modid = Doomsday.MODID)
+//@Mod.EventBusSubscriber(modid = Doomsday.MODID)
+/**
+ * 暂时弃用
+ * */
 public class EchoScreenCommand {
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         // 注册回响状态命令
-        EchoScreenCommand.register(event.getDispatcher());
+        // EchoScreenCommand.register(event.getDispatcher());
     }
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("echostatus")

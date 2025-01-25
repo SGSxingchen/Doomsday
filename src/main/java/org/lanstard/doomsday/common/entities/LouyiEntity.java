@@ -25,7 +25,6 @@ import software.bernie.geckolib.core.animation.Animation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import net.minecraft.server.TickTask;
-
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.List;
@@ -36,6 +35,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import top.theillusivec4.curios.api.CuriosApi;
+import org.lanstard.doomsday.common.items.DaoItem;
+import org.lanstard.doomsday.common.items.EyeItem;
+import net.minecraft.world.damagesource.DamageTypes;
 
 public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJumping, Saddleable{
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -67,9 +70,9 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
         
-        // 追踪带有眼球的玩家
+        // 追踪带有眼球的玩家或装备了道/眼球的玩家
         this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                player -> hasEyeItem((Player) player)));
+                player -> hasEyeItem((Player) player) || hasEquippedEyeOrDao((Player) player)));
         // 反击逻辑
         this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
     }
@@ -78,6 +81,14 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
         return player.getInventory().hasAnyOf(Set.of(
             ModItem.EYE.get()  // 只检测普通眼球
         ));
+    }
+
+    private boolean hasEquippedEyeOrDao(Player player) {
+        return CuriosApi.getCuriosInventory(player)
+            .map(handler -> handler.findFirstCurio(stack -> 
+                !stack.isEmpty() && (stack.getItem() instanceof DaoItem || stack.getItem() instanceof EyeItem))
+                .isPresent())
+            .orElse(false);
     }
 
     @Override
@@ -410,5 +421,10 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
                 player.connection.send(new ClientboundSetEntityMotionPacket(this));
             }
         }
+    }
+
+    @Override
+    public boolean isInvulnerableTo(DamageSource damageSource) {
+        return damageSource.is(DamageTypes.FALL) || super.isInvulnerableTo(damageSource);
     }
 } 

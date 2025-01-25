@@ -11,8 +11,8 @@ import org.lanstard.doomsday.common.entities.IceBlockEntity;
 
 public class HanBingEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.HANBING;
-    private static final int SANITY_COST = 20;               // 理智消耗
-    private static final int COOLDOWN = 400;                 // 20秒冷却
+    private static final int SANITY_COST = 10;               // 理智消耗
+    private static final int COOL_DOWN = 8 * 20;                 // 8秒冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_BELIEF = 10;                // 最小信念要求
     
@@ -56,12 +56,12 @@ public class HanBingEcho extends Echo {
         int currentSanity = SanityManager.getSanity(player);
         int beliefLevel = SanityManager.getBeliefLevel(player);
 
-        if (beliefLevel >= MIN_BELIEF && currentSanity >= FREE_COST_THRESHOLD) {
+        if (beliefLevel >= MIN_BELIEF && currentSanity <= FREE_COST_THRESHOLD) {
             return true;
         }
 
         // 检查理智值是否足够
-        if (currentSanity < SANITY_COST || (currentSanity < FREE_COST_THRESHOLD && beliefLevel < MIN_BELIEF)) {
+        if (currentSanity < SANITY_COST) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你的理智不足以释放寒冰之力..."));
             return false;
         }
@@ -74,7 +74,8 @@ public class HanBingEcho extends Echo {
         // 消耗理智值（如果当前理智值低于阈值则免费释放）
         int currentSanity = SanityManager.getSanity(player);
         int currentBelief = SanityManager.getBeliefLevel(player);
-        if (currentSanity >= FREE_COST_THRESHOLD && currentBelief >= MIN_BELIEF) {
+        boolean freeCost = currentSanity <= FREE_COST_THRESHOLD && currentBelief >= MIN_BELIEF;
+        if (!freeCost) {
             SanityManager.modifySanity(player, -SANITY_COST);
         }
 
@@ -85,7 +86,7 @@ public class HanBingEcho extends Echo {
         level.addFreshEntity(iceBlock);
 
         // 设置冷却时间
-        cooldownEndTime = System.currentTimeMillis() + COOLDOWN * 50; // 转换为毫秒
+        cooldownEndTime = System.currentTimeMillis() + COOL_DOWN * 50; // 转换为毫秒
         updateState(player);
 
         // 发送使用提示

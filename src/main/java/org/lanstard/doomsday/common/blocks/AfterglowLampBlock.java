@@ -16,6 +16,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.NotNull;
 import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 
@@ -30,7 +31,7 @@ public class AfterglowLampBlock extends Block {
     private static final int HEALING_RANGE = 10;
     private static final int PARTICLE_RANGE = 5;
     private static final int SANITY_HEAL_AMOUNT = 1;
-    private static final int MAX_DAILY_HEAL = 100;
+    private static final int MAX_DAILY_HEAL = 150;
     private static final int HEAL_INTERVAL_TICKS = 60; // 3秒 = 60tick
     
     // 记录每个玩家的每日恢复量
@@ -43,17 +44,17 @@ public class AfterglowLampBlock extends Block {
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public @NotNull VoxelShape getCollisionShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext context) {
         return COLLISION_SHAPE;
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+    public boolean propagatesSkylightDown(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos) {
         return true;
     }
 
@@ -97,7 +98,6 @@ public class AfterglowLampBlock extends Block {
             if (isNearAfterglowLamp(serverLevel, player.blockPosition())) {
                 UUID playerId = player.getUUID();
                 int healedToday = dailyHealAmount.getOrDefault(playerId, 0);
-                
                 if (healedToday < MAX_DAILY_HEAL) {
                     // 恢复理智值
                     SanityManager.modifySanity(player, SANITY_HEAL_AMOUNT);
@@ -108,7 +108,7 @@ public class AfterglowLampBlock extends Block {
     }
 
     @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+    public void animateTick(@NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, RandomSource random) {
         if (random.nextFloat() < 0.3f) {
             // 在半径5格的半圆范围内生成粒子
             double angle = random.nextDouble() * Math.PI; // 0到π的角度，形成半圆

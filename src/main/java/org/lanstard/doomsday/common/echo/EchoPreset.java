@@ -215,7 +215,7 @@ public enum EchoPreset {
     WUGU("无垢", EchoType.ACTIVE, ActivationType.TRIGGER, 100, 0) {
         @Override
         public Echo createEcho() {
-            return new WuGuEcho();
+            return new WuGouEcho();
         }
     },
 
