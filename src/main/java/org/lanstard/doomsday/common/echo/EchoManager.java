@@ -134,6 +134,7 @@ public class EchoManager {
                 .append(Component.translatable("message.doomsday.echo_disabled")));
             return false;
         }
+        updateEcho(player, echo);
         return true;
     }
 

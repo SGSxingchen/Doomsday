@@ -3,7 +3,6 @@ package org.lanstard.doomsday.common.echo.preset;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionHand;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
@@ -12,7 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 public class YanPinEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.YANPIN;
     private static final int SANITY_COST = 200;              // 理智消耗
-    private static final int COOLDOWN = 12000;               // 10分钟冷却
+    private static final int COOL_DOWN = 12000;               // 10分钟冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
     
@@ -109,7 +108,7 @@ public class YanPinEcho extends Echo {
         }
 
         // 设置冷却
-        cooldownEndTime = System.currentTimeMillis() + (COOLDOWN * 50);
+        cooldownEndTime = System.currentTimeMillis() + (COOL_DOWN * 50);
     }
 
     @Override

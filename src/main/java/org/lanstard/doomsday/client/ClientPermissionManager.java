@@ -47,6 +47,11 @@ public class ClientPermissionManager {
     }
 
     @SubscribeEvent
+    public static void onClientLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+        isJoinServer = false;
+    }
+
+    @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (!isJoinServer) return;
         if (event.phase == TickEvent.Phase.END) {

@@ -2,7 +2,6 @@ package org.lanstard.doomsday.common.events;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
@@ -16,8 +15,6 @@ import org.lanstard.doomsday.common.echo.preset.*;
 import org.lanstard.doomsday.common.items.ModItem;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.event.entity.player.PlayerContainerEvent;
-import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +72,7 @@ public class EchoTriggerEvents {
         }
         // 无垢回响触发
         else if (stack.is(ModItem.WHITE_COAT.get()) && !EchoManager.hasSpecificEcho(player, "wugu")) {
-            checkAndGrantEcho(player, "wugu", WuGuEcho.class,
+            checkAndGrantEcho(player, "wugu", WuGouEcho.class,
                 "§b[十日终焉] §f...获得白大褂的瞬间,无垢的回响在耳...");
         }
         // 茂木回响触发

@@ -10,6 +10,9 @@ import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.server.level.ServerLevel;
+import org.lanstard.doomsday.common.entities.QiheiSwordEntity;
 
 import java.util.List;
 
@@ -87,7 +90,31 @@ public class BreakAllEcho extends Echo {
         AABB box = player.getBoundingBox().inflate(RANGE);
         List<ServerPlayer> nearbyPlayers = player.level().getEntitiesOfClass(ServerPlayer.class, box);
         
+        // 移除范围内的七黑剑
+        List<QiheiSwordEntity> nearbySwords = player.level().getEntitiesOfClass(
+            QiheiSwordEntity.class,
+            box
+        );
+        
         boolean hasTargets = false;
+        if (!nearbySwords.isEmpty()) {
+            hasTargets = true;
+            for (QiheiSwordEntity sword : nearbySwords) {
+                sword.remove(Entity.RemovalReason.DISCARDED);
+                // 生成粒子效果表示剑被破除
+                if (player.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(
+                        ParticleTypes.EXPLOSION,
+                        sword.getX(),
+                        sword.getY(),
+                        sword.getZ(),
+                        1, 0, 0, 0, 0
+                    );
+                }
+            }
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...破万法摧毁了" + nearbySwords.size() + "把七黑剑..."));
+        }
+        
         for (ServerPlayer target : nearbyPlayers) {
             if (target == player) continue; // 不影响自己
             

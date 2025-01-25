@@ -34,13 +34,13 @@ public class ModItem {
         () -> new EchoBallItem(new Item.Properties()));
 
     public static final RegistryObject<Item> DAO = ITEMS.register("dao",
-        () -> new DaoItem(new Item.Properties()));
+        () -> new DaoItem(new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> EYE = ITEMS.register("eye",
-        () -> new EyeItem(new Item.Properties()));
+        () -> new EyeItem(new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> MOLDY_EYE = ITEMS.register("moldy_eye",
-        () -> new MoldyEyeItem(new Item.Properties()));
+        () -> new MoldyEyeItem(new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> CHISEL = ITEMS.register("chisel",
         () -> new ChiselItem(new Item.Properties().durability(1)));
@@ -52,7 +52,7 @@ public class ModItem {
         () -> new BeliefPointsItem(new Item.Properties()));
 
     public static final RegistryObject<Item> BOMBS = ITEMS.register("bombs",
-        () -> new BombsItem(new Item.Properties()));
+        () -> new BombsItem(new Item.Properties().stacksTo(16)));
 
     public static final RegistryObject<Item> FIRE_BOMB = ITEMS.register("fire_bomb",
         () -> new FireBombItem(new Item.Properties().stacksTo(16)));

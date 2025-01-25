@@ -13,7 +13,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.server.command.EnumArgument;
 import org.lanstard.doomsday.Doomsday;
 
 import java.util.stream.Collectors;
@@ -32,6 +31,19 @@ public class EchoCommand {
             builder
         );
     };
+
+    // 创建一个建议提供者用于预设的自动补全
+    private static final SuggestionProvider<CommandSourceStack> PRESET_SUGGESTIONS = (context, builder) -> {
+        String remaining = builder.getRemaining().toLowerCase();
+        for (EchoPreset preset : EchoPreset.values()) {
+            String name = preset.name().toLowerCase();
+            String displayName = preset.getDisplayName();
+            if (name.startsWith(remaining) || displayName.startsWith(remaining)) {
+                builder.suggest(name, Component.literal(displayName));
+            }
+        }
+        return builder.buildFuture();
+    };
     
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
@@ -43,12 +55,22 @@ public class EchoCommand {
             // 添加回响
             .then(Commands.literal("add")
                 .then(Commands.argument("player", EntityArgument.player())
-                .then(Commands.argument("preset", EnumArgument.enumArgument(EchoPreset.class))
-                .executes(context -> addEcho(
-                    context.getSource(),
-                    EntityArgument.getPlayer(context, "player"),
-                    context.getArgument("preset", EchoPreset.class)
-                )))))
+                .then(Commands.argument("preset", StringArgumentType.word())
+                .suggests(PRESET_SUGGESTIONS)
+                .executes(context -> {
+                    String presetName = StringArgumentType.getString(context, "preset");
+                    try {
+                        EchoPreset preset = EchoPreset.valueOf(presetName.toUpperCase());
+                        return addEcho(
+                            context.getSource(),
+                            EntityArgument.getPlayer(context, "player"),
+                            preset
+                        );
+                    } catch (IllegalArgumentException e) {
+                        context.getSource().sendFailure(Component.literal("未知的回响预设: " + presetName));
+                        return 0;
+                    }
+                }))))
             
             // 列出回响
             .then(Commands.literal("list")
@@ -117,15 +139,47 @@ public class EchoCommand {
     }
 
     private static int addEcho(CommandSourceStack source, ServerPlayer player, EchoPreset preset) {
-        Echo echo = preset.createEcho();
-        EchoManager.addEcho(player, echo);
-        
-        source.sendSuccess(() -> Component.literal(
-            String.format("已为玩家 %s 添加回响: %s", 
-                player.getName().getString(), 
-                preset.name())
-        ), true);
-        return 1;
+        try {
+            // 检查玩家是否已经拥有该回响
+            for (Echo existingEcho : EchoManager.getPlayerEchoes(player)) {
+                if (existingEcho.getId().equals(preset.name().toLowerCase())) {
+                    source.sendFailure(Component.literal(
+                        String.format("玩家 %s 已经拥有回响: %s", 
+                            player.getName().getString(), 
+                            preset.getDisplayName())
+                    ));
+                    return 0;
+                }
+            }
+
+            // 创建并添加回响
+            Echo echo = preset.createEcho();
+            if (echo == null) {
+                source.sendFailure(Component.literal("创建回响失败：无效的预设"));
+                return 0;
+            }
+
+            // 添加回响
+            EchoManager.addEcho(player, echo);
+            
+            // 发送成功消息
+            source.sendSuccess(() -> Component.literal(
+                String.format("已为玩家 %s 添加回响: %s", 
+                    player.getName().getString(), 
+                    preset.getDisplayName())
+            ), true);
+            
+            // 通知玩家
+            player.sendSystemMessage(Component.literal(
+                String.format("§b[十日终焉] §f你获得了新的回响：%s", preset.getDisplayName())
+            ));
+            
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("添加回响时发生错误：" + e.getMessage()));
+            e.printStackTrace(); // 在服务器日志中打印详细错误信息
+            return 0;
+        }
     }
 
     private static int listEchoes(CommandSourceStack source, ServerPlayer player) {
@@ -151,7 +205,7 @@ public class EchoCommand {
     private static int listPresets(CommandSourceStack source) {
         StringBuilder message = new StringBuilder("可用的回响预设:\n");
         for (EchoPreset preset : EchoPreset.values()) {
-            message.append(String.format("- %s\n", preset.name()));
+            message.append(String.format("- %s (%s)\n", preset.name().toLowerCase(), preset.getDisplayName()));
         }
         source.sendSuccess(() -> Component.literal(message.toString()), false);
         return 1;

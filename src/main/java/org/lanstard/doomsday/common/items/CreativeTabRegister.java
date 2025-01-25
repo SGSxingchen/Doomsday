@@ -53,6 +53,7 @@ public class CreativeTabRegister {
                         output.accept(ModSpawnEggs.PUPPET_SPAWN_EGG.get());
                         output.accept(ModSpawnEggs.MUA_SPAWN_EGG.get());
                         output.accept(ModSpawnEggs.LOUYI_SPAWN_EGG.get());
+                        output.accept(ModSpawnEggs.QIHEI_SWORD_SPAWN_EGG.get());
                     })
                     .build()
     );

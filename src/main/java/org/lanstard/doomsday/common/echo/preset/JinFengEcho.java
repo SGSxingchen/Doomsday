@@ -223,7 +223,7 @@ public class JinFengEcho extends Echo {
         );
         
         // 在推动路径上生成粒子
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 120; i++) {
             double offset = random.nextDouble() * 2 - 1;
             Vec3 particlePos = pos.add(
                 direction.x + offset * 0.3,

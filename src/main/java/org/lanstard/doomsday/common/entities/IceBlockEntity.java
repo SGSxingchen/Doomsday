@@ -14,9 +14,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.Direction;
 
 public class IceBlockEntity extends ThrowableItemProjectile {
-    private static final float DAMAGE = 8.0f;
-    private static final float SPLIT_DAMAGE = 4.0f;
-    private static final float SPLIT_SPEED_MULTIPLIER = 1.3f;
+    private static final float DAMAGE = 15.0f;
+    private static final float SPLIT_DAMAGE = 8.0f;
+    private static final float SPLIT_SPEED_MULTIPLIER = 0.8f;
     private int splitCount = 0;  // 分裂次数计数
     private static final int MAX_SPLIT = 2;  // 最大分裂次数
 

@@ -17,7 +17,7 @@ public class BaoRanEcho extends Echo {
     private static final int SANITY_COST = 20;
     private static final int MIN_FAITH = 10;
     private static final int FREE_COST_THRESHOLD = 300;
-    private static final int COOLDOWN = 1200; // 1分钟 = 20tick/s * 60s = 1200tick
+    private static final int COOLDOWN = 3 * 60 * 20; // 3分钟 = 20tick/s * 60s = 1200tick
     private static final Random random = new Random();
     
     private long lastUseTime = 0;
@@ -78,14 +78,14 @@ public class BaoRanEcho extends Echo {
         }
 
         int currentSanity = SanityManager.getSanity(player);
-        int beliefLevel = SanityManager.getBeliefLevel(player);
+        int faith = SanityManager.getFaith(player);
 
-        if (beliefLevel >= MIN_FAITH && currentSanity >= FREE_COST_THRESHOLD) {
+        if (faith >= MIN_FAITH && currentSanity <= FREE_COST_THRESHOLD) {
             return true;
         }
 
         // 检查理智值是否足够
-        if (currentSanity < SANITY_COST && currentSanity >= FREE_COST_THRESHOLD) {
+        if (currentSanity < SANITY_COST) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不宁，难以施展爆燃之法..."));
             return false;
         }
@@ -101,7 +101,7 @@ public class BaoRanEcho extends Echo {
         // 检查是否需要消耗理智值
         int currentSanity = SanityManager.getSanity(player);
         int faith = SanityManager.getFaith(player);
-        boolean freeCost = currentSanity < FREE_COST_THRESHOLD || faith >= MIN_FAITH;
+        boolean freeCost = currentSanity < FREE_COST_THRESHOLD && faith >= MIN_FAITH;
 
         // 如果不是免费释放，消耗理智值
         if (!freeCost) {
@@ -117,7 +117,20 @@ public class BaoRanEcho extends Echo {
     }
 
     private boolean hasConvertibleItems(ServerPlayer player) {
-        return !player.getInventory().items.isEmpty();
+        List<ItemStack> items = player.getInventory().items;
+        if (items.isEmpty()) {
+            return false;
+        }
+        boolean flag = false;
+        for (ItemStack item : items) {
+            if (!item.isEmpty()) {
+                if (item.getItem() != ModItem.FIRE_BOMB.get()) {
+                    flag = true;
+                    break;
+                }
+            }
+        }
+        return flag;
     }
 
     private void convertRandomItem(ServerPlayer player) {
@@ -127,9 +140,10 @@ public class BaoRanEcho extends Echo {
             return;
         }
 
-        // 找出所有非空的物品槽
+        // 找出所有除了爆然弹的非空的物品槽
         for (int i = 0; i < items.size(); i++) {
             if (!items.get(i).isEmpty()) {
+                if(items.get(i).getItem() == ModItem.FIRE_BOMB.get()) continue;
                 validSlots.add(i);
             }
         }
@@ -138,6 +152,7 @@ public class BaoRanEcho extends Echo {
             // 随机选择一个物品槽
             int slot = validSlots.get(random.nextInt(validSlots.size()));
             ItemStack oldStack = items.get(slot);
+
             
             // 记录原物品名称
             String oldItemName = oldStack.getHoverName().getString();

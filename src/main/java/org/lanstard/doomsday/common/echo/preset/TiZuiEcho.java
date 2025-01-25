@@ -19,8 +19,7 @@ public class TiZuiEcho extends Echo {
     private static final int SANITY_COST = 50;              // 理智消耗
     private static final int FREE_COST_THRESHOLD = 300;     // 免费释放阈值
     private static final int MIN_FAITH_REQUIREMENT = 10;    // 最低信念要求
-    private static final int RANGE = 10;                    // 选择目标的范围
-    private static final float LOW_HEALTH_THRESHOLD = 10.0f; // 低生命值阈值
+    private static final int RANGE = 16;                    // 选择目标的范围
     
     private UUID boundTargetId = null;                      // 绑定目标的UUID
     private String boundTargetName = null;                  // 绑定目标的名字（用于显示）

@@ -33,23 +33,31 @@ public class TimeOverlay {
     
     private static void render(GuiGraphics guiGraphics, int screenWidth, int screenHeight) {
         Minecraft minecraft = Minecraft.getInstance();
-        float scale = (float)minecraft.getWindow().getGuiScale();
+        float guiScale = (float)minecraft.getWindow().getGuiScale();
         
-        // 根据GUI比例计算实际尺寸
-        int bgWidth = (int)(BASE_BG_WIDTH * (scale / 2));
-        int bgHeight = (int)(BASE_BG_HEIGHT * (scale / 2));
+        // 根据GUI比例动态调整缩放系数
+        float scaleRatio;
+        if (guiScale >= 4) {
+            scaleRatio = 1.0F; // GUI比例4或更高时使用1:1缩放
+        } else if (guiScale == 3) {
+            scaleRatio = 1.5F;
+        } else {
+            scaleRatio = guiScale / 2; // GUI比例1或2时使用原来的缩放
+        }
+        
+        // 根据实际缩放计算尺寸
+        int bgWidth = (int)(BASE_BG_WIDTH * scaleRatio);
         
         String timeText = ClientTimeManager.getTimeString();
         
         // 计算位置（居中显示）
         int x = (screenWidth - bgWidth) / 2;
-        int y = (int)(5 * (scale / 2));  // 距离顶部的距离也跟随缩放
+        int y = (int)(5 * scaleRatio);  // 距离顶部的距离也跟随缩放
         
         // 保存当前矩阵状态
         guiGraphics.pose().pushPose();
         
         // 设置缩放
-        float scaleRatio = scale / 3;
         guiGraphics.pose().scale(scaleRatio, scaleRatio, 1.0F);
         
         // 调整绘制坐标以适应缩放

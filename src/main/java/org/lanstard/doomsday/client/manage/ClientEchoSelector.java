@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.client;
+package org.lanstard.doomsday.client.manage;
 
 import org.lanstard.doomsday.common.echo.Echo;
 
