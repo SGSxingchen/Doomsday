@@ -13,6 +13,8 @@ import net.minecraft.world.phys.Vec3;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
+import org.lanstard.doomsday.common.entities.QiheiSwordEntity;
+import org.lanstard.doomsday.common.entities.ModEntities;
 import net.minecraft.nbt.CompoundTag;
 import org.joml.Vector3f;
 
@@ -25,9 +27,13 @@ public class ZhaoZaiEcho extends Echo {
     private static final int WITHER_DURATION = 15 * 20;       // 凋零效果持续时间（15秒）
     private static final int WITHER_AMPLIFIER = 0;            // 凋零效果等级（1级）
     private static final int GLOWING_DURATION = 30 * 20;      // 发光效果持续时间（30秒）
-    private static final int CHECK_INTERVAL = 10 * 20;         // 检查间隔（10秒）
+    private static final int CHECK_INTERVAL = 10 * 20;        // 检查间隔（10秒）
     private static final float BASE_SUCCESS_RATE = 0.05f;     // 基础成功率（5%）
     private static final float SUCCESS_RATE_INCREMENT = 0.01f; // 失败后成功率增加（1%）
+    private static final int SUMMON_SANITY_COST = 100;        // 召唤消耗的理智值
+    private static final int COOLDOWN_TICKS = 36000;          // 冷却时间（30分钟 = 36000刻）
+    private static final int MIN_FAITH = 10;                  // 最低信念要求
+    private static final int FREE_COST_THRESHOLD = 300;       // 免费释放的理智阈值
     
     // 粒子效果相关
     private static final float DARK_RED = 0.5F;
@@ -38,6 +44,7 @@ public class ZhaoZaiEcho extends Echo {
     private int tickCounter = 0;
     private float currentSuccessRate = BASE_SUCCESS_RATE;
     private final Random random = new Random();
+    private int summonCooldown = 0;                          // 召唤冷却计时器
 
     public ZhaoZaiEcho() {
         super(
@@ -45,7 +52,7 @@ public class ZhaoZaiEcho extends Echo {
             PRESET.getDisplayName(),
             PRESET.getType(),
             PRESET.getActivationType(),
-            0,  // 无主动技能消耗
+            SUMMON_SANITY_COST,  // 主动技能消耗100理智
             0   // 无被动消耗
         );
         setActive(true); // 默认激活
@@ -58,7 +65,12 @@ public class ZhaoZaiEcho extends Echo {
 
     @Override
     public void onUpdate(ServerPlayer player) {
-        // 每5秒检查一次
+        // 更新召唤冷却
+        if (summonCooldown > 0) {
+            summonCooldown--;
+        }
+        if(!isActive()) return;
+        // 原有的被动效果逻辑
         tickCounter++;
         if (tickCounter >= CHECK_INTERVAL) {
             tickCounter = 0;
@@ -146,6 +158,7 @@ public class ZhaoZaiEcho extends Echo {
         CompoundTag tag = super.toNBT();
         tag.putInt("tickCounter", tickCounter);
         tag.putFloat("currentSuccessRate", currentSuccessRate);
+        tag.putInt("summonCooldown", summonCooldown);
         return tag;
     }
     
@@ -154,18 +167,72 @@ public class ZhaoZaiEcho extends Echo {
         echo.setActive(tag.getBoolean("isActive"));
         echo.tickCounter = tag.getInt("tickCounter");
         echo.currentSuccessRate = tag.getFloat("currentSuccessRate");
+        echo.summonCooldown = tag.getInt("summonCooldown");
         return echo;
     }
 
     @Override
     protected boolean doCanUse(ServerPlayer player) {
-        // 这是一个纯被动技能，不需要主动使用
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...招灾并非人为..."));
-        return false;
+        // 检查冷却时间
+        if (summonCooldown > 0) {
+            int remainingMinutes = summonCooldown / 1200; // 转换为分钟
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...七黑剑尚未准备就绪，需等待" + remainingMinutes + "分钟..."));
+            return false;
+        }
+
+        // 检查信念点数和理智值，判断是否免费释放
+        int faith = SanityManager.getFaith(player);
+        int currentSanity = SanityManager.getSanity(player);
+        boolean isFree = faith >= MIN_FAITH && currentSanity < FREE_COST_THRESHOLD;
+
+        // 如果不是免费释放，检查理智值是否足够
+        if (!isFree && currentSanity < SUMMON_SANITY_COST) {
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...理智不足，无法召唤七黑剑..."));
+            return false;
+        }
+
+        return true;
     }
 
     @Override
     protected void doUse(ServerPlayer player) {
-        // 这是一个纯被动技能，不需要主动使用
+        // 检查是否免费释放
+        int faith = SanityManager.getFaith(player);
+        int currentSanity = SanityManager.getSanity(player);
+        boolean isFree = faith >= MIN_FAITH && currentSanity < FREE_COST_THRESHOLD;
+
+        // 只有在不免费时才消耗理智值
+        if (!isFree) {
+            SanityManager.modifySanity(player, -SUMMON_SANITY_COST);
+        }
+        
+        // 在玩家前方3格处召唤七黑剑
+        ServerLevel level = (ServerLevel) player.level();
+        Vec3 lookVec = player.getLookAngle();
+        Vec3 spawnPos = player.position().add(lookVec.scale(3));
+        
+        // 创建七黑剑实体
+        QiheiSwordEntity sword = new QiheiSwordEntity(
+            ModEntities.QIHEI_SWORD.get(),
+            level
+        );
+        sword.setPos(spawnPos.x, spawnPos.y + 1, spawnPos.z);
+        sword.setInvulnerable(true); // 设置为无敌状态
+        
+        // 生成粒子效果
+        spawnEffectParticles(level, spawnPos);
+        
+        // 将剑添加到世界
+        level.addFreshEntity(sword);
+        
+        // 设置冷却时间
+        summonCooldown = COOLDOWN_TICKS;
+        updateState(player);
+        // 发送消息
+        if (isFree) {
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念之力引导，七黑剑无偿现世..."));
+        } else {
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...七黑剑应召而至..."));
+        }
     }
 } 

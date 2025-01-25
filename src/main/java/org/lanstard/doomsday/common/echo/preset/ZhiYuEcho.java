@@ -1,11 +1,14 @@
 package org.lanstard.doomsday.common.echo.preset;
 
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
@@ -52,7 +55,12 @@ public class ZhiYuEcho extends Echo {
             // 每秒消耗2点理智并治疗附近玩家
             if (tickCounter >= 20) {
                 tickCounter = 0;
-                SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
+
+                int currentSanity = SanityManager.getSanity(player);
+                int faith = SanityManager.getFaith(player);
+                boolean freeCost = currentSanity < FREE_COST_THRESHOLD || faith >= MIN_FAITH;
+
+                if (!freeCost) SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
                 
                 // 获取范围内的其他玩家
                 AABB box = player.getBoundingBox().inflate(HEAL_RANGE);
@@ -72,19 +80,15 @@ public class ZhiYuEcho extends Echo {
                     }
                     
                     // 恢复理智值
-                    int currentSanity = SanityManager.getSanity(target);
-                    if (currentSanity < MAX_SANITY_HEAL) {
+                    int targetSanity = SanityManager.getSanity(target);
+                    if (targetSanity < MAX_SANITY_HEAL) {
                         SanityManager.modifySanity(target, 1);
                     }
+
+
                     
                     // 生成治愈粒子效果
-                    ((ServerLevel)target.level()).sendParticles(
-                        ParticleTypes.HEART,
-                        target.getX(),
-                        target.getY() + 1,
-                        target.getZ(),
-                        1, 0.5, 0.5, 0.5, 0.1
-                    );
+                    spawnEffectParticles((ServerLevel) player.level(), target.position(), HEAL_RANGE);
                 }
             }
             
@@ -98,7 +102,29 @@ public class ZhiYuEcho extends Echo {
             updateState(player);
         }
     }
+    // 粒子效果相关
+    private static final float DARK_RED = 0.0F;
+    private static final float DARK_GREEN = 0.5F;
+    private static final float DARK_BLUE = 0.0F;
+    private static final float PARTICLE_SIZE = 1.0F;
+    private void spawnEffectParticles(ServerLevel level, Vec3 pos, double RANGE) {
+        DustParticleOptions darkParticle = new DustParticleOptions(
+                new Vector3f(DARK_RED, DARK_GREEN, DARK_BLUE),
+                PARTICLE_SIZE
+        );
 
+        // 生成环形粒子效果
+        for (int i = 0; i < 36; i++) {
+            double angle = 2.0 * Math.PI * i / 36;
+            double radius = RANGE;
+            double x = pos.x + radius * Math.cos(angle);
+            double z = pos.z + radius * Math.sin(angle);
+
+            level.sendParticles(darkParticle,
+                    x, pos.y + 0.1, z,
+                    1, 0, 0.1, 0, 0);
+        }
+    }
     @Override
     public void onDeactivate(ServerPlayer player) {
         player.sendSystemMessage(Component.literal("§b[十日终焉] §f...治愈之力消散..."));

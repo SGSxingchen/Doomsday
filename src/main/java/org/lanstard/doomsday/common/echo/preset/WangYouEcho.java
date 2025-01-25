@@ -39,7 +39,10 @@ public class WangYouEcho extends Echo {
             // 每秒消耗1点理智
             if (tickCounter >= 20) {
                 tickCounter = 0;
-                SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
+                int currentSanity = SanityManager.getSanity(player);
+                int faith = SanityManager.getFaith(player);
+                boolean freeCost = currentSanity < FREE_COST_THRESHOLD || faith >= MIN_FAITH;
+                if(!freeCost) SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
             }
         }
     }

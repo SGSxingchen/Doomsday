@@ -2,7 +2,6 @@ package org.lanstard.doomsday.client.manage;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.lanstard.doomsday.client.ClientEchoSelector;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoType;
 import org.lanstard.doomsday.common.echo.PlayerEchoData;

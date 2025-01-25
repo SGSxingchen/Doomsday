@@ -29,5 +29,6 @@ public class ClientSetup {
         event.registerEntityRenderer(ModEntities.LOUYI.get(), LouyiRenderer::new);
         event.registerEntityRenderer(ModEntities.FIRE_BOMB.get(), FireBombRenderer::new);
         event.registerEntityRenderer(ModEntities.ICE_BLOCK.get(), IceBlockRenderer::new);
+        event.registerEntityRenderer(ModEntities.QIHEI_SWORD.get(), QiheiSwordRenderer::new);
     }
 } 

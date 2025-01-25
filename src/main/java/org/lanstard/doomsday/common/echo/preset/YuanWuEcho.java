@@ -2,7 +2,6 @@ package org.lanstard.doomsday.common.echo.preset;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
@@ -11,8 +10,6 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.network.chat.Component;
 import org.lanstard.doomsday.common.echo.Echo;
-import org.lanstard.doomsday.common.echo.EchoType;
-import org.lanstard.doomsday.common.echo.ActivationType;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 
@@ -24,7 +21,7 @@ public class YuanWuEcho extends Echo {
     private static final int SANITY_COST = 10;
     private static final int MIN_FAITH = 10;
     private static final int FREE_SANITY_THRESHOLD = 300;
-    private static final int COOLDOWN_TICKS = 12000; // 10分钟 = 10 * 60 * 20 ticks
+    private static final int SKILL1_COOL_DOWN_TICKS = 12000; // 10分钟 = 10 * 60 * 20 ticks
     private long cooldownEndTime = 0;
     private static final EchoPreset PRESET = EchoPreset.YUANWU;
 
@@ -56,11 +53,7 @@ public class YuanWuEcho extends Echo {
 
     @Override
     public boolean doCanUse(ServerPlayer player) {
-        // 检查冷却时间
-        // if (System.currentTimeMillis() < cooldownEndTime) {
-        //     player.sendSystemMessage(Component.literal("§b[十日终焉] §f...此法尚需时日方可再施展..."));
-        //     return false;
-        // }、
+
         long timeMs = cooldownEndTime - System.currentTimeMillis();
         if (timeMs > 0) {
             long remainingSeconds = timeMs / 20 / 50;
@@ -99,36 +92,45 @@ public class YuanWuEcho extends Echo {
             SanityManager.modifySanity(player, -SANITY_COST);
         }
 
-        // 获取所有包含石头或圆石的配方
-        List<Recipe<?>> allRecipes = new ArrayList<>(player.level().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING));
-        List<Recipe<?>> stoneRecipes = new ArrayList<>();
-        
-        for (Recipe<?> recipe : allRecipes) {
-            if (recipe instanceof CraftingRecipe) {
-                for (Ingredient ingredient : recipe.getIngredients()) {
-                    for (ItemStack stack : ingredient.getItems()) {
-                        if (stack.getItem() == Items.STONE || stack.getItem() == Items.COBBLESTONE) {
-                            stoneRecipes.add(recipe);
-                            break;
+        if(player.isShiftKeyDown()){
+            ItemStack result = new ItemStack(Items.STONE, 1);
+            player.getInventory().add(result.copy());
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...原物之法显现，获得了 ")
+                    .append(result.getHoverName())
+                    .append(Component.literal(" ×" + result.getCount())));
+        }
+        else{
+            // 获取所有包含石头或圆石的配方
+            List<Recipe<?>> allRecipes = new ArrayList<>(player.level().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING));
+            List<Recipe<?>> stoneRecipes = new ArrayList<>();
+
+            for (Recipe<?> recipe : allRecipes) {
+                if (recipe instanceof CraftingRecipe) {
+                    for (Ingredient ingredient : recipe.getIngredients()) {
+                        for (ItemStack stack : ingredient.getItems()) {
+                            if (stack.getItem() == Items.STONE || stack.getItem() == Items.COBBLESTONE) {
+                                stoneRecipes.add(recipe);
+                                break;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // 随机选择一个配方并给予玩家
-        if (!stoneRecipes.isEmpty()) {
-            Recipe<?> selectedRecipe = stoneRecipes.get(new Random().nextInt(stoneRecipes.size()));
-            ItemStack result = selectedRecipe.getResultItem(player.level().registryAccess());
-            player.getInventory().add(result.copy());
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...原物之法显现，获得了 ")
-                .append(result.getHoverName())
-                .append(Component.literal(" ×" + result.getCount())));
-        }
+            // 随机选择一个配方并给予玩家
+            if (!stoneRecipes.isEmpty()) {
+                Recipe<?> selectedRecipe = stoneRecipes.get(new Random().nextInt(stoneRecipes.size()));
+                ItemStack result = selectedRecipe.getResultItem(player.level().registryAccess());
+                player.getInventory().add(result.copy());
+                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...原物之法显现，获得了 ")
+                        .append(result.getHoverName())
+                        .append(Component.literal(" ×" + result.getCount())));
+            }
 
-        // 设置冷却时间
-        cooldownEndTime = System.currentTimeMillis() + (COOLDOWN_TICKS * 50); // 50ms per tick
-        updateState(player);
+            // 设置冷却时间
+            cooldownEndTime = System.currentTimeMillis() + (SKILL1_COOL_DOWN_TICKS * 50); // 50ms per tick
+            updateState(player);
+        }
     }
 
     @Override

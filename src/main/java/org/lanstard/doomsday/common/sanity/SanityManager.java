@@ -61,7 +61,7 @@ public class SanityManager {
     
     public static int getBeliefLevel(ServerPlayer player) {
         if (sanityData == null) return 0;
-        return sanityData.getFaith(player.getUUID()) / 100; // 每100点信仰值对应1点信念
+        return sanityData.getFaith(player.getUUID());
     }
     
     public static int getMaxSanity(ServerPlayer player) {
@@ -109,7 +109,7 @@ public class SanityManager {
         if (currentSanity > maxSanity) {
             setSanity(player, maxSanity);
         }
-        
+
         syncToClient(player);
     }
     

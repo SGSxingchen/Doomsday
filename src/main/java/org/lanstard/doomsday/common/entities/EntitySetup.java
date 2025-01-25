@@ -13,5 +13,6 @@ public class EntitySetup {
         event.put(ModEntities.LOUYI.get(), LouyiEntity.createAttributes().build());
         event.put(ModEntities.PUPPET.get(), PuppetEntity.createAttributes().build());
         event.put(ModEntities.MUA.get(), MuaEntity.createAttributes().build());
+        event.put(ModEntities.QIHEI_SWORD.get(), QiheiSwordEntity.createAttributes().build());
     }
 }

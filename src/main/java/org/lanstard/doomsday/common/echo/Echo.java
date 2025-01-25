@@ -181,20 +181,25 @@ public abstract class Echo {
             isActive = false;
         }
     }
+
+    // 新增：启用回响
+    public void enable() {
+        this.disabledUntil = 0;
+        if (!isActive) {
+            isActive = true;
+        }
+    }
     
     // 新增：检查是否被禁用
     public boolean isDisabled() {
         if (System.currentTimeMillis() > disabledUntil) {
             disabledUntil = 0;
+            enable();
             return false;
         }
         return disabledUntil > 0;
     }
     
-    // 新增：解除禁用状态
-    public void enable() {
-        this.disabledUntil = 0;
-    }
     
     /**
      * 检查是否可以使用回响
