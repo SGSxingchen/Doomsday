@@ -11,7 +11,8 @@
   "item.doomsday.echo_ball": "回响球",
   "item.doomsday.dao": "道",
   "item.doomsday.dao.tooltip": "道法自然，万物皆空",
-  "item.doomsday.dao.tooltip.shift": "道法三千六百门,人人各执一苗根",
+  "item.doomsday.dao.tooltip.ctrl": "道法三千六百门,人人各执一苗根",
+  "item.doomsday.echo_ball.tooltip": "道法三千六百门,人人各执一苗根",
   "item.doomsday.eye": "眼球",
   "item.doomsday.eye.tooltip": "普通的人类眼球",
   "item.doomsday.moldy_eye": "霉变的眼球",
@@ -23,6 +24,7 @@
   "item.doomsday.puppet_spawn_egg": "傀儡刷怪蛋",
   "item.doomsday.mua_spawn_egg": "茂木造物刷怪蛋",
   "item.doomsday.louyi_spawn_egg": "蝼蚁生成蛋",
+  "item.doomsday.qihei_sword_spawn_egg": "七黑剑生成蛋",
   
   "item.doomsday.shenjun_helmet": "神君头盔",
   "item.doomsday.shenjun_chestplate": "神君胸甲",
@@ -33,6 +35,7 @@
   "entity.doomsday.puppet": "傀儡",
   "entity.doomsday.mua": "茂木造物",
   "entity.doomsday.louyi": "蝼蚁",
+  "entity.doomsday.qihei_sword": "七黑剑",
   
   "block.doomsday.afterglow_lamp": "余念灯",
   "block.doomsday.field_block": "场地方块",

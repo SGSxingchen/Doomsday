@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.client;
+package org.lanstard.doomsday.client.event;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -7,11 +7,12 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lanstard.doomsday.Doomsday;
+import org.lanstard.doomsday.client.manage.ClientEchoSelector;
+import org.lanstard.doomsday.client.KeyBindings;
 import org.lanstard.doomsday.client.manage.ClientEchoManager;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoType;
 import org.lanstard.doomsday.network.NetworkManager;
-import org.lanstard.doomsday.network.packet.OpenEchoScreenPacket;
 import org.lanstard.doomsday.network.packet.UseEchoPacket;
 import org.lanstard.doomsday.network.packet.ToggleContinuousEchoPacket;
 

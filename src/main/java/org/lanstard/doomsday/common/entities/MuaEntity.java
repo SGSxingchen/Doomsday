@@ -25,6 +25,8 @@ import java.util.UUID;
 
 public class MuaEntity extends Monster implements GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final int MAX_LIFE;
+    private int timeToLive = 0;
     private UUID ownerUUID;
     @Nullable
     private LivingEntity cachedOwner;
@@ -32,6 +34,7 @@ public class MuaEntity extends Monster implements GeoEntity {
     public MuaEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
         this.setNoAi(true); // 禁用AI，使其不会移动
+        MAX_LIFE = 200;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -55,6 +58,11 @@ public class MuaEntity extends Monster implements GeoEntity {
         super.tick();
         
         if (!this.level().isClientSide) {
+            timeToLive++;
+            if (timeToLive > MAX_LIFE) {
+                this.remove(RemovalReason.DISCARDED);
+                return;
+            }
             // 检查owner是否存在
             if (this.ownerUUID == null) {
                 this.discard();

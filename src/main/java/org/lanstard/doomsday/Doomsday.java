@@ -16,6 +16,7 @@ import org.lanstard.doomsday.common.effects.ModEffects;
 import org.lanstard.doomsday.common.entities.ModEntities;
 import org.lanstard.doomsday.common.items.ModSpawnEggs;
 import org.lanstard.doomsday.config.DoomsdayConfig;
+import org.lanstard.doomsday.network.ModMessages;
 
 @Mod(Doomsday.MODID)
 public class Doomsday {
@@ -25,11 +26,6 @@ public class Doomsday {
     public Doomsday() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         
-        // 注册配置
-        DoomsdayConfig.register();
-        
-        // 注册网络消息
-        NetworkManager.register();
 
         // 注册方块
         ModBlocks.register(modEventBus);
@@ -46,7 +42,6 @@ public class Doomsday {
 
         CreativeTabRegister.register(modEventBus);
 
-
         // 注册事件监听器
         MinecraftForge.EVENT_BUS.register(this);
         
@@ -56,5 +51,12 @@ public class Doomsday {
         
         // 注册效果
         ModEffects.register(modEventBus);
+        
+        // 注册网络消息
+        NetworkManager.register();
+        ModMessages.register();
+        
+        // 注册配置（最后注册）
+        DoomsdayConfig.register();
     }
 }

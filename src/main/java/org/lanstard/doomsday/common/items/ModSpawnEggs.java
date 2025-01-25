@@ -35,6 +35,10 @@ public class ModSpawnEggs {
             () -> new ForgeSpawnEggItem(ModEntities.LOUYI, 0x4A4A4A, 0x2A2A2A,  // 深灰色和暗灰色
                     new Item.Properties()));
 
+    public static final RegistryObject<Item> QIHEI_SWORD_SPAWN_EGG = SPAWN_EGGS.register("qihei_sword_spawn_egg",
+            () -> new ForgeSpawnEggItem(ModEntities.QIHEI_SWORD, 0x2F2F2F, 0x000000,  // 深灰色和黑色
+                    new Item.Properties()));
+
     public static void register(IEventBus eventBus) {
         SPAWN_EGGS.register(eventBus);
     }

@@ -11,8 +11,8 @@ import net.minecraft.nbt.CompoundTag;
 
 public class BaoShanEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.BAOSHAN;
-    private static final int SANITY_COST = 20;               // 理智消耗
-    private static final int COOLDOWN = 400;                 // 20秒冷却
+    private static final int SANITY_COST = 10;               // 理智消耗
+    private static final int COOL_DOWN = 8 * 20;                 // 8秒冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_BELIEF = 10;                // 最小信念要求
     
@@ -81,7 +81,7 @@ public class BaoShanEcho extends Echo {
         level.addFreshEntity(bombs);
 
         // 设置冷却
-        cooldownEndTime = System.currentTimeMillis() + COOLDOWN * 50;
+        cooldownEndTime = System.currentTimeMillis() + COOL_DOWN * 50;
         updateState(player);
         
         // 发送消息

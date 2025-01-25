@@ -2,6 +2,7 @@ package org.lanstard.doomsday.common.sanity;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -18,7 +19,6 @@ public class SanityEffectManager {
         if (event.phase == TickEvent.Phase.END && !event.player.level().isClientSide) {
             ServerPlayer player = (ServerPlayer) event.player;
             int sanity = SanityManager.getSanity(player);
-            
             applyEffects(player, sanity);
             handleNaturalChange(player, sanity);
         }
@@ -50,16 +50,20 @@ public class SanityEffectManager {
        var modifierId = java.util.UUID.fromString("b9c99a89-f5c9-4624-9d38-4a1f5d5a2e3a"); // 固定UUID用于识别这个修改器
        
        // 移除旧的修改器（如果存在）
-       attribute.removePermanentModifier(modifierId);
-       
-       // 只有在有修改时才添加修改器
+        if (attribute != null) {
+            attribute.removePermanentModifier(modifierId);
+        }
+
+        // 只有在有修改时才添加修改器
        if (totalHealthModifier != 0) {
-           attribute.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-               modifierId,
-               "Sanity Health Modifier",
-               totalHealthModifier,
-               net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION
-           ));
+           if (attribute != null) {
+               attribute.addPermanentModifier(new AttributeModifier(
+                   modifierId,
+                   "Sanity Health Modifier",
+                   totalHealthModifier,
+                   AttributeModifier.Operation.ADDITION
+               ));
+           }
        }
     }
     

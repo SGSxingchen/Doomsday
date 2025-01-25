@@ -6,8 +6,8 @@
       "critical_low": 200
     },
     "natural_change": {
-      "regen_rate": 1,
-      "drain_rate": 1,
+      "regen_rate": 0,
+      "drain_rate": 0,
       "regen_interval": 100,
       "drain_interval": 100
     },
@@ -58,7 +58,7 @@
           {
             "type": "minecraft:weakness",
             "duration": 100,
-            "amplifier": 1
+            "amplifier": 0
           }
         ],
         "health_modifier": -8

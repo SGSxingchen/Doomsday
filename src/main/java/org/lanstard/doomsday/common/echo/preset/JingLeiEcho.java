@@ -15,13 +15,12 @@ import org.lanstard.doomsday.common.sanity.SanityManager;
 
 public class JingLeiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.JINGLEI;
-    private static final int SANITY_COST = 20;
+    private static final int SANITY_COST = 10;
     private static final int MIN_FAITH = 10;
     private static final int FREE_COST_THRESHOLD = 300;
     private static final int RANGE = 64;
-    private static final int COOLDOWN = 200; // 10秒 = 200tick
+    private static final int COOL_DOWN = 8 * 20; // 8秒 = 200tick
     private static final float DAMAGE = 8.0f;
-    
     private long lastUseTime = 0;
 
     public JingLeiEcho() {
@@ -41,8 +40,8 @@ public class JingLeiEcho extends Echo {
         long currentTime = player.level().getGameTime();
         if (lastUseTime > 0) {
             long timeDiff = currentTime - lastUseTime;
-            if (timeDiff < COOLDOWN) {
-                long remainingSeconds = (COOLDOWN - timeDiff) / 20;
+            if (timeDiff < COOL_DOWN) {
+                long remainingSeconds = (COOL_DOWN - timeDiff) / 20;
                 player.sendSystemMessage(Component.literal("§c[十日终焉] §f...惊雷之力尚需" + remainingSeconds + "秒恢复..."));
                 return false;
             }
@@ -51,7 +50,7 @@ public class JingLeiEcho extends Echo {
         // 检查理智值是否足够
         int currentSanity = SanityManager.getSanity(player);
         int faith = SanityManager.getFaith(player);
-        boolean freeCost = currentSanity < FREE_COST_THRESHOLD || faith >= MIN_FAITH;
+        boolean freeCost = currentSanity < FREE_COST_THRESHOLD && faith >= MIN_FAITH;
 
         if (!freeCost && currentSanity < SANITY_COST) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不宁，难以施展惊雷之法..."));
@@ -63,7 +62,11 @@ public class JingLeiEcho extends Echo {
 
     @Override
     protected void doUse(ServerPlayer player) {
-        // 获取玩家视线所指的方块位置
+        // 检查是否需要消耗理智值
+        int currentSanity = SanityManager.getSanity(player);
+        int faith = SanityManager.getFaith(player);
+        boolean freeCost = currentSanity < FREE_COST_THRESHOLD && faith >= MIN_FAITH;
+
         Vec3 eyePosition = player.getEyePosition();
         Vec3 lookVec = player.getLookAngle();
         Vec3 endPos = eyePosition.add(lookVec.x * RANGE, lookVec.y * RANGE, lookVec.z * RANGE);
@@ -84,15 +87,12 @@ public class JingLeiEcho extends Echo {
             if (lightning != null) {
                 lightning.moveTo(Vec3.atBottomCenterOf(targetPos));
                 lightning.setVisualOnly(false);
-                lightning.setDamage(DAMAGE);
+                lightning.setDamage(DAMAGE + faith);
                 serverLevel.addFreshEntity(lightning);
             }
         }
 
-        // 检查是否需要消耗理智值
-        int currentSanity = SanityManager.getSanity(player);
-        int faith = SanityManager.getFaith(player);
-        boolean freeCost = currentSanity < FREE_COST_THRESHOLD || faith >= MIN_FAITH;
+
 
         // 如果不是免费释放，消耗理智值
         if (!freeCost) {

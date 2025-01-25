@@ -17,8 +17,8 @@ public class YueQianEcho extends Echo {
     private static final int SANITY_COST = 50;
     private static final int MIN_FAITH = 10;
     private static final int FREE_COST_THRESHOLD = 300;
-    private static final int MAX_RANGE = 32;
-    private static final int COOLDOWN = 1200; // 1分钟 = 20tick * 60
+    private static final int MAX_RANGE = 64;
+    private static final int COOL_DOWN = 30 * 20; // 1分钟 = 20tick * 60
     
     private long lastUseTime = 0;
 
@@ -51,8 +51,8 @@ public class YueQianEcho extends Echo {
     public boolean doCanUse(ServerPlayer player) {
         // 检查冷却时间
         long currentTime = player.level().getGameTime();
-        if (currentTime - lastUseTime < COOLDOWN) {
-            int remainingSeconds = (int)((COOLDOWN - (currentTime - lastUseTime)) / 20);
+        if (currentTime - lastUseTime < COOL_DOWN) {
+            int remainingSeconds = (int)((COOL_DOWN - (currentTime - lastUseTime)) / 20);
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...跃迁之法尚需" + remainingSeconds + "秒冷却..."));
             return false;
         }

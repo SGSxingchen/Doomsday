@@ -1,5 +1,7 @@
 package org.lanstard.doomsday.common.items;
 
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.ItemStack;
@@ -15,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.NotNull;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoManager;
 import org.lanstard.doomsday.client.ClientPermissionManager;
@@ -40,21 +43,9 @@ public class EyeItem extends Item implements ICurioItem {
     }
 
     @Override
-    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+    public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, Player player, @NotNull LivingEntity target, InteractionHand hand) {
         if (player.level().isClientSide) {
             return InteractionResult.PASS;
-        }
-
-        // 检查是否有嫁接回响
-        if (!EchoManager.hasSpecificEcho((ServerPlayer) player, "jiajie")) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你需要嫁接之力才能为他人装配眼球/道..."));
-            return InteractionResult.FAIL;
-        }
-
-        // 检查是否有回响可以转移
-        if (!hasStoredEchoes(stack)) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...这个眼球中没有储存任何回响..."));
-            return InteractionResult.FAIL;
         }
 
         // 尝试装备到目标玩家身上
@@ -62,11 +53,15 @@ public class EyeItem extends Item implements ICurioItem {
             ItemStack eyeStack = stack.copy();
             if (equipToPlayer(targetPlayer, eyeStack)) {
                 stack.shrink(1); // 消耗物品
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...成功为目标装配了眼球/道..."));
-                target.sendSystemMessage(Component.literal("§b[十日终焉] §f...你被装配了眼球/道..."));
+                if (player instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.displayClientMessage(Component.literal("§b...成功为目标装配了眼球..."), true);
+                }
+                targetPlayer.displayClientMessage(Component.literal("§b...你被装配了眼球..."), true);
                 return InteractionResult.SUCCESS;
             } else {
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...目标无法装配更多眼球/道..."));
+                if (player instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.displayClientMessage(Component.literal("§c...目标无法装配更多眼球..."), true);
+                }
                 return InteractionResult.FAIL;
             }
         }
@@ -145,14 +140,16 @@ public class EyeItem extends Item implements ICurioItem {
             if (tag != null && tag.contains(TAG_MODIFIER_UUID)) {
                 var modifierId = java.util.UUID.fromString(tag.getString(TAG_MODIFIER_UUID));
                 var attribute = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
-                attribute.removePermanentModifier(modifierId);
+                if (attribute != null) {
+                    attribute.removePermanentModifier(modifierId);
+                }
             }
 
             // 恢复最大理智值
             SanityManager.modifyMaxSanity(player, sanityReduction);
 
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的生命上限恢复了" + healthReduction + "点..."));
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的理智上限恢复了" + sanityReduction + "点..."));
+            player.displayClientMessage(Component.literal("§b...你的生命上限恢复了" + healthReduction + "点..."), true);
+            player.displayClientMessage(Component.literal("§b...你的理智上限恢复了" + sanityReduction + "点..."), true);
         }
     }
 
@@ -161,7 +158,7 @@ public class EyeItem extends Item implements ICurioItem {
         if (slotContext.entity() instanceof ServerPlayer player) {
             // 检查是否有嫁接回响
             if (!EchoManager.hasSpecificEcho(player, "jiajie")) {
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你需要嫁接之力才能装配眼球/道..."));
+                player.displayClientMessage(Component.literal("§c...你需要嫁接之力才能装配眼球..."), true);
                 return false;
             }
             return true;
@@ -170,7 +167,7 @@ public class EyeItem extends Item implements ICurioItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, List<Component> tooltip, @NotNull TooltipFlag flag) {
         tooltip.add(Component.translatable("item.doomsday.eye.tooltip").withStyle(ChatFormatting.GRAY));
         
         // 显示玩家名字
@@ -287,18 +284,22 @@ public class EyeItem extends Item implements ICurioItem {
         }
 
         // 使用属性修改器减少最大生命值
-        var attribute = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+        var attribute = player.getAttribute(Attributes.MAX_HEALTH);
         
         // 移除旧的修改器（如果存在）
-        attribute.removePermanentModifier(modifierId);
-        
+        if (attribute != null) {
+            attribute.removePermanentModifier(modifierId);
+        }
+
         // 添加新的修改器
-        attribute.addPermanentModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-            modifierId,
-            "Echo Item Health Reduction",
-            -healthReduction,
-            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION
-        ));
+        if (attribute != null) {
+            attribute.addPermanentModifier(new AttributeModifier(
+                modifierId,
+                "Echo Item Health Reduction",
+                -healthReduction,
+                AttributeModifier.Operation.ADDITION
+            ));
+        }
 
         // 如果当前生命值超过新的最大值，设置为新的最大值
         if (player.getHealth() > player.getMaxHealth()) {
@@ -308,8 +309,8 @@ public class EyeItem extends Item implements ICurioItem {
         // 减少最大理智值
         SanityManager.modifyMaxSanity(player, -sanityReduction);
 
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你的生命上限减少了" + healthReduction + "点..."));
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你的理智上限减少了" + sanityReduction + "点..."));
+        player.displayClientMessage(Component.literal("§c...你的生命上限减少了" + healthReduction + "点..."), true);
+        player.displayClientMessage(Component.literal("§c...你的理智上限减少了" + sanityReduction + "点..."), true);
     }
 
     @Override
@@ -326,9 +327,9 @@ public class EyeItem extends Item implements ICurioItem {
             if (System.currentTimeMillis() - creationTime >= DECAY_TIME) {
                 // 转换为腐烂的眼球
                 ItemStack moldyEye = new ItemStack(ModItem.MOLDY_EYE.get());
-                if (entity instanceof Player player) {
+                if (entity instanceof ServerPlayer player) {
                     player.getInventory().setItem(slotId, moldyEye);
-                    player.sendSystemMessage(Component.literal("§c[十日终焉] §f...一颗眼球腐烂了..."));
+                    player.displayClientMessage(Component.literal("§c...一颗眼球腐烂了..."), true);
                 }
             }
         }
