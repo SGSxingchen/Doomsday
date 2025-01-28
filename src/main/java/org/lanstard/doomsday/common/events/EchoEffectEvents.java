@@ -41,10 +41,9 @@ public class EchoEffectEvents {
         // 检查受伤玩家是否拥有双生花回响
         for (Echo echo : EchoManager.getPlayerEchoes(player)) {
             if (echo instanceof ShuangShengHuaEcho shuangShengHuaEcho) {
-                // 取消原始伤害
-                event.setCanceled(true);
-                // 应用分摊伤害
-                shuangShengHuaEcho.onDamage(player, event.getAmount(), true);
+                if(shuangShengHuaEcho.onDamage(player, event.getAmount(), true)){
+                    event.setCanceled(true);
+                }
                 break;
             }
         }
@@ -56,10 +55,9 @@ public class EchoEffectEvents {
             for (Echo echo : EchoManager.getPlayerEchoes(otherPlayer)) {
                 if (echo instanceof ShuangShengHuaEcho shuangShengHuaEcho) {
                     if (shuangShengHuaEcho.isLinkedWith(player)) {
-                        // 取消原始伤害
-                        event.setCanceled(true);
-                        // 应用分摊伤害
-                        shuangShengHuaEcho.onDamage(otherPlayer, event.getAmount(), false);
+                        if(shuangShengHuaEcho.onDamage(player, event.getAmount(), true)){
+                            event.setCanceled(true);
+                        }
                         return;
                     }
                 }

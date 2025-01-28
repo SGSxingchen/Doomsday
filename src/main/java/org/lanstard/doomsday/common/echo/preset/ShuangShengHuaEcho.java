@@ -368,15 +368,15 @@ public class ShuangShengHuaEcho extends Echo {
     }
     
     // 处理伤害分摊
-    public void onDamage(ServerPlayer player, float amount, boolean isDamageOwner) {
-        if (linkedTarget == null) return;
+    public boolean onDamage(ServerPlayer player, float amount, boolean isDamageOwner) {
+        if (linkedTarget == null) return false;
         
         // 检查伤害分摊CD
-        if (damageShareCooldown > 0) return;
+        if (damageShareCooldown > 0) return false;
         damageShareCooldown = DAMAGE_SHARE_CD;
         
         ServerPlayer target = player.getServer().getPlayerList().getPlayer(linkedTarget);
-        if (target == null || !target.isAlive()) return;
+        if (target == null || !target.isAlive()) return false;
         
         // 分摊伤害
         float sharedDamage = amount / 2;
@@ -398,5 +398,6 @@ public class ShuangShengHuaEcho extends Echo {
             target.sendSystemMessage(Component.literal("§b[十日终焉] §f...双生之链分摊了你受到的伤害..."));
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...双生之链与你分担了伤害..."));
         }
+        return true;
     }
 } 
