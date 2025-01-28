@@ -89,8 +89,8 @@ public class ClientEventHandler {
         return sb.toString();
     }
 
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
+    // @SubscribeEvent
+    // @OnlyIn(Dist.CLIENT)
     public static void onClientJoin(ClientPlayerNetworkEvent.LoggingIn event) {
         Minecraft mc = Minecraft.getInstance();
         

@@ -8,9 +8,9 @@ import net.minecraftforge.fml.common.Mod;
 import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoManager;
-import org.lanstard.doomsday.common.items.EyeItem;
 import org.lanstard.doomsday.common.items.ModItem;
-import org.lanstard.doomsday.common.items.ChiselItem;
+import org.lanstard.doomsday.common.items.echo.EyeItem;
+import org.lanstard.doomsday.common.items.tools.ChiselItem;
 
 import java.util.List;
 import java.util.ArrayList;

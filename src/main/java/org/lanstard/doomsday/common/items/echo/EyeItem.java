@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.common.items;
+package org.lanstard.doomsday.common.items.echo;
 
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoManager;
 import org.lanstard.doomsday.client.ClientPermissionManager;
+import org.lanstard.doomsday.common.items.ModItem;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 import top.theillusivec4.curios.api.SlotContext;
 import javax.annotation.Nullable;

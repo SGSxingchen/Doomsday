@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.common.items;
+package org.lanstard.doomsday.common.items.medical;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;

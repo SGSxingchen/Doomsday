@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.common.items;
+package org.lanstard.doomsday.common.items.echo;
 
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;

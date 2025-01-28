@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.common.items;
+package org.lanstard.doomsday.common.items.spawners;
 
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;

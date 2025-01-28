@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.common.items;
+package org.lanstard.doomsday.common.items.equipment.armor;
 
 import net.minecraft.Util;
 import net.minecraft.sounds.SoundEvent;

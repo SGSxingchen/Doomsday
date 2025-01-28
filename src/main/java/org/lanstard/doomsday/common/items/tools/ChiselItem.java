@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.common.items;
+package org.lanstard.doomsday.common.items.tools;
 
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +16,9 @@ import net.minecraft.server.level.ServerPlayer;
 import org.lanstard.doomsday.common.effects.ModEffects;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoManager;
+import org.lanstard.doomsday.common.items.ModItem;
+import org.lanstard.doomsday.common.items.echo.EyeItem;
+
 import java.util.List;
 
 public class ChiselItem extends Item {

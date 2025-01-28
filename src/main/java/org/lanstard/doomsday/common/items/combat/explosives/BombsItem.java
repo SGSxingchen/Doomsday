@@ -1,4 +1,4 @@
-package org.lanstard.doomsday.common.items;
+package org.lanstard.doomsday.common.items.combat.explosives;
 
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;

@@ -8,6 +8,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import org.lanstard.doomsday.Doomsday;
+import org.lanstard.doomsday.common.items.spawners.ModSpawnEggs;
 
 public class CreativeTabRegister {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = 
