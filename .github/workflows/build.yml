@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Build Mod
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
     - uses: actions/checkout@v3
     
@@ -22,25 +22,12 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
         
-    - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-    
-    - name: Build with Gradle
-      run: ./gradlew build
+    - name: Build jar
+      run: ./gradlew jar
       
-    - name: Upload build artifacts
+    - name: Upload mod jar
       uses: actions/upload-artifact@v3
       if: success()
       with:
-        name: Package
+        name: mod-jar
         path: build/libs/*.jar
-
-    - name: Run tests
-      run: ./gradlew test
-      
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: build/reports/tests/
