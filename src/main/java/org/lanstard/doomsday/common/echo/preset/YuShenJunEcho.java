@@ -194,6 +194,8 @@ public class YuShenJunEcho extends Echo {
         
         // 设置冷却
         cooldownTicks = COOL_DOWN;
+        notifyEchoClocks(player);
+        updateState(player);
     }
 
     private void removeSummonedEntity(ServerPlayer player) {

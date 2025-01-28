@@ -12,10 +12,11 @@ import net.minecraft.nbt.CompoundTag;
 
 public class KuiLeiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.KUILEI;
-    private static final int SANITY_COST = 150;              // 理智消耗
+    private static final int SANITY_COST = 100;              // 理智消耗
     private static final int COOL_DOWN = 1200;                // 1分钟冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
+    private static final int MID_FAITH = 5;                  // 中等信念要求
     private static final float PUPPET_SCALE = 1.0f;          // 傀儡大小
     
     private long cooldownEndTime = 0;
@@ -100,14 +101,20 @@ public class KuiLeiEcho extends Echo {
 
         // 消耗理智
         if (!freeCost) {
-            SanityManager.modifySanity(player, -SANITY_COST);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + SANITY_COST + "点心神，傀儡已成..."));
+            int actualCost = faith >= MID_FAITH ? SANITY_COST / 2 : SANITY_COST;
+            SanityManager.modifySanity(player, -actualCost);
+            String faithLevel = faith >= MIN_FAITH_REQUIREMENT ? "坚定" : (faith >= MID_FAITH ? "稳固" : "微弱");
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，傀儡(" + faithLevel + ")已成..."));
         } else {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，傀儡已成..."));
+            String faithLevel = faith >= MIN_FAITH_REQUIREMENT ? "坚定" : (faith >= MID_FAITH ? "稳固" : "微弱");
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，傀儡(" + faithLevel + ")已成..."));
         }
 
         // 设置冷却
-        cooldownEndTime = System.currentTimeMillis() + (COOL_DOWN * 50);
+        long cooldown = faith >= MID_FAITH ? COOL_DOWN / 2 : COOL_DOWN;
+        cooldownEndTime = System.currentTimeMillis() + (cooldown * 50);
+        notifyEchoClocks(player);
+        updateState(player);
     }
 
     @Override

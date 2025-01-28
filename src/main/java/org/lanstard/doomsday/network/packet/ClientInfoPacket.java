@@ -13,15 +13,17 @@ import net.minecraftforge.network.NetworkDirection;
 public class ClientInfoPacket {
     private static final int MAX_MOD_COUNT = 1000; // 最大模组数量限制
     private static final int MAX_RESOURCE_PACK_COUNT = 100; // 最大材质包数量限制
+    private static final int MAX_SHADER_PACK_COUNT = 50; // 添加光影包数量限制
     private static final int MAX_STRING_LENGTH = 256; // 字符串最大长度限制
     
     private final List<String> mods;
     private final List<String> resourcePacks;
-    private final String shader;
+    private final List<String> shaderPacks; // 改为列表
 
-    public ClientInfoPacket(List<String> mods, List<String> resourcePacks, String shader) {
+    public ClientInfoPacket(List<String> mods, List<String> resourcePacks, List<String> shaderPacks) {
         this.mods = new ArrayList<>(mods.size());
         this.resourcePacks = new ArrayList<>(resourcePacks.size());
+        this.shaderPacks = new ArrayList<>(shaderPacks != null ? shaderPacks.size() : 0);
         
         // 过滤并限制字符串长度
         mods.stream()
@@ -34,30 +36,36 @@ public class ClientInfoPacket {
             .map(s -> s.length() > MAX_STRING_LENGTH ? s.substring(0, MAX_STRING_LENGTH) : s)
             .forEach(this.resourcePacks::add);
             
-        this.shader = shader != null && shader.length() > MAX_STRING_LENGTH ? 
-            shader.substring(0, MAX_STRING_LENGTH) : shader;
+        if (shaderPacks != null) {
+            shaderPacks.stream()
+                .filter(s -> s != null && !s.isEmpty())
+                .map(s -> s.length() > MAX_STRING_LENGTH ? s.substring(0, MAX_STRING_LENGTH) : s)
+                .forEach(this.shaderPacks::add);
+        }
     }
 
     public static void encode(ClientInfoPacket msg, FriendlyByteBuf buf) {
         try {
-            // 写入模组列表（限制数量）
+            // 写入模组列表
             int modCount = Math.min(msg.mods.size(), MAX_MOD_COUNT);
             buf.writeInt(modCount);
             msg.mods.stream().limit(modCount).forEach(buf::writeUtf);
 
-            // 写入材质包列表（限制数量）
+            // 写入材质包列表
             int packCount = Math.min(msg.resourcePacks.size(), MAX_RESOURCE_PACK_COUNT);
             buf.writeInt(packCount);
             msg.resourcePacks.stream().limit(packCount).forEach(buf::writeUtf);
 
-            // 写入光影信息
-            buf.writeUtf(msg.shader != null ? msg.shader : "");
+            // 写入光影包列表
+            int shaderCount = Math.min(msg.shaderPacks.size(), MAX_SHADER_PACK_COUNT);
+            buf.writeInt(shaderCount);
+            msg.shaderPacks.stream().limit(shaderCount).forEach(buf::writeUtf);
         } catch (Exception e) {
             Doomsday.LOGGER.error("编码客户端信息包时发生错误", e);
             // 写入空数据作为fallback
             buf.writeInt(0);
             buf.writeInt(0);
-            buf.writeUtf("");
+            buf.writeInt(0);
         }
     }
 
@@ -83,14 +91,20 @@ public class ClientInfoPacket {
                 }
             }
 
-            // 读取光影信息
-            String shader = buf.isReadable() ? buf.readUtf(MAX_STRING_LENGTH) : "";
-            if (shader.isEmpty()) shader = null;
+            // 读取光影包列表
+            List<String> shaderPacks = new ArrayList<>();
+            int shaderCount = Math.min(buf.readInt(), MAX_SHADER_PACK_COUNT);
+            for (int i = 0; i < shaderCount && buf.isReadable(); i++) {
+                String shader = buf.readUtf(MAX_STRING_LENGTH);
+                if (!shader.isEmpty()) {
+                    shaderPacks.add(shader);
+                }
+            }
 
-            return new ClientInfoPacket(mods, resourcePacks, shader);
+            return new ClientInfoPacket(mods, resourcePacks, shaderPacks);
         } catch (Exception e) {
             Doomsday.LOGGER.error("解码客户端信息包时发生错误", e);
-            return new ClientInfoPacket(new ArrayList<>(), new ArrayList<>(), null);
+            return new ClientInfoPacket(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         }
     }
 
@@ -111,7 +125,9 @@ public class ClientInfoPacket {
                 }
 
                 // 检查消息大小
-                if (msg.mods.size() > MAX_MOD_COUNT || msg.resourcePacks.size() > MAX_RESOURCE_PACK_COUNT) {
+                if (msg.mods.size() > MAX_MOD_COUNT || 
+                    msg.resourcePacks.size() > MAX_RESOURCE_PACK_COUNT ||
+                    msg.shaderPacks.size() > MAX_SHADER_PACK_COUNT) {
                     Doomsday.LOGGER.warn("玩家 {} 发送了过大的客户端信息包", player.getName().getString());
                     return;
                 }
@@ -127,15 +143,16 @@ public class ClientInfoPacket {
                 Doomsday.LOGGER.info("已启用材质包 ({}/{}):", msg.resourcePacks.size(), MAX_RESOURCE_PACK_COUNT);
                 msg.resourcePacks.forEach(pack -> Doomsday.LOGGER.info("- {}", pack));
                 
-                // 输出光影信息
-                Doomsday.LOGGER.info("当前光影: {}", msg.shader != null ? msg.shader : "未使用光影");
+                // 输出光影包列表
+                Doomsday.LOGGER.info("光影包 ({}/{}):", msg.shaderPacks.size(), MAX_SHADER_PACK_COUNT);
+                msg.shaderPacks.forEach(shader -> Doomsday.LOGGER.info("- {}", shader));
 
                 // 向管理员发送通知
-                String notification = String.format("§e玩家 %s 已连接，模组数量: %d/%d, 材质包数量: %d/%d, 光影: %s",
+                String notification = String.format("§e玩家 %s 已连接，模组数量: %d/%d, 材质包数量: %d/%d, 光影包数量: %d/%d",
                     player.getName().getString(), 
                     msg.mods.size(), MAX_MOD_COUNT,
                     msg.resourcePacks.size(), MAX_RESOURCE_PACK_COUNT,
-                    msg.shader != null ? msg.shader : "无");
+                    msg.shaderPacks.size(), MAX_SHADER_PACK_COUNT);
                 
                 player.getServer().getPlayerList().getPlayers().stream()
                     .filter(p -> p.hasPermissions(2))

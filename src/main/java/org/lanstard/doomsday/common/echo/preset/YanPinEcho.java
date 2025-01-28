@@ -11,11 +11,13 @@ import net.minecraft.nbt.CompoundTag;
 public class YanPinEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.YANPIN;
     private static final int SANITY_COST = 200;              // 理智消耗
-    private static final int COOL_DOWN = 12000;               // 10分钟冷却
+    private static final int COOL_DOWN = 12000;              // 10分钟冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
+    private static final int MAX_STACK_SIZE = 32;            // 最大堆叠数量
+    private static final int HIGH_FAITH_STACK_SIZE = 64;    // 高信念时最大堆叠数量
     
-    private long cooldownEndTime = 0;
+    private long lastUseTime = 0;
 
     public YanPinEcho() {
         super(
@@ -51,9 +53,12 @@ public class YanPinEcho extends Echo {
 
     @Override
     protected boolean doCanUse(ServerPlayer player) {
-        long timeMs = cooldownEndTime - System.currentTimeMillis();
-        if (timeMs > 0) {
-            long remainingSeconds = timeMs / 20 / 50;
+        // 检查冷却时间
+        long currentTime = player.level().getGameTime();
+        int cooldown = SanityManager.getFaith(player) >= 5 ? COOL_DOWN / 2 : COOL_DOWN;
+        
+        if (currentTime - lastUseTime < cooldown) {
+            int remainingSeconds = (int)((cooldown - (currentTime - lastUseTime)) / 20);
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...赝品之力尚需" + remainingSeconds + "秒恢复..."));
             return false;
         }
@@ -62,6 +67,12 @@ public class YanPinEcho extends Echo {
         ItemStack offhandItem = player.getOffhandItem();
         if (offhandItem.isEmpty()) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...副手无物品可复制..."));
+            return false;
+        }
+
+        // 检查物品是否可以复制
+        if (!canDuplicate(offhandItem)) {
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...此物品无法复制..."));
             return false;
         }
 
@@ -79,22 +90,36 @@ public class YanPinEcho extends Echo {
         return true;
     }
 
+    private boolean canDuplicate(ItemStack item) {
+        // 这里可以添加不允许复制的物品列表
+        return !item.hasCustomHoverName() && // 不能复制改名物品
+               !item.isEnchanted() &&        // 不能复制附魔物品
+               item.getCount() <= MAX_STACK_SIZE; // 检查堆叠数量
+    }
+
     @Override
     protected void doUse(ServerPlayer player) {
-        // 获取副手物品
         ItemStack offhandItem = player.getOffhandItem();
-        if (offhandItem.isEmpty()) return;  // 安全检查
+        if (offhandItem.isEmpty() || !canDuplicate(offhandItem)) {
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...无法复制此物品..."));
+            return;
+        }
 
         // 检查理智值和信念值
         int currentSanity = SanityManager.getSanity(player);
         int faith = SanityManager.getFaith(player);
         boolean freeCost = faith >= MIN_FAITH_REQUIREMENT && currentSanity < FREE_COST_THRESHOLD;
 
+        // 确定可复制的堆叠数量
+        int maxStackSize = faith >= 5 ? HIGH_FAITH_STACK_SIZE : MAX_STACK_SIZE;
+        if (offhandItem.getCount() > maxStackSize) {
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...物品数量过多，无法复制..."));
+            return;
+        }
+
         // 创建物品副本
-        ItemStack duplicatedItem = offhandItem.copy();
-        
-        // 尝试添加到玩家背包
-        if (!player.getInventory().add(duplicatedItem)) {
+        ItemStack copy = offhandItem.copy();
+        if (!player.getInventory().add(copy)) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...背包已满，无法容纳赝品..."));
             return;
         }
@@ -107,21 +132,22 @@ public class YanPinEcho extends Echo {
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，赝品已成..."));
         }
 
-        // 设置冷却
-        cooldownEndTime = System.currentTimeMillis() + (COOL_DOWN * 50);
+        lastUseTime = player.level().getGameTime();
+        updateState(player);
+        notifyEchoClocks(player);
     }
 
     @Override
     public CompoundTag toNBT() {
         CompoundTag tag = super.toNBT();
-        tag.putLong("cooldownEndTime", cooldownEndTime);
+        tag.putLong("lastUseTime", lastUseTime);
         return tag;
     }
     
     public static YanPinEcho fromNBT(CompoundTag tag) {
         YanPinEcho echo = new YanPinEcho();
         echo.setActive(tag.getBoolean("isActive"));
-        echo.cooldownEndTime = tag.getLong("cooldownEndTime");
+        echo.lastUseTime = tag.getLong("lastUseTime");
         return echo;
     }
 } 

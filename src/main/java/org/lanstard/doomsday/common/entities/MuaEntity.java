@@ -2,6 +2,7 @@ package org.lanstard.doomsday.common.entities;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -11,9 +12,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import org.lanstard.doomsday.common.sanity.SanityManager;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -77,6 +78,14 @@ public class MuaEntity extends Monster implements GeoEntity {
                 // 跳过自己和主人
                 if (entity == this || (this.ownerUUID != null && this.ownerUUID.equals(entity.getUUID()))) {
                     continue;
+                }
+                
+                // 如果是玩家，检查是否是队友
+                if (entity instanceof ServerPlayer targetPlayer && getOwner() instanceof ServerPlayer owner) {
+                    // 如果是队友，跳过
+                    if(SanityManager.getFaith(owner) >= 5 && owner.getTeam() != null && owner.getTeam().isAlliedTo(targetPlayer.getTeam())){
+                        continue;
+                    }
                 }
 
                 // 给予缓慢X效果

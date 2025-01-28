@@ -51,11 +51,21 @@ public class YueQianEcho extends Echo {
     public boolean doCanUse(ServerPlayer player) {
         // 检查冷却时间
         long currentTime = player.level().getGameTime();
-        if (currentTime - lastUseTime < COOL_DOWN) {
-            int remainingSeconds = (int)((COOL_DOWN - (currentTime - lastUseTime)) / 20);
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...跃迁之法尚需" + remainingSeconds + "秒冷却..."));
-            return false;
+        if(SanityManager.getFaith(player) >= 5) {
+            if (currentTime - lastUseTime < COOL_DOWN / 10) {
+                int remainingSeconds = (int)(((COOL_DOWN / 10) - (currentTime - lastUseTime)) / 20);
+                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...跃迁之法尚需" + remainingSeconds + "秒冷却..."));
+                return false;
+            }
         }
+        else{
+            if (currentTime - lastUseTime < COOL_DOWN) {
+                int remainingSeconds = (int)((COOL_DOWN - (currentTime - lastUseTime)) / 20);
+                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...跃迁之法尚需" + remainingSeconds + "秒冷却..."));
+                return false;
+            }
+        }
+
 
         int currentSanity = SanityManager.getSanity(player);
         int beliefLevel = SanityManager.getBeliefLevel(player);
@@ -105,10 +115,6 @@ public class YueQianEcho extends Echo {
         player.teleportTo(targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5);
         player.sendSystemMessage(Component.literal("§b[十日终焉] §f...跃迁之法，瞬息千里..."));
 
-        // 更新冷却时间
-        lastUseTime = level.getGameTime();
-        updateState(player);
-
         // 消耗理智值（仅当信念点数大于等于10且理智值大于等于300时消耗）
         int currentSanity = SanityManager.getSanity(player);
         int faith = SanityManager.getFaith(player);
@@ -116,6 +122,12 @@ public class YueQianEcho extends Echo {
             SanityManager.modifySanity(player, -SANITY_COST);
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗了" + SANITY_COST + "点心神之力..."));
         }
+
+        // 更新冷却时间
+        lastUseTime = level.getGameTime();
+        updateState(player);
+        notifyEchoClocks(player);
+
     }
 
     @Override

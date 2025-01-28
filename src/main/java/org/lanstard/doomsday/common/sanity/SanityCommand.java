@@ -69,6 +69,31 @@ public class SanityCommand {
                         context.getSource(),
                         EntityArgument.getPlayer(context, "player")
                     )))));
+
+        dispatcher.register(Commands.literal("faith")
+            .requires(source -> source.hasPermission(2))
+            .then(Commands.literal("set")
+                .then(Commands.argument("player", EntityArgument.player())
+                    .then(Commands.argument("value", IntegerArgumentType.integer(0, 100))
+                        .executes(context -> setFaith(
+                            context.getSource(),
+                            EntityArgument.getPlayer(context, "player"),
+                            IntegerArgumentType.getInteger(context, "value")
+                        )))))
+            .then(Commands.literal("modify")
+                .then(Commands.argument("player", EntityArgument.player())
+                    .then(Commands.argument("delta", IntegerArgumentType.integer(-10, 10))
+                        .executes(context -> modifyFaith(
+                            context.getSource(),
+                            EntityArgument.getPlayer(context, "player"),
+                            IntegerArgumentType.getInteger(context, "delta")
+                        )))))
+            .then(Commands.literal("get")
+                .then(Commands.argument("player", EntityArgument.player())
+                    .executes(context -> getFaith(
+                        context.getSource(),
+                        EntityArgument.getPlayer(context, "player")
+                    )))));
     }
 
     private static int setSanity(CommandSourceStack source, ServerPlayer player, int value) {
@@ -119,6 +144,32 @@ public class SanityCommand {
         int value = SanityManager.getMaxSanity(player);
         source.sendSuccess(() -> Component.literal(
             String.format("玩家 %s 的理智值上限为: %d", player.getName().getString(), value)
+        ), false);
+        return 1;
+    }
+
+    private static int setFaith(CommandSourceStack source, ServerPlayer player, int value) {
+        SanityManager.setFaith(player, value);
+        source.sendSuccess(() -> Component.literal(
+            String.format("已将玩家 %s 的信念值设置为: %d", player.getName().getString(), value)
+        ), true);
+        return 1;
+    }
+
+    private static int modifyFaith(CommandSourceStack source, ServerPlayer player, int delta) {
+        SanityManager.modifyFaith(player, delta);
+        int newValue = SanityManager.getFaith(player);
+        source.sendSuccess(() -> Component.literal(
+            String.format("已将玩家 %s 的信念值调整 %d 点，当前为: %d", 
+                player.getName().getString(), delta, newValue)
+        ), true);
+        return 1;
+    }
+
+    private static int getFaith(CommandSourceStack source, ServerPlayer player) {
+        int value = SanityManager.getFaith(player);
+        source.sendSuccess(() -> Component.literal(
+            String.format("玩家 %s 的信念值为: %d", player.getName().getString(), value)
         ), false);
         return 1;
     }

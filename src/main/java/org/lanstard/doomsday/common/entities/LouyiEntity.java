@@ -39,6 +39,10 @@ import top.theillusivec4.curios.api.CuriosApi;
 import org.lanstard.doomsday.common.items.DaoItem;
 import org.lanstard.doomsday.common.items.EyeItem;
 import net.minecraft.world.damagesource.DamageTypes;
+import java.util.UUID;
+import java.util.Map;
+import java.util.Optional;
+import java.util.HashMap;
 
 public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJumping, Saddleable{
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -48,15 +52,26 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
     private Vec3 dashTarget = null;
     private boolean isAttacking = false;
 
+    // 仇恨系统
+    private final Map<UUID, Float> threatMap = new HashMap<>();
+    private static final float THREAT_DECAY_RATE = 0.1f; // 每秒衰减的仇恨值
+    private static final float THREAT_MULTIPLIER = 1.5f; // 伤害转换为仇恨的倍率
+    private static final float MIN_THREAT_THRESHOLD = 5.0f; // 最小仇恨阈值
+    private static final float ITEM_THREAT_RATE = 2.0f; // 每秒因物品增加的仇恨值
+    private int threatUpdateTicks = 0;
+    private static final int THREAT_UPDATE_INTERVAL = 20; // 每秒更新一次仇恨
+    private static final int SCAN_INTERVAL = 60; // 每5秒扫描一次新目标
+    private int scanTicks = 0;
+
     public LouyiEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
-                .add(Attributes.MAX_HEALTH, 40.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.35D)  // 较快的移动速度
-                .add(Attributes.ATTACK_DAMAGE, 5.0D)
+                .add(Attributes.MAX_HEALTH, 60.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.45D)  // 较快的移动速度
+                .add(Attributes.ATTACK_DAMAGE, 7.0D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.ATTACK_SPEED, 0.5D);    // 较慢的攻击速度
     }
@@ -70,11 +85,8 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
         
-        // 追踪带有眼球的玩家或装备了道/眼球的玩家
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                player -> hasEyeItem((Player) player) || hasEquippedEyeOrDao((Player) player)));
-        // 反击逻辑
-        this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
+        // 移除原有的目标选择器，改用自定义的仇恨系统
+        this.targetSelector.addGoal(1, new DynamicTargetGoal(this));
     }
 
     private boolean hasEyeItem(Player player) {
@@ -96,6 +108,13 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
         super.tick();
         
         if (!this.level().isClientSide) {
+            // 更新仇恨系统
+            threatUpdateTicks++;
+            if (threatUpdateTicks >= THREAT_UPDATE_INTERVAL) {
+                threatUpdateTicks = 0;
+                updateThreatLevels();
+            }
+            
             // 更新冷却时间
             if (jumpCooldown > 0) jumpCooldown--;
             if (dashCooldown > 0) dashCooldown--;
@@ -331,6 +350,9 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
         private ItemEntity targetItem;
         private final double speed;
         private final float searchRange = 8.0F;
+        private int searchCooldown = 0;
+        private static final int SEARCH_INTERVAL = 20; // 每0.5秒检查一次
+        private Vec3 lastKnownItemPos = null;
 
         public CollectEyeGoal(LouyiEntity entity) {
             this.louyi = entity;
@@ -340,7 +362,32 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
 
         @Override
         public boolean canUse() {
-            AABB searchBox = this.louyi.getBoundingBox().inflate(searchRange, 3.0D, searchRange);
+            // 如果已经有目标物品且物品仍然有效，继续使用当前目标
+            if (targetItem != null && !targetItem.isRemoved()) {
+                return true;
+            }
+
+            // 添加冷却检查
+            if (searchCooldown > 0) {
+                searchCooldown--;
+                return false;
+            }
+            searchCooldown = SEARCH_INTERVAL;
+
+            // 如果漏翼正在追踪玩家且距离较近，降低检查概率
+            if (louyi.getTarget() != null && louyi.distanceToSqr(louyi.getTarget()) < 16.0D) {
+                if (louyi.getRandom().nextInt(4) != 0) { // 75%的概率跳过检查
+                    return false;
+                }
+            }
+
+            // 优化搜索范围，根据当前状态动态调整
+            float currentRange = searchRange;
+            if (lastKnownItemPos != null) {
+                currentRange = Math.min(searchRange, (float) lastKnownItemPos.distanceTo(louyi.position()) + 2.0F);
+            }
+
+            AABB searchBox = this.louyi.getBoundingBox().inflate(currentRange, 3.0D, currentRange);
             List<ItemEntity> items = this.louyi.level().getEntitiesOfClass(
                 ItemEntity.class,
                 searchBox,
@@ -348,7 +395,14 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
             );
             
             if (!items.isEmpty()) {
-                targetItem = items.get(0);
+                // 选择最近的眼球
+                targetItem = items.stream()
+                    .min((a, b) -> Double.compare(
+                        a.distanceToSqr(louyi),
+                        b.distanceToSqr(louyi)))
+                    .orElse(items.get(0));
+                
+                lastKnownItemPos = targetItem.position();
                 // 找到眼球后清除所有仇恨目标
                 this.louyi.setTarget(null);
                 return true;
@@ -365,13 +419,24 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
         @Override
         public void tick() {
             if (targetItem != null && !targetItem.isRemoved()) {
-                this.louyi.getNavigation().moveTo(targetItem, this.speed);
+                // 更新最后已知位置
+                lastKnownItemPos = targetItem.position();
+                
+                // 如果路径被阻塞，尝试直接移动
+                if (!this.louyi.getNavigation().isInProgress()) {
+                    Vec3 moveVec = targetItem.position().subtract(louyi.position()).normalize();
+                    this.louyi.setDeltaMovement(moveVec.x * speed, this.louyi.getDeltaMovement().y, moveVec.z * speed);
+                } else {
+                    this.louyi.getNavigation().moveTo(targetItem, this.speed);
+                }
                 
                 // 如果足够近，回收物品
                 if (this.louyi.distanceToSqr(targetItem) < 2.0D) {
                     targetItem.discard();  // 移除物品
                     // 清除仇恨目标
                     this.louyi.setTarget(null);
+                    // 重置最后已知位置
+                    lastKnownItemPos = null;
                 }
             }
         }
@@ -380,6 +445,7 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
         public void stop() {
             targetItem = null;
             this.louyi.getNavigation().stop();
+            // 不要重置lastKnownItemPos，保留最后位置信息以优化下次搜索
         }
     }
 
@@ -426,5 +492,148 @@ public class LouyiEntity extends Monster implements GeoEntity, PlayerRideableJum
     @Override
     public boolean isInvulnerableTo(DamageSource damageSource) {
         return damageSource.is(DamageTypes.FALL) || super.isInvulnerableTo(damageSource);
+    }
+
+    // 仇恨值相关方法
+    public void addThreat(Entity entity, float amount) {
+        if (entity instanceof LivingEntity) {
+            UUID entityId = entity.getUUID();
+            float threatAmount = amount * THREAT_MULTIPLIER;
+
+
+            float currentThreat = threatMap.getOrDefault(entityId, 0f);
+            threatMap.put(entityId, currentThreat + threatAmount);
+        }
+    }
+
+    public float getThreat(Entity entity) {
+        return threatMap.getOrDefault(entity.getUUID(), 0f);
+    }
+
+    private void updateThreatLevels() {
+        // 更新仇恨值
+        threatMap.entrySet().removeIf(entry -> {
+            UUID entityId = entry.getKey();
+            float currentThreat = entry.getValue();
+            
+            // 获取实体
+            Entity entity = ((ServerLevel)level()).getEntity(entityId);
+            if (!(entity instanceof LivingEntity living) || !living.isAlive() || currentThreat <= 0) {
+                return true; // 移除无效的仇恨目标
+            }
+            
+            // 检查实体是否在范围内
+            double distSqr = entity.distanceToSqr(this);
+            if (distSqr > 64 * 64) { // 64格范围
+                return true; // 超出范围，移除仇恨
+            }
+            
+            boolean isSpecialTarget = entity instanceof Player player && 
+                (hasEyeItem(player) || hasEquippedEyeOrDao(player));
+            
+            // 衰减仇恨值
+            float newThreat = currentThreat;
+            if (isSpecialTarget) {
+                newThreat += ITEM_THREAT_RATE;
+            }
+            newThreat = Math.max(0, newThreat - THREAT_DECAY_RATE);
+            
+            // 如果仇恨值过低且不是特殊目标，移除
+            if (newThreat <= MIN_THREAT_THRESHOLD && !isSpecialTarget) {
+                return true;
+            }
+            
+            entry.setValue(newThreat);
+            return false;
+        });
+        
+        // 每5秒才扫描新目标
+        scanTicks++;
+        if (scanTicks >= SCAN_INTERVAL) {
+            scanTicks = 0;
+            scanNewTargets();
+        }
+        
+        // 更新当前目标
+        updateTarget();
+    }
+
+    private void scanNewTargets() {
+        // 获取一次附近玩家列表
+        List<Player> nearbyPlayers = level().getEntitiesOfClass(
+            Player.class,
+            this.getBoundingBox().inflate(64.0D),
+            player -> !threatMap.containsKey(player.getUUID())
+        );
+        
+        // 对获取到的玩家进行处理
+        for (Player player : nearbyPlayers) {
+            if (hasEyeItem(player) || hasEquippedEyeOrDao(player)) {
+                addThreat(player, MIN_THREAT_THRESHOLD + 5.0f);
+            }
+        }
+    }
+
+    private void updateTarget() {
+        if (threatMap.isEmpty()) {
+            return;
+        }
+        
+        // 获取当前目标的仇恨值
+        LivingEntity currentTarget = getTarget();
+        float currentMaxThreat = currentTarget != null ? threatMap.getOrDefault(currentTarget.getUUID(), 0f) : 0f;
+        
+        UUID maxThreatId = null;
+        float maxThreat = currentMaxThreat;
+        
+        // 使用简单循环替代Stream，性能更好
+        for (Map.Entry<UUID, Float> entry : threatMap.entrySet()) {
+            if (entry.getValue() > maxThreat) {
+                maxThreatId = entry.getKey();
+                maxThreat = entry.getValue();
+            }
+        }
+        
+        // 只有在找到更高仇恨值的目标时才更换
+        if (maxThreatId != null && maxThreat > currentMaxThreat) {
+            Entity newTarget = ((ServerLevel)level()).getEntity(maxThreatId);
+            if (newTarget instanceof LivingEntity living && living.isAlive()) {
+                setTarget(living);
+            }
+        }
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        if (super.hurt(source, amount)) {
+            Entity attacker = source.getEntity();
+            if (attacker instanceof Player) {
+                addThreat(attacker, amount);
+            } else if (attacker instanceof LivingEntity) {  // 添加对其他生物（包括召唤物）的处理
+                addThreat(attacker, amount);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // 自定义目标选择器
+    private static class DynamicTargetGoal extends Goal {
+        private final LouyiEntity louyi;
+        
+        public DynamicTargetGoal(LouyiEntity entity) {
+            this.louyi = entity;
+            this.setFlags(EnumSet.of(Flag.TARGET));
+        }
+        
+        @Override
+        public boolean canUse() {
+            return true; // 始终运行，让仇恨系统处理目标选择
+        }
+        
+        @Override
+        public void tick() {
+            // 目标选择由updateThreatLevels处理
+        }
     }
 } 

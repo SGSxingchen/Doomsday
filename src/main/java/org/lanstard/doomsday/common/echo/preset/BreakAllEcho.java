@@ -125,7 +125,11 @@ public class BreakAllEcho extends Echo {
             // 使所有回响失效
             for (Echo echo : targetEchoes) {
                 if (echo instanceof BreakAllEcho) continue; // 破万法不会被破万法影响
+                // 先关闭回响
+                echo.setActiveAndUpdate(target, false);
+                // 再禁用回响
                 echo.disable(DISABLE_DURATION);
+                // 最后触发停用效果
                 echo.onDeactivate(target);
                 hasDisabledAny = true;
             }
@@ -159,6 +163,7 @@ public class BreakAllEcho extends Echo {
         
         // 记录使用时间
         lastUsedTime = System.currentTimeMillis();
+        notifyEchoClocks(player);
         updateState(player);
         
         // 播放粒子效果

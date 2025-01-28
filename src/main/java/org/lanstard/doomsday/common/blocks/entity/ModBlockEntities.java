@@ -8,6 +8,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.common.blocks.ModBlocks;
 import org.lanstard.doomsday.common.blocks.PreservationTableBlockEntity;
+import org.lanstard.doomsday.common.blocks.entity.EchoClockBlockEntity;
 
 public class ModBlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = 
@@ -17,6 +18,11 @@ public class ModBlockEntities {
         BLOCK_ENTITIES.register("preservation_table",
             () -> BlockEntityType.Builder.of(PreservationTableBlockEntity::new,
                 ModBlocks.PRESERVATION_TABLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<EchoClockBlockEntity>> ECHO_CLOCK =
+        BLOCK_ENTITIES.register("echo_clock",
+            () -> BlockEntityType.Builder.of(EchoClockBlockEntity::new,
+                ModBlocks.ECHO_CLOCK.get()).build(null));
 
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);

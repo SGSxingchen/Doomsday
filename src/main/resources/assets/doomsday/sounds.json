@@ -1,0 +1,10 @@
+{
+  "clock": {
+    "sounds":[
+        {
+            "name":"doomsday:clock",
+            "stream":true
+        }
+    ]
+  }
+} 

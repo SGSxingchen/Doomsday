@@ -27,6 +27,7 @@ public class CreativeTabRegister {
                         // 方块
                         output.accept(ModItem.AFTERGLOW_LAMP.get());
                         output.accept(ModItem.FIELD_BLOCK.get());
+                        output.accept(ModItem.ECHO_CLOCK.get());
                         
                         // 回响相关物品
                         output.accept(ModItem.ECHO_BALL.get());

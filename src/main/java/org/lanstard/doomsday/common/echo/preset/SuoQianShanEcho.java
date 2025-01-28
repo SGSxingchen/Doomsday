@@ -19,6 +19,8 @@ public class SuoQianShanEcho extends Echo {
     private static final int CONTINUOUS_SANITY_COST = 1;          // 每秒持续消耗
     private static final int ACTIVE_SANITY_COST = 100;           // 主动技能消耗
     private static final int FREE_COST_THRESHOLD = 300;          // 免费释放阈值
+    private static final int HIGH_FAITH = 10;                    // 高等信念要求
+    private static final int COOL_DOWN_TICKS = 1200;            // 冷却时间1分钟
     
     // 效果等级
     private static final int SPEED_AMPLIFIER = 99;               // 速度100
@@ -32,6 +34,7 @@ public class SuoQianShanEcho extends Echo {
     private static final float PARTICLE_SIZE = 1.0F;
     
     private int tickCounter = 0;
+    private int cooldownTicks = 0;
     private Vec3 markedPosition = null;
     private String markedDimensionKey = null;
     
@@ -56,6 +59,11 @@ public class SuoQianShanEcho extends Echo {
     public void onUpdate(ServerPlayer player) {
         if (!isActive()) return;
         
+        // 更新冷却时间
+        if (cooldownTicks > 0) {
+            cooldownTicks--;
+        }
+        
         // 每秒触发一次效果
         tickCounter++;
         if (tickCounter >= 20) {
@@ -66,7 +74,7 @@ public class SuoQianShanEcho extends Echo {
             int faith = SanityManager.getFaith(player);
             
             // 如果信念大于等于10点且理智低于300，则不消耗理智
-            boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+            boolean freeCost = faith >= HIGH_FAITH && currentSanity < FREE_COST_THRESHOLD;
             
             // 如果不是免费释放且理智不足，则关闭效果
             if (!freeCost && currentSanity < CONTINUOUS_SANITY_COST) {
@@ -99,12 +107,26 @@ public class SuoQianShanEcho extends Echo {
 
     @Override
     protected boolean doCanUse(ServerPlayer player) {
-        int currentSanity = SanityManager.getSanity(player);
-        
         // 检查是否被禁用
         if (this.isDisabled()) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...缩地之法暂失其效..."));
             return false;
+        }
+
+        // 检查冷却时间
+        if (cooldownTicks > 0) {
+            int remainingSeconds = cooldownTicks / 20;
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...缩地之力尚需积蓄，剩余" + remainingSeconds + "秒..."));
+            return false;
+        }
+        
+        // 检查理智值和信念值
+        int currentSanity = SanityManager.getSanity(player);
+        int faith = SanityManager.getFaith(player);
+        
+        // 如果信念大于等于10点且理智低于300，则不消耗理智
+        if (faith >= HIGH_FAITH && currentSanity < FREE_COST_THRESHOLD) {
+            return true;
         }
         
         // 检查理智值
@@ -131,12 +153,14 @@ public class SuoQianShanEcho extends Echo {
             int faith = SanityManager.getFaith(player);
             
             // 如果信念大于等于10点且理智低于300，则不消耗理智
-            boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+            boolean freeCost = faith >= HIGH_FAITH && currentSanity < FREE_COST_THRESHOLD;
             
             // 如果不是免费释放，消耗理智值
             if (!freeCost) {
-                SanityManager.modifySanity(player, -ACTIVE_SANITY_COST);
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + ACTIVE_SANITY_COST + "点心神，施展缩地之法..."));
+                // 根据信念等级减少消耗
+                int actualCost = faith >= HIGH_FAITH ? ACTIVE_SANITY_COST / 2 : ACTIVE_SANITY_COST;
+                SanityManager.modifySanity(player, -actualCost);
+                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，施展缩地之法..."));
             } else {
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，千山可达..."));
             }
@@ -154,6 +178,11 @@ public class SuoQianShanEcho extends Echo {
             if (player.level() instanceof ServerLevel serverLevel) {
                 spawnTeleportParticles(serverLevel, markedPosition);
             }
+
+            // 设置冷却时间
+            cooldownTicks = faith >= HIGH_FAITH ? COOL_DOWN_TICKS / 2 : COOL_DOWN_TICKS;
+            updateState(player);
+            notifyEchoClocks(player);
         } else if (!player.isShiftKeyDown()) {
             // 如果不在潜行，标记当前位置
             markedPosition = player.position();
@@ -248,7 +277,7 @@ public class SuoQianShanEcho extends Echo {
             int faith = SanityManager.getFaith(player);
             
             // 如果信念大于等于10点且理智低于300，则不消耗理智
-            boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+            boolean freeCost = faith >= HIGH_FAITH && currentSanity < FREE_COST_THRESHOLD;
             
             // 如果不是免费释放且理智不足，则无法开启
             if (!freeCost && currentSanity < TOGGLE_SANITY_COST) {
@@ -277,6 +306,7 @@ public class SuoQianShanEcho extends Echo {
     public CompoundTag toNBT() {
         CompoundTag tag = super.toNBT();
         tag.putInt("tickCounter", tickCounter);
+        tag.putInt("cooldownTicks", cooldownTicks);
         
         if (markedPosition != null) {
             tag.putDouble("markedX", markedPosition.x);
@@ -292,6 +322,7 @@ public class SuoQianShanEcho extends Echo {
         SuoQianShanEcho echo = new SuoQianShanEcho();
         echo.setActive(tag.getBoolean("isActive"));
         echo.tickCounter = tag.getInt("tickCounter");
+        echo.cooldownTicks = tag.getInt("cooldownTicks");
         
         if (tag.contains("markedX")) {
             echo.markedPosition = new Vec3(

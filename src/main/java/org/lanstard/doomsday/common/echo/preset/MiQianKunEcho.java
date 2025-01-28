@@ -172,6 +172,8 @@ public class MiQianKunEcho extends Echo {
         
         // 设置冷却
         cooldownTicks = COOLDOWN;
+        notifyEchoClocks(player);
+        updateState(player);
     }
 
     private void clearAllBuffs(ServerPlayer player) {

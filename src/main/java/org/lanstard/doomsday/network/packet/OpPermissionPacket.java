@@ -37,20 +37,16 @@ public class OpPermissionPacket {
                                                Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
+            boolean currentOpState = false;
             if (player != null) {
-                boolean currentOpState = player.hasPermissions(2);
-                UUID playerId = player.getUUID();
-                
-                // 如果权限状态发生变化或是首次检查，就发送更新
-                Boolean lastState = lastPermissionState.get(playerId);
-                if (lastState == null || lastState != currentOpState) {
-                    lastPermissionState.put(playerId, currentOpState);
-                    NetworkManager.getChannel().sendTo(
+                currentOpState = player.hasPermissions(2);
+            }
+            if (player != null) {
+                NetworkManager.getChannel().sendTo(
                         new OpPermissionPacket(currentOpState),
                         player.connection.connection,
                         NetworkDirection.PLAY_TO_CLIENT
-                    );
-                }
+                );
             }
         });
         ctx.get().setPacketHandled(true);
