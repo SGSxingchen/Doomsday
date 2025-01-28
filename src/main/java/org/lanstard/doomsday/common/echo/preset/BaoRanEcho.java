@@ -14,10 +14,11 @@ import java.util.List;
 import java.util.Random;
 
 public class BaoRanEcho extends Echo {
-    private static final int SANITY_COST = 20;
-    private static final int MIN_FAITH = 10;
+    private static final int SANITY_COST = 50;
+    private static final int MID_FAITH = 5;                 // 中等信念要求
+    private static final int MIN_FAITH = 10;                // 最小信念要求
     private static final int FREE_COST_THRESHOLD = 300;
-    private static final int COOLDOWN = 3 * 60 * 20; // 3分钟 = 20tick/s * 60s = 1200tick
+    private static final int COOLDOWN = 5 * 60 * 20;        // 3分钟 = 20tick/s * 60s = 1200tick
     private static final Random random = new Random();
     
     private long lastUseTime = 0;
@@ -103,16 +104,43 @@ public class BaoRanEcho extends Echo {
         int faith = SanityManager.getFaith(player);
         boolean freeCost = currentSanity < FREE_COST_THRESHOLD && faith >= MIN_FAITH;
 
-        // 如果不是免费释放，消耗理智值
-        if (!freeCost) {
-            SanityManager.modifySanity(player, -SANITY_COST);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗了" + SANITY_COST + "点心神之力..."));
+        // 根据信念等级调整消耗
+        int actualCost = SANITY_COST;
+        if (faith >= MID_FAITH) {
+            actualCost = SANITY_COST / 2;  // 信念≥5时消耗减半
         }
 
-        // 随机转换一个物品为爆燃弹
-        convertRandomItem(player);
+        // 如果不是免费释放，消耗理智值
+        if (!freeCost) {
+            SanityManager.modifySanity(player, -actualCost);
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗了" + actualCost + "点心神之力..."));
+        }
+
+        // 根据信念等级决定转换数量
+        int convertCount = 1;
+        if (faith >= MIN_FAITH) {
+            convertCount = 3;  // 高等信念转换3个
+        } else if (faith >= MID_FAITH) {
+            convertCount = 2;  // 中等信念转换2个
+        }
+
+        // 转换物品
+        int converted = 0;
+        for (int i = 0; i < convertCount; i++) {
+            if (hasConvertibleItems(player)) {
+                convertRandomItem(player, faith);
+                converted++;
+            }
+        }
+
+        // 根据信念等级发送不同的消息
+        String faithLevel = faith >= MIN_FAITH ? "坚定" : (faith >= MID_FAITH ? "稳固" : "微弱");
+        if (converted > 0) {
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f..." + faithLevel + "的爆燃之力转化了" + converted + "个物品..."));
+        }
         
         // 更新状态
+        notifyEchoClocks(player);
         updateState(player);
     }
 
@@ -133,7 +161,7 @@ public class BaoRanEcho extends Echo {
         return flag;
     }
 
-    private void convertRandomItem(ServerPlayer player) {
+    private void convertRandomItem(ServerPlayer player, int faith) {
         List<ItemStack> items = player.getInventory().items;
         List<Integer> validSlots = new java.util.ArrayList<>();
         if (items.isEmpty()) {
@@ -152,13 +180,26 @@ public class BaoRanEcho extends Echo {
             // 随机选择一个物品槽
             int slot = validSlots.get(random.nextInt(validSlots.size()));
             ItemStack oldStack = items.get(slot);
-
             
             // 记录原物品名称
             String oldItemName = oldStack.getHoverName().getString();
 
-            // 转换为爆燃弹
+            // 转换为爆燃弹并根据信念等级设置强化等级
             ItemStack newStack = new ItemStack(ModItem.FIRE_BOMB.get());
+            if (faith >= MIN_FAITH) {
+                // 高等信念时设置为高等强化
+                if (newStack.getTag() == null) {
+                    newStack.setTag(new CompoundTag());
+                }
+                newStack.getTag().putInt("EnhancedLevel", 2);
+            } else if (faith >= MID_FAITH) {
+                // 中等信念时设置为中等强化
+                if (newStack.getTag() == null) {
+                    newStack.setTag(new CompoundTag());
+                }
+                newStack.getTag().putInt("EnhancedLevel", 1);
+            }
+
             if (oldStack.getCount() > 1) {
                 oldStack.shrink(1);
                 player.getInventory().add(newStack);
@@ -167,7 +208,8 @@ public class BaoRanEcho extends Echo {
             }
 
             // 发送转换提示
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f..." + oldItemName + "在爆燃之力下化为了爆燃弹..."));
+            String enhanceLevel = faith >= MIN_FAITH ? "高等" : (faith >= MID_FAITH ? "中等" : "普通");
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f..." + oldItemName + "在爆燃之力下化为了" + enhanceLevel + "爆燃弹..."));
         }
     }
 } 

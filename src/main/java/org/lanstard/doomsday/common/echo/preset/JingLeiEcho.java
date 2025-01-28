@@ -17,10 +17,12 @@ public class JingLeiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.JINGLEI;
     private static final int SANITY_COST = 10;
     private static final int MIN_FAITH = 10;
+    private static final int MID_FAITH = 5;                  // 中等信念要求
     private static final int FREE_COST_THRESHOLD = 300;
     private static final int RANGE = 64;
-    private static final int COOL_DOWN = 8 * 20; // 8秒 = 200tick
-    private static final float DAMAGE = 8.0f;
+    private static final int BASE_COOL_DOWN = 10 * 20;       // 基础冷却8秒
+    private static final float BASE_DAMAGE = 15.0f;          // 基础伤害
+    private static final float DAMAGE_PER_FAITH = 1.5f;     // 每点信念增加的伤害
     private long lastUseTime = 0;
 
     public JingLeiEcho() {
@@ -39,9 +41,17 @@ public class JingLeiEcho extends Echo {
         // 检查冷却时间
         long currentTime = player.level().getGameTime();
         if (lastUseTime > 0) {
+            // 计算当前应该的冷却时间
+            int faith = SanityManager.getFaith(player);
+            float damage = BASE_DAMAGE + faith * DAMAGE_PER_FAITH;
+            long actualCoolDown = (long)(BASE_COOL_DOWN * ((damage / BASE_DAMAGE) / 0.75));
+            if (faith >= MID_FAITH) {
+                actualCoolDown = actualCoolDown / 2;
+            }
+            
             long timeDiff = currentTime - lastUseTime;
-            if (timeDiff < COOL_DOWN) {
-                long remainingSeconds = (COOL_DOWN - timeDiff) / 20;
+            if (timeDiff < actualCoolDown) {
+                long remainingSeconds = (actualCoolDown - timeDiff) / 20;
                 player.sendSystemMessage(Component.literal("§c[十日终焉] §f...惊雷之力尚需" + remainingSeconds + "秒恢复..."));
                 return false;
             }
@@ -87,23 +97,37 @@ public class JingLeiEcho extends Echo {
             if (lightning != null) {
                 lightning.moveTo(Vec3.atBottomCenterOf(targetPos));
                 lightning.setVisualOnly(false);
-                lightning.setDamage(DAMAGE + faith);
+                // 根据信念计算伤害
+                float damage = BASE_DAMAGE + faith * DAMAGE_PER_FAITH;
+                lightning.setDamage(damage);
                 serverLevel.addFreshEntity(lightning);
+
+                // 根据造成的伤害调整冷却时间并设置
+                lastUseTime = player.level().getGameTime();
+                
+                // 发送信息时包含伤害和冷却信息
+                if (!freeCost) {
+                    int actualCost = faith >= MID_FAITH ? SANITY_COST / 2 : SANITY_COST;
+                    SanityManager.modifySanity(player, -actualCost);
+                    long actualCoolDown = (long)(BASE_COOL_DOWN * ((damage / BASE_DAMAGE) / 0.75));
+                    if (faith >= MID_FAITH) {
+                        actualCoolDown = actualCoolDown / 2;
+                    }
+                    player.sendSystemMessage(Component.literal(String.format("§b[十日终焉] §f...消耗%d点心神，惊雷(%.1f伤害)已降，需恢复%d秒...", 
+                        actualCost, damage, actualCoolDown/20)));
+                } else {
+                    long actualCoolDown = (long)(BASE_COOL_DOWN * ((damage / BASE_DAMAGE) / 0.75));
+                    if (faith >= MID_FAITH) {
+                        actualCoolDown = actualCoolDown / 2;
+                    }
+                    player.sendSystemMessage(Component.literal(String.format("§b[十日终焉] §f...信念引导，惊雷(%.1f伤害)已降，需恢复%d秒...", 
+                        damage, actualCoolDown/20)));
+                }
             }
         }
 
-
-
-        // 如果不是免费释放，消耗理智值
-        if (!freeCost) {
-            SanityManager.modifySanity(player, -SANITY_COST);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗了" + SANITY_COST + "点心神之力..."));
-        }
-
-        // 更新最后使用时间
-        lastUseTime = player.level().getGameTime();
-        
         // 更新状态
+        notifyEchoClocks(player);
         updateState(player);
     }
 

@@ -12,9 +12,13 @@ import net.minecraft.nbt.CompoundTag;
 public class BaoShanEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.BAOSHAN;
     private static final int SANITY_COST = 10;               // 理智消耗
-    private static final int COOL_DOWN = 8 * 20;                 // 8秒冷却
-    private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
+    private static final int COOL_DOWN = 8 * 20;             // 8秒冷却
+    private static final int MID_BELIEF = 5;                 // 中等信念要求
     private static final int MIN_BELIEF = 10;                // 最小信念要求
+    private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
+    private static final float BASE_SPEED = 1.5F;            // 基础速度
+    private static final float MID_SPEED = 2.0F;             // 中等信念速度
+    private static final float HIGH_SPEED = 2.5F;            // 高等信念速度
     
     private long cooldownEndTime = 0;
 
@@ -60,11 +64,18 @@ public class BaoShanEcho extends Echo {
     protected void doUse(ServerPlayer player) {
         // 检查是否免费释放
         int currentSanity = SanityManager.getSanity(player);
-        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && currentSanity < FREE_COST_THRESHOLD;
+        int faith = SanityManager.getFaith(player);
+        boolean isFree = faith >= MIN_BELIEF && currentSanity < FREE_COST_THRESHOLD;
+        
+        // 根据信念等级调整消耗
+        int actualCost = SANITY_COST;
+        if (faith >= MID_BELIEF) {
+            actualCost = SANITY_COST / 2;  // 信念≥5时消耗减半
+        }
         
         // 消耗理智
         if (!isFree) {
-            SanityManager.modifySanity(player, -SANITY_COST);
+            SanityManager.modifySanity(player, -actualCost);
         }
 
         // 创建并发射爆闪实体
@@ -76,19 +87,39 @@ public class BaoShanEcho extends Echo {
             player.getZ()
         );
         
-        // 设置投掷速度
-        bombs.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+        // 根据信念等级设置爆闪特性
+        if (faith >= MIN_BELIEF) {
+            bombs.setEnhanced(2);  // 高等强化
+        } else if (faith >= MID_BELIEF) {
+            bombs.setEnhanced(1);  // 中等强化
+        }
+        
+        // 根据信念等级设置投掷速度
+        float speed;
+        if (faith >= MIN_BELIEF) {
+            speed = HIGH_SPEED;
+        } else if (faith >= MID_BELIEF) {
+            speed = MID_SPEED;
+        } else {
+            speed = BASE_SPEED;
+        }
+        
+        // 设置投掷速度和精确度
+        float inaccuracy = faith >= MID_BELIEF ? 0.5F : 1.0F;  // 信念≥5时提高精确度
+        bombs.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, speed, inaccuracy);
         level.addFreshEntity(bombs);
 
         // 设置冷却
         cooldownEndTime = System.currentTimeMillis() + COOL_DOWN * 50;
+        notifyEchoClocks(player);
         updateState(player);
         
         // 发送消息
+        String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
         if (isFree) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引闪，爆闪飞出..."));
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念(" + faithLevel + ")引闪，爆闪飞出..."));
         } else {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...心随光动，爆闪涌出..."));
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...心随光动，" + faithLevel + "爆闪涌出..."));
         }
     }
 

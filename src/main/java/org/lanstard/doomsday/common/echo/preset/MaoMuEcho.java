@@ -2,9 +2,6 @@ package org.lanstard.doomsday.common.echo.preset;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -19,6 +16,7 @@ import org.lanstard.doomsday.common.entities.MuaEntity;
 public class MaoMuEcho extends Echo {
     private static final int SANITY_COST = 20;
     private static final int MIN_FAITH = 10;
+    private static final int MID_FAITH = 5;                  // 中等信念要求
     private static final int FREE_SANITY_THRESHOLD = 300;
     private static final int COOLDOWN_TICKS = 200; // 10秒 = 10 * 20 ticks
     private long cooldownEndTime = 0;
@@ -103,7 +101,10 @@ public class MaoMuEcho extends Echo {
         
         // 只有在不满足免费释放条件时才消耗理智
         if (!freeCast) {
-            SanityManager.modifySanity(player, -SANITY_COST);
+            // 根据信念等级减少消耗
+            int actualCost = faith >= MID_FAITH ? SANITY_COST / 2 : SANITY_COST;
+            SanityManager.modifySanity(player, -actualCost);
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神..."));
         }
 
         // 生成茂木造物
@@ -115,8 +116,10 @@ public class MaoMuEcho extends Echo {
         player.sendSystemMessage(Component.literal("§b[十日终焉] §f...茂木之力凝聚，召唤出了一个茂木造物..."));
 
         // 设置冷却时间
-        cooldownEndTime = System.currentTimeMillis() + (COOLDOWN_TICKS * 50); // 50ms per tick
+        long cooldown = faith >= MID_FAITH ? COOLDOWN_TICKS / 2 : COOLDOWN_TICKS;
+        cooldownEndTime = System.currentTimeMillis() + (cooldown * 50);
         updateState(player);
+        notifyEchoClocks(player);
     }
 
     @Override

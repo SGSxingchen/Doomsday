@@ -29,7 +29,10 @@ public class ZhaoZaiEcho extends Echo {
     private static final int GLOWING_DURATION = 30 * 20;      // 发光效果持续时间（30秒）
     private static final int CHECK_INTERVAL = 10 * 20;        // 检查间隔（10秒）
     private static final float BASE_SUCCESS_RATE = 0.05f;     // 基础成功率（5%）
+    private static final float HIGH_FAITH_SUCCESS_RATE = 0.08f; // 高信念基础成功率（8%）
     private static final float SUCCESS_RATE_INCREMENT = 0.01f; // 失败后成功率增加（1%）
+    private static final float HIGH_FAITH_RATE_INCREMENT = 0.015f; // 高信念失败后成功率增加（1.5%）
+    private static final int HIGH_FAITH_RANGE = 15;           // 高信念时的影响范围（15格）
     private static final int SUMMON_SANITY_COST = 100;        // 召唤消耗的理智值
     private static final int COOLDOWN_TICKS = 36000;          // 冷却时间（30分钟 = 36000刻）
     private static final int MIN_FAITH = 10;                  // 最低信念要求
@@ -80,23 +83,57 @@ public class ZhaoZaiEcho extends Echo {
             long dayTime = level.getDayTime() % 24000;
             boolean currentIsNight = dayTime >= 13000 && dayTime < 23000;
             
+            // 获取当前信念值
+            int faith = SanityManager.getFaith(player);
+            boolean isHighFaith = faith >= 5;
+            
             // 尝试触发效果
             if (random.nextFloat() < currentSuccessRate) {
                 // 成功触发效果
-                AABB box = player.getBoundingBox().inflate(RANGE);
-                List<LivingEntity> nearbyPlayers = level.getEntitiesOfClass(LivingEntity.class, box);
-                
-                for (LivingEntity target : nearbyPlayers) {
-                    if (target == player) {
-                        continue;
+                AABB box = player.getBoundingBox().inflate(isHighFaith ? HIGH_FAITH_RANGE : RANGE);
+                List<LivingEntity> nearbyEntities = level.getEntitiesOfClass(
+                    LivingEntity.class,
+                    box,
+                    entity -> {
+                        if (entity == player) return false;
+                        if (entity instanceof ServerPlayer targetPlayer) {
+                            // 排除OP、创造模式和旁观模式的玩家
+                            if (targetPlayer.hasPermissions(2) || targetPlayer.isCreative() || targetPlayer.isSpectator()) {
+                                return false;
+                            }
+                            // 高信念时，检查Team系统
+                            if (isHighFaith) {
+                                return !player.isAlliedTo(targetPlayer);
+                            }
+                        }
+                        // 如果不是玩家或者信念不够，则认为是敌对生物
+                        return true;
                     }
+                );
+                
+                for (LivingEntity target : nearbyEntities) {
                     if (currentIsNight) {
                         // 夜晚：凋零效果
-                        target.addEffect(new MobEffectInstance(MobEffects.WITHER, WITHER_DURATION, WITHER_AMPLIFIER, false, true));
+                        target.addEffect(new MobEffectInstance(MobEffects.WITHER, 
+                            WITHER_DURATION, 
+                            isHighFaith ? 1 : WITHER_AMPLIFIER,
+                            false, true));
+                        if (isHighFaith) {
+                            // 高信念时额外给予失明效果，降低敌人视野
+                            target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 
+                                WITHER_DURATION, 0, false, true));
+                        }
                         target.sendSystemMessage(Component.literal("§c[十日终焉] §f...夜色降临，灾厄缠身..."));
                     } else {
                         // 白天：发光效果
-                        target.addEffect(new MobEffectInstance(MobEffects.GLOWING, GLOWING_DURATION, 0, false, true));
+                        target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 
+                            GLOWING_DURATION,
+                            0, false, true));
+                        if (isHighFaith) {
+                            // 高信念时额外给予中毒效果
+                            target.addEffect(new MobEffectInstance(MobEffects.POISON, 
+                                GLOWING_DURATION / 2, 0, false, true));
+                        }
                         target.sendSystemMessage(Component.literal("§b[十日终焉] §f...白昼将至，灾厄显形..."));
                     }
                 }
@@ -107,13 +144,13 @@ public class ZhaoZaiEcho extends Echo {
                 }
                 
                 // 重置成功率
-                currentSuccessRate = BASE_SUCCESS_RATE;
+                currentSuccessRate = isHighFaith ? HIGH_FAITH_SUCCESS_RATE : BASE_SUCCESS_RATE;
                 
                 // 显示触发信息
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灾厄显现..."));
             } else {
                 // 失败，增加下次成功率
-                currentSuccessRate += SUCCESS_RATE_INCREMENT;
+                currentSuccessRate += isHighFaith ? HIGH_FAITH_RATE_INCREMENT : SUCCESS_RATE_INCREMENT;
                 
                 // 显示当前成功率
                 // int percentage = Math.round(currentSuccessRate * 100);
@@ -228,6 +265,7 @@ public class ZhaoZaiEcho extends Echo {
         // 设置冷却时间
         summonCooldown = COOLDOWN_TICKS;
         updateState(player);
+        notifyEchoClocks(player);
         // 发送消息
         if (isFree) {
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念之力引导，七黑剑无偿现世..."));

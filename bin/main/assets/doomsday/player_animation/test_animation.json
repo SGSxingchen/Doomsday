@@ -1,0 +1,58 @@
+{
+    "version": 1,
+    "uuid": "33b912f8-0aa0-45e6-a2d4-9b5677e6f35c",
+    "name": "test_animation",
+    "emote": {
+        "beginTick": 0,
+        "endTick": 40,
+        "stopTick": 45,
+        "isLoop": false,
+        "returnTick": 0,
+        "nsfw": false,
+        "degrees": false,
+        "moves": [
+            {
+                "tick": 0,
+                "easing": "INOUTSINE",
+                "rightArm": {
+                    "pitch": 0
+                }
+            },
+            {
+                "tick": 20,
+                "easing": "INOUTSINE",
+                "rightArm": {
+                    "pitch": 2.0944 
+                }
+            },
+            {
+                "tick": 40,
+                "easing": "INOUTSINE",
+                "rightArm": {
+                    "pitch": 0
+                }
+            },
+            {
+                "tick": 0,
+                "easing": "INOUTSINE",
+                "leftArm": {
+                    "pitch": 0
+                }
+            },
+            {
+                "tick": 20,
+                "easing": "INOUTSINE",
+                "leftArm": {
+                    "pitch": 2.0944
+                }
+            },
+            {
+                "tick": 40,
+                "easing": "INOUTSINE",
+                "leftArm": {
+                    "pitch": 0
+                }
+            }
+        ]
+    }
+}
