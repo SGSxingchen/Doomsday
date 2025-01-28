@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.lanstard.doomsday.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "doomsday.refmap.json",
+  "mixins": [],
+  "client": [
+    "DisplayHealthRenderMixin"
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

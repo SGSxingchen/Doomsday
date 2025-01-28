@@ -218,13 +218,12 @@ public class ClientEventHandler {
                 .collect(Collectors.toList());
 
             // 发送信息到服务端
-            ModMessages.sendToServer(new ClientInfoPacket(mods, resourcePacks, 
-                shaderPacks.isEmpty() ? null : String.join(", ", shaderPacks)));
+            ModMessages.sendToServer(new ClientInfoPacket(mods, resourcePacks, shaderPacks));
 
         } catch (Exception e) {
             Doomsday.LOGGER.error("等待异步操作完成时发生错误", e);
             // 如果出错，尝试发送已经收集到的信息
-            ModMessages.sendToServer(new ClientInfoPacket(mods, new ArrayList<>(), null));
+            ModMessages.sendToServer(new ClientInfoPacket(mods, new ArrayList<>(), new ArrayList<>()));
         }
     }
 

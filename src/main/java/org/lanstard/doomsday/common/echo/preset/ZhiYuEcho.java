@@ -17,14 +17,15 @@ import java.util.List;
 
 public class ZhiYuEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.ZHIYU;
-    private static final int SANITY_COST = 20;
-    private static final int MIN_FAITH = 10;
-    private static final int FREE_COST_THRESHOLD = 300;
-    private static final int CONTINUOUS_SANITY_COST = 2;
-    private static final int HEAL_RANGE = 5;
+    private static final int SANITY_COST = 15;
+    private static final int MIN_FAITH = 8;
+    private static final int FREE_COST_THRESHOLD = 200;
+    private static final int CONTINUOUS_SANITY_COST = 1;
+    private static final int HEAL_RANGE = 8;
     private static final int MAX_SANITY_HEAL = 500;
-    private static final int ACTIVE_DURATION = 1200; // 60秒 = 1200tick
-    private static final int COOLDOWN = 12000; // 10分钟 = 12000tick
+    private static final int MAX_SANITY_HEAL_HIGH_FAITH = 800;
+    private static final int ACTIVE_DURATION = 2400; // 120秒 = 2400tick
+    private static final int COOLDOWN = 6000; // 5分钟 = 6000tick
     
     private int tickCounter = 0;
     private int activeTime = 0;
@@ -48,16 +49,18 @@ public class ZhiYuEcho extends Echo {
 
     @Override
     public void onUpdate(ServerPlayer player) {
+        int currentSanity = SanityManager.getSanity(player);
+        int faith = SanityManager.getFaith(player);
         if (isActive()) {
+
             tickCounter++;
             activeTime++;
             
-            // 每秒消耗2点理智并治疗附近玩家
+            // 每秒处理一次治疗效果
             if (tickCounter >= 20) {
                 tickCounter = 0;
 
-                int currentSanity = SanityManager.getSanity(player);
-                int faith = SanityManager.getFaith(player);
+
                 boolean freeCost = currentSanity < FREE_COST_THRESHOLD || faith >= MIN_FAITH;
 
                 if (!freeCost) SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
@@ -72,23 +75,45 @@ public class ZhiYuEcho extends Echo {
                 
                 // 为每个玩家恢复生命和理智
                 for (ServerPlayer target : nearbyPlayers) {
-                    // 恢复生命值
+                    // 恢复生命值，增加恢复量
                     float currentHealth = target.getHealth();
                     float maxHealth = target.getMaxHealth();
-                    if (currentHealth < maxHealth) {
-                        target.heal(1.0f);
-                    }
-                    
-                    // 恢复理智值
-                    int targetSanity = SanityManager.getSanity(target);
-                    if (targetSanity < MAX_SANITY_HEAL) {
-                        SanityManager.modifySanity(target, 1);
-                    }
 
+                    if(faith >= 5){
+                        if (currentHealth < maxHealth) {
+                            target.heal(3.0f);
+                        }
 
-                    
+                        // 恢复理智值，增加恢复量
+                        int targetSanity = SanityManager.getSanity(target);
+                        if (targetSanity < (faith >= 5 ? MAX_SANITY_HEAL_HIGH_FAITH : MAX_SANITY_HEAL)) {
+                            SanityManager.modifySanity(target, 4);
+                        }
+                    }
+                    else{
+                        if (currentHealth < maxHealth) {
+                            target.heal(1.5f);
+                        }
+                        // 恢复理智值，增加恢复量
+                        int targetSanity = SanityManager.getSanity(target);
+                        if (targetSanity < (faith >= 5 ? MAX_SANITY_HEAL_HIGH_FAITH : MAX_SANITY_HEAL)) {
+                            SanityManager.modifySanity(target, 2);
+                        }
+                    }
                     // 生成治愈粒子效果
                     spawnEffectParticles((ServerLevel) player.level(), target.position(), HEAL_RANGE);
+                }
+
+                // 施法者自身也获得治疗效果
+                float currentHealth = player.getHealth();
+                float maxHealth = player.getMaxHealth();
+                if (currentHealth < maxHealth) {
+                    if(faith >= 5){
+                        player.heal(6.0f);
+                    }
+                    else{
+                        player.heal(3.0f);
+                    }
                 }
             }
             
@@ -99,30 +124,53 @@ public class ZhiYuEcho extends Echo {
                 activeTime = 0;
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...治愈之力已耗尽，需要时间恢复..."));
             }
-            updateState(player);
+        } else {
+
+            // 在非激活状态下，如果不在冷却中且activeTime > 0，则逐渐恢复
+            if (player.level().getGameTime() - lastUseTime >= COOLDOWN && activeTime > 0) {
+                tickCounter++;
+                if (tickCounter >= 40) { // 每2秒减少1点activeTime
+                    tickCounter = 0;
+                    if(faith >= 5){
+                        activeTime = Math.max(0, activeTime - 2);
+                    }
+                    else{
+                        activeTime = Math.max(0, activeTime - 1);
+                    }
+                }
+            }
         }
+        updateState(player);
     }
     // 粒子效果相关
     private static final float DARK_RED = 0.0F;
-    private static final float DARK_GREEN = 0.5F;
-    private static final float DARK_BLUE = 0.0F;
-    private static final float PARTICLE_SIZE = 1.0F;
+    private static final float DARK_GREEN = 0.8F;
+    private static final float DARK_BLUE = 0.2F;
+    private static final float PARTICLE_SIZE = 1.2F;
     private void spawnEffectParticles(ServerLevel level, Vec3 pos, double RANGE) {
         DustParticleOptions darkParticle = new DustParticleOptions(
                 new Vector3f(DARK_RED, DARK_GREEN, DARK_BLUE),
                 PARTICLE_SIZE
         );
 
-        // 生成环形粒子效果
+        // 生成双层环形粒子效果
         for (int i = 0; i < 36; i++) {
             double angle = 2.0 * Math.PI * i / 36;
             double radius = RANGE;
             double x = pos.x + radius * Math.cos(angle);
             double z = pos.z + radius * Math.sin(angle);
 
+            // 外环
             level.sendParticles(darkParticle,
                     x, pos.y + 0.1, z,
                     1, 0, 0.1, 0, 0);
+                    
+            // 内环
+            level.sendParticles(ParticleTypes.HEART,
+                    x * 0.5 + pos.x * 0.5, 
+                    pos.y + 0.5, 
+                    z * 0.5 + pos.z * 0.5,
+                    1, 0, 0.1, 0, 0.01);
         }
     }
     @Override
@@ -166,12 +214,14 @@ public class ZhiYuEcho extends Echo {
         if (!isActive()) {
             // 开启时才需要判断是否可用
             if (doCanUse(player)) {
+                onActivate(player);
                 setActiveAndUpdate(player, true);
-                activeTime = 0;
+                notifyEchoClocks(player);
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...治愈之力已开启..."));
             }
         } else {
-            // 关闭时直接关闭
+            // 关闭时直接关闭，但不重置activeTime
+            onDeactivate(player);
             setActiveAndUpdate(player, false);
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...治愈之力已关闭..."));
         }

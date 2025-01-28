@@ -33,6 +33,8 @@ public class UseEchoPacket {
                     if (echo.getId().equals(msg.echoId)) {
                         if (EchoManager.canUseEcho(player, echo)) {
                             echo.use(player);
+                            // 同步到客户端
+                            EchoManager.syncToClient(player);
                         }
                         break;
                     }

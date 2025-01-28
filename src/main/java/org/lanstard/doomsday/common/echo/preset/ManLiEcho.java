@@ -17,9 +17,11 @@ public class ManLiEcho extends Echo {
     private static final int SANITY_COST = 150;          // 理智消耗
     private static final int FREE_COST_THRESHOLD = 300;  // 免费释放阈值
     private static final int MIN_BELIEF = 10;            // 最小信念要求
+    private static final int MID_BELIEF = 5;             // 中等信念要求
     private static final int STRENGTH_AMPLIFIER = 1;     // 力量2效果
     private static final int RESISTANCE_AMPLIFIER = 0;   // 抗性1效果
     private static final int INCREASE_MAX_HEALTH = 40;   // 提升最大生命值
+    private static final int COOLDOWN_TICKS = 20 * 120;  // 2分钟冷却
     
     private long cooldownEndTime = 0;                    // 冷却结束时间
 
@@ -66,47 +68,67 @@ public class ManLiEcho extends Echo {
 
     @Override
     protected void doUse(ServerPlayer player) {
+        int faith = SanityManager.getFaith(player);
         // 检查是否可以免费释放
-        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && 
-                        SanityManager.getSanity(player) < FREE_COST_THRESHOLD;
+        boolean isFree = faith >= MIN_BELIEF && SanityManager.getSanity(player) < FREE_COST_THRESHOLD;
         
         // 消耗理智
         if (!isFree) {
-            SanityManager.modifySanity(player, -SANITY_COST);
+            int actualCost = faith >= MID_BELIEF ? SANITY_COST / 2 : SANITY_COST;
+            SanityManager.modifySanity(player, -actualCost);
         }
 
         // 使用属性修改器来应用生命值变化
         var attribute = player.getAttribute(Attributes.MAX_HEALTH);
-        var modifierId = java.util.UUID.fromString("b9c99a89-f5c9-4624-9d38-4a1f5d8b9a91"); // 固定UUID用于识别这个修改器
+        var modifierId = java.util.UUID.fromString("b9c99a89-f5c9-4624-9d38-4a1f5d8b9a91");
 
         // 移除旧的修改器（如果存在）
         if (attribute != null) {
             attribute.removePermanentModifier(modifierId);
         }
 
-        // 只有在有修改时才添加修改器
+        // 根据信念等级调整效果
+        int healthBonus = INCREASE_MAX_HEALTH;
+        int strengthLevel = STRENGTH_AMPLIFIER;
+        int resistanceLevel = RESISTANCE_AMPLIFIER;
+        
+        if (faith >= MIN_BELIEF) {
+            healthBonus = (int)(INCREASE_MAX_HEALTH * 1.5);      // 60点生命
+            strengthLevel = STRENGTH_AMPLIFIER + 1;     // 力量3
+            resistanceLevel = RESISTANCE_AMPLIFIER + 1; // 抗性2
+        } else if (faith >= MID_BELIEF) {
+            healthBonus = (int)(INCREASE_MAX_HEALTH * 1.5);  // 60点生命
+            strengthLevel = STRENGTH_AMPLIFIER + 1;     // 力量3
+            resistanceLevel = RESISTANCE_AMPLIFIER + 1; // 抗性2
+        }
+
+        // 添加生命值修改器
         if (attribute != null) {
             attribute.addPermanentModifier(new AttributeModifier(
                     modifierId,
                     "ManliEcho Health Modifier",
-                    INCREASE_MAX_HEALTH,
+                    healthBonus,
                     AttributeModifier.Operation.ADDITION
             ));
         }
 
         // 添加效果
-        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, EFFECT_DURATION, STRENGTH_AMPLIFIER, false, true));
-        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, EFFECT_DURATION, RESISTANCE_AMPLIFIER, false, true));
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, EFFECT_DURATION, strengthLevel, false, true));
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, EFFECT_DURATION, resistanceLevel, false, true));
         
         // 设置冷却
-        cooldownEndTime = System.currentTimeMillis() + EFFECT_DURATION;
+        long cooldown = faith >= MID_BELIEF ? COOLDOWN_TICKS / 2 : COOLDOWN_TICKS;
+        cooldownEndTime = System.currentTimeMillis() + cooldown * 50;
         
         // 发送消息
         if (isFree) {
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引动蛮力，力量涌现..."));
         } else {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + SANITY_COST + "点心神，引动蛮力..."));
+            int actualCost = faith >= MID_BELIEF ? SANITY_COST / 2 : SANITY_COST;
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，引动蛮力..."));
         }
+        updateState(player);
+        notifyEchoClocks(player);
     }
 
     @Override

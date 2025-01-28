@@ -1,12 +1,9 @@
 package org.lanstard.doomsday.common.echo.preset;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
-import org.lanstard.doomsday.common.items.ModItem;
-import org.lanstard.doomsday.common.sanity.SanityManager;
 import net.minecraft.nbt.CompoundTag;
 
 public class QiaoWuEcho extends Echo {
@@ -44,6 +41,7 @@ public class QiaoWuEcho extends Echo {
     @Override
     protected void doUse(ServerPlayer player) {
         // 这是一个纯被动技能，不需要主动使用
+        notifyEchoClocks(player);
     }
 
     @Override

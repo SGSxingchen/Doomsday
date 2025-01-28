@@ -1,0 +1,23 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "WRW",
+        "RBR",
+        "WRW"
+    ],
+    "key": {
+        "W": {
+            "item": "minecraft:white_wool"
+        },
+        "R": {
+            "item": "minecraft:redstone"
+        },
+        "B": {
+            "item": "minecraft:bread"
+        }
+    },
+    "result": {
+        "item": "doomsday:medkit",
+        "count": 1
+    }
+} 

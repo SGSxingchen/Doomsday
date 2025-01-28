@@ -45,6 +45,10 @@ public class SanityEffectManager {
            }
        }
 
+       // 添加信念值带来的生命值加成（每1点信念提供2点生命值）
+       int faith = SanityManager.getFaith(player);
+       totalHealthModifier += faith * 2;
+
        // 使用属性修改器来应用生命值变化
        var attribute = player.getAttribute(Attributes.MAX_HEALTH);
        var modifierId = java.util.UUID.fromString("b9c99a89-f5c9-4624-9d38-4a1f5d5a2e3a"); // 固定UUID用于识别这个修改器

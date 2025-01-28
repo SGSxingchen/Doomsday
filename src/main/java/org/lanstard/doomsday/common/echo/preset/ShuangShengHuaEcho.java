@@ -80,7 +80,7 @@ public class ShuangShengHuaEcho extends Echo {
             
             // 如果不是免费释放且理智不足，则关闭效果
             if (!freeCost && currentSanity < CONTINUOUS_SANITY_COST) {
-                setActiveAndUpdate(player, false);
+                setActive(false);
                 onDeactivate(player);
                 player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神已竭，双花凋零..."));
                 return;
@@ -161,13 +161,15 @@ public class ShuangShengHuaEcho extends Echo {
     @Override
     protected boolean doCanUse(ServerPlayer player) {
         int currentSanity = SanityManager.getSanity(player);
-        
-        // 检查是否被禁用
-        if (this.isDisabled()) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...仙法暂失其效，难以施为..."));
-            return false;
+        int faith = SanityManager.getFaith(player);
+
+        // 如果信念大于等于10点且理智低于300，则不消耗理智
+        boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+
+        // 如果不是免费释放且理智不足，则关闭效果
+        if (freeCost) {
+            return true;
         }
-        
         // 检查理智值
         if (currentSanity < ACTIVE_SANITY_COST) {
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...心神不足，难以施展仙法..."));
@@ -228,6 +230,8 @@ public class ShuangShengHuaEcho extends Echo {
             
             // 生成链接粒子效果
             spawnLinkParticles(player, targetPlayer);
+            updateState(player);
+            notifyEchoClocks(player);
         } else {
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...双生之花只能与玩家建立链接..."));
         }
@@ -321,11 +325,11 @@ public class ShuangShengHuaEcho extends Echo {
             } else {
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，双生花开..."));
             }
-            
-            setActiveAndUpdate(player, true);
+
+            setActive(true);
             onActivate(player);
         } else {
-            setActiveAndUpdate(player, false);
+            setActive(false);
             onDeactivate(player);
         }
     }
