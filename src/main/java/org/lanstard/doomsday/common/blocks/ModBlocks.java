@@ -31,6 +31,13 @@ public class ModBlocks {
             .noLootTable()
             .noOcclusion()));
 
+    public static final RegistryObject<Block> ECHO_CLOCK = BLOCKS.register("echo_clock",
+        () -> new EchoClockBlock(Block.Properties.copy(net.minecraft.world.level.block.Blocks.BELL)
+            .strength(5.0F)
+            .requiresCorrectToolForDrops()
+            .sound(SoundType.METAL)
+            .noOcclusion()));
+
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);
     }

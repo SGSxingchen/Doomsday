@@ -42,7 +42,7 @@ public class World3DTextRenderer {
         int afterCount = activeTexts.size();
         
         if (beforeCount != afterCount) {
-            LOGGER.debug("移除过期文本: {} -> {}", beforeCount, afterCount);
+            // LOGGER.debug("移除过期文本: {} -> {}", beforeCount, afterCount);
         }
     }
     
@@ -72,11 +72,11 @@ public class World3DTextRenderer {
             Font font = Minecraft.getInstance().font;
             float width = font.width(textData.getText());
             int color = textData.getColor() | ((int)(textData.getCurrentAlpha() * 255.0F) << 24);
-            LOGGER.info("渲染文本属性: width={}, color=0x{}, glowing={}",
-                    width,
-                    Integer.toHexString(color),
-                    textData.isGlowing()
-            );
+            // LOGGER.info("渲染文本属性: width={}, color=0x{}, glowing={}",
+            //         width,
+            //         Integer.toHexString(color),
+            //         textData.isGlowing()
+            // );
 
             font.drawInBatch(
                     textData.getText(),     // 要渲染的文本内容

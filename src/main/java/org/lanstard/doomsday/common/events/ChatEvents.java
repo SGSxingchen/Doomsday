@@ -4,16 +4,20 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ServerChatEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.config.DoomsdayConfig;
 
-@Mod.EventBusSubscriber(modid = Doomsday.MODID)
+@Mod.EventBusSubscriber(modid = Doomsday.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ChatEvents {
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onServerChat(ServerChatEvent event) {
+        // 添加日志以便调试
+        Doomsday.LOGGER.debug("DoomsdayMod: Processing chat event for player: " + event.getPlayer().getName().getString());
+        
         // 如果本地聊天功能未启用，不处理事件
         if (!DoomsdayConfig.ENABLE_LOCAL_CHAT.get()) {
             return;

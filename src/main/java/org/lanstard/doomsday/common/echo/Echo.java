@@ -3,6 +3,7 @@ package org.lanstard.doomsday.common.echo;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+
 public abstract class Echo {
     private final String id;
     private final String name;
@@ -43,6 +44,13 @@ public abstract class Echo {
      * 用于清理效果、重置状态等
      */
     public abstract void onDeactivate(ServerPlayer player);
+    
+    /**
+     * 通知所有回响钟
+     */
+    protected void notifyEchoClocks(ServerPlayer player) {
+        EchoManager.notifyEchoClocks(player, this.getName());
+    }
     
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
@@ -130,8 +138,6 @@ public abstract class Echo {
     protected void setActive(boolean active) {
         if (this.isActive != active) {
             this.isActive = active;
-            // 注意：这里不直接调用updateState，因为我们可能在非ServerPlayer上下文中调用此方法
-            // 状态更新应该由调用者在合适的时机触发
         }
     }
     
@@ -139,7 +145,7 @@ public abstract class Echo {
      * 设置回声的激活状态并立即更新
      * 此方法必须在服务器端调用
      */
-    protected void setActiveAndUpdate(ServerPlayer player, boolean active) {
+    public void setActiveAndUpdate(ServerPlayer player, boolean active) {
         setActive(active);
         updateState(player);
     }
@@ -160,7 +166,6 @@ public abstract class Echo {
         if (!this.canUse(player)) {
             return;
         }
-        
         doUse(player);
     }
     
@@ -178,16 +183,13 @@ public abstract class Echo {
     public void disable(int duration) {
         this.disabledUntil = System.currentTimeMillis() + duration * 50; // 转换游戏刻到毫秒
         if (isActive) {
-            isActive = false;
+            setActive(false);
         }
     }
 
     // 新增：启用回响
     public void enable() {
         this.disabledUntil = 0;
-        if (!isActive) {
-            isActive = true;
-        }
     }
     
     // 新增：检查是否被禁用

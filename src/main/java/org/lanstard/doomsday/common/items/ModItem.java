@@ -63,6 +63,9 @@ public class ModItem {
     public static final RegistryObject<Item> FIELD_BLOCK = ITEMS.register("field_block",
         () -> new BlockItem(ModBlocks.FIELD_BLOCK.get(), new Item.Properties()));
 
+    public static final RegistryObject<Item> ECHO_CLOCK = ITEMS.register("echo_clock",
+        () -> new BlockItem(ModBlocks.ECHO_CLOCK.get(), new Item.Properties()));
+
     public static final RegistryObject<Item> STAR_TICKET = ITEMS.register("star_ticket", () ->
         new Item(new Item.Properties().rarity(Rarity.UNCOMMON)) {
             @Override

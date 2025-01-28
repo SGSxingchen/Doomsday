@@ -22,7 +22,7 @@ public class YuanWuEcho extends Echo {
     private static final int MIN_FAITH = 10;
     private static final int FREE_SANITY_THRESHOLD = 300;
     private static final int SKILL1_COOL_DOWN_TICKS = 12000; // 10分钟 = 10 * 60 * 20 ticks
-    private long cooldownEndTime = 0;
+    private long lastUseTime = 0;
     private static final EchoPreset PRESET = EchoPreset.YUANWU;
 
     public YuanWuEcho() {
@@ -53,10 +53,12 @@ public class YuanWuEcho extends Echo {
 
     @Override
     public boolean doCanUse(ServerPlayer player) {
-
-        long timeMs = cooldownEndTime - System.currentTimeMillis();
-        if (timeMs > 0) {
-            long remainingSeconds = timeMs / 20 / 50;
+        // 检查冷却时间
+        long currentTime = player.level().getGameTime();
+        int cooldown = SanityManager.getFaith(player) >= 5 ? SKILL1_COOL_DOWN_TICKS / 10 : SKILL1_COOL_DOWN_TICKS;
+        
+        if (currentTime - lastUseTime < cooldown) {
+            int remainingSeconds = (int)((cooldown - (currentTime - lastUseTime)) / 20);
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...原物之力尚需" + remainingSeconds + "秒恢复..."));
             return false;
         }
@@ -64,7 +66,6 @@ public class YuanWuEcho extends Echo {
         // 检查信仰和理智
         int faith = SanityManager.getFaith(player);
         int sanity = SanityManager.getSanity(player);
-        
         
         // 当信仰大于等于10且理智小于300时，不消耗理智
         if (faith >= MIN_FAITH && sanity < FREE_SANITY_THRESHOLD) {
@@ -94,7 +95,10 @@ public class YuanWuEcho extends Echo {
 
         if(player.isShiftKeyDown()){
             ItemStack result = new ItemStack(Items.STONE, 1);
-            player.getInventory().add(result.copy());
+            if(!player.getInventory().add(result.copy())) {
+                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...物品栏已满，无法获得物品..."));
+                return;
+            }
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...原物之法显现，获得了 ")
                     .append(result.getHoverName())
                     .append(Component.literal(" ×" + result.getCount())));
@@ -121,16 +125,20 @@ public class YuanWuEcho extends Echo {
             if (!stoneRecipes.isEmpty()) {
                 Recipe<?> selectedRecipe = stoneRecipes.get(new Random().nextInt(stoneRecipes.size()));
                 ItemStack result = selectedRecipe.getResultItem(player.level().registryAccess());
-                player.getInventory().add(result.copy());
+                if(!player.getInventory().add(result.copy())) {
+                    player.sendSystemMessage(Component.literal("§c[十日终焉] §f...物品栏已满，无法获得物品..."));
+                    return;
+                }
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...原物之法显现，获得了 ")
                         .append(result.getHoverName())
                         .append(Component.literal(" ×" + result.getCount())));
             }
-
-            // 设置冷却时间
-            cooldownEndTime = System.currentTimeMillis() + (SKILL1_COOL_DOWN_TICKS * 50); // 50ms per tick
-            updateState(player);
         }
+
+        // 更新使用时间
+        lastUseTime = player.level().getGameTime();
+        updateState(player);
+        notifyEchoClocks(player);
     }
 
     @Override
@@ -141,14 +149,14 @@ public class YuanWuEcho extends Echo {
     @Override
     public CompoundTag toNBT() {
         CompoundTag tag = super.toNBT();
-        tag.putLong("cooldownEndTime", cooldownEndTime);
+        tag.putLong("lastUseTime", lastUseTime);
         return tag;
     }
 
     public static YuanWuEcho fromNBT(CompoundTag tag) {
         YuanWuEcho echo = new YuanWuEcho();
         echo.setActive(tag.getBoolean("isActive"));
-        echo.cooldownEndTime = tag.getLong("cooldownEndTime");
+        echo.lastUseTime = tag.getLong("lastUseTime");
         return echo;
     }
 } 

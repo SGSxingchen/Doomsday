@@ -146,9 +146,27 @@ public class EchoTriggerEvents {
         if (EchoManager.hasSpecificEcho(player, "wangyou")) {
             for (Echo echo : EchoManager.getPlayerEchoes(player)) {
                 if (echo instanceof WangYouEcho && echo.isActive()) {
-                    event.setCanceled(true);
-                    SanityManager.modifySanity(player, -20);
-                    player.sendSystemMessage(Component.literal("§b[十日终焉] §f...忘忧之力将伤害转化为心神之耗..."));
+                    int faith = SanityManager.getFaith(player);
+                    float reduction = WangYouEcho.BASE_DAMAGE_REDUCTION + (faith / 2) * WangYouEcho.FAITH_DAMAGE_REDUCTION;
+                    reduction = Math.min(0.9F, reduction);
+                    
+                    // 计算减免的伤害量
+                    float originalDamage = event.getAmount();
+                    float reducedDamage = originalDamage * (1 - reduction);
+                    float blockedDamage = originalDamage - reducedDamage;
+                    
+                    // 设置减免后的伤害
+                    event.setAmount(reducedDamage);
+                    
+                    // 消耗理智值（每减免1点伤害消耗2点理智）
+                    int sanityCost = Math.round(blockedDamage * 2);
+                    SanityManager.modifySanity(player, -sanityCost);
+                    
+                    // 显示减伤效果和理智消耗
+                    player.sendSystemMessage(Component.literal("§b[十日终焉] §f...忘忧之力减免了")
+                        .append(Component.literal(String.format("%.1f", reduction * 100)))
+                        .append(Component.literal("%的伤害"))
+                        .append(Component.literal(String.format("，消耗%d点心神...", sanityCost))));
                     break;
                 }
             }

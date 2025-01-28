@@ -17,7 +17,10 @@ public class LingShiEcho extends Echo {
     private static final int SANITY_COST = 20;           // 使用消耗
     private static final int FREE_COST_THRESHOLD = 300;  // 免费释放阈值
     private static final int MIN_BELIEF = 10;            // 最小信念要求
-    private static final int RANGE = 10;                 // 检测范围
+    private static final int MID_BELIEF = 5;             // 中等信念要求
+    private static final int BASE_RANGE = 10;            // 基础检测范围
+    private static final int MID_RANGE = 20;             // 中等信念检测范围
+    private static final int HIGH_RANGE = 30;            // 高等信念检测范围
 
     public LingShiEcho() {
         super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), PRESET.getActivationType(), SANITY_COST, 0);
@@ -56,7 +59,10 @@ public class LingShiEcho extends Echo {
     @Override
     protected void doUse(ServerPlayer player) {
         // 获取玩家视线中的目标
-        double reach = RANGE;
+        int faith = SanityManager.getFaith(player);
+        double reach = faith >= MIN_BELIEF ? HIGH_RANGE : 
+                      (faith >= MID_BELIEF ? MID_RANGE : BASE_RANGE);
+                      
         Vec3 eyePosition = player.getEyePosition();
         Vec3 lookVector = player.getLookAngle();
         Vec3 endPos = eyePosition.add(lookVector.x * reach, lookVector.y * reach, lookVector.z * reach);
@@ -77,12 +83,17 @@ public class LingShiEcho extends Echo {
         }
         
         // 检查是否可以免费释放
-        int currentSanity = SanityManager.getSanity(player);
-        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && currentSanity < FREE_COST_THRESHOLD;
+        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && SanityManager.getSanity(player) < FREE_COST_THRESHOLD;
         
         // 消耗理智
         if (!isFree) {
-            SanityManager.modifySanity(player, -SANITY_COST);
+            int actualCost = faith >= MID_BELIEF ? SANITY_COST / 2 : SANITY_COST;
+            SanityManager.modifySanity(player, -actualCost);
+            String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，灵视之力(" + faithLevel + ")已生效..."));
+        } else {
+            String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，灵视之力(" + faithLevel + ")已生效..."));
         }
 
         // 获取目标的回响和理智值
@@ -107,6 +118,7 @@ public class LingShiEcho extends Echo {
             }
             player.sendSystemMessage(Component.literal(message.toString()));
         }
+        notifyEchoClocks(player);
     }
 
     @Override

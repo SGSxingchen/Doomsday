@@ -17,6 +17,9 @@ import org.lanstard.doomsday.common.entities.ModEntities;
 import org.lanstard.doomsday.common.items.ModSpawnEggs;
 import org.lanstard.doomsday.config.DoomsdayConfig;
 import org.lanstard.doomsday.network.ModMessages;
+import org.lanstard.doomsday.common.events.ChatEvents;
+import org.lanstard.doomsday.common.events.InteractionEvents;
+import org.lanstard.doomsday.common.sounds.ModSounds;
 
 @Mod(Doomsday.MODID)
 public class Doomsday {
@@ -26,7 +29,9 @@ public class Doomsday {
     public Doomsday() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         
-
+        // 注册音效
+        ModSounds.register(modEventBus);
+        
         // 注册方块
         ModBlocks.register(modEventBus);
         ModBlockEntities.register(modEventBus);
@@ -44,6 +49,9 @@ public class Doomsday {
 
         // 注册事件监听器
         MinecraftForge.EVENT_BUS.register(this);
+        // 注册聊天和交互事件
+        MinecraftForge.EVENT_BUS.register(new ChatEvents());
+        MinecraftForge.EVENT_BUS.register(new InteractionEvents());
         
         // 注册配方
         ModRecipes.RECIPE_TYPES.register(modEventBus);

@@ -1,27 +1,37 @@
 package org.lanstard.doomsday.common.echo;
 
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkDirection;
 import org.lanstard.doomsday.Doomsday;
+import org.lanstard.doomsday.common.blocks.entity.EchoClockBlockEntity;
 import org.lanstard.doomsday.common.echo.preset.BreakAllEcho;
 import org.lanstard.doomsday.common.events.EchoLifecycleEvents;
 import org.lanstard.doomsday.network.NetworkManager;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 @Mod.EventBusSubscriber(modid = Doomsday.MODID)
 public class EchoManager {
     private static final String DATA_NAME = "doomsday_echo";
     private static EchoSavedData echoData;
     private static MinecraftServer server;
+    // 存储每个维度中的回响钟位置
+    private static final Map<ResourceKey<Level>, Set<BlockPos>> echoClocksPos = new java.util.HashMap<>();
 
     public static void init(MinecraftServer server) {
         EchoManager.server = server;
@@ -30,6 +40,9 @@ public class EchoManager {
             EchoSavedData::new,
             DATA_NAME
         );
+        // 从保存的数据中恢复回响钟位置
+        echoClocksPos.clear();
+        echoClocksPos.putAll(echoData.getEchoClockPositions());
     }
 
     // 获取玩家的回响数据
@@ -134,6 +147,7 @@ public class EchoManager {
                 .append(Component.translatable("message.doomsday.echo_disabled")));
             return false;
         }
+        
         updateEcho(player, echo);
         return true;
     }
@@ -195,6 +209,41 @@ public class EchoManager {
         
         // 同步到客户端
         syncToClient(player);
+    }
+
+    // 修改添加回响钟位置的方法
+    public static void addEchoClock(Level level, BlockPos pos) {
+        echoClocksPos.computeIfAbsent(level.dimension(), k -> new java.util.HashSet<>()).add(pos.immutable());
+        // 保存数据
+        if (echoData != null) {
+            echoData.setEchoClockPositions(echoClocksPos);
+            echoData.setDirty();
+        }
+    }
+
+    // 修改移除回响钟位置的方法
+    public static void removeEchoClock(Level level, BlockPos pos) {
+        Set<BlockPos> positions = echoClocksPos.get(level.dimension());
+        if (positions != null) {
+            positions.remove(pos);
+            // 保存数据
+            if (echoData != null) {
+                echoData.setEchoClockPositions(echoClocksPos);
+                echoData.setDirty();
+            }
+        }
+    }
+
+    // 通知范围内的所有回响钟
+    public static void notifyEchoClocks(ServerPlayer player, String echoName) {
+        Set<BlockPos> positions = echoClocksPos.get(player.level().dimension());
+        if (positions == null) return;
+        positions.forEach(pos -> {
+            BlockEntity blockEntity = player.level().getBlockEntity(pos);
+            if (blockEntity instanceof EchoClockBlockEntity clockEntity) {
+                clockEntity.onEchoUsed(echoName);
+            }
+        });
     }
 
 } 

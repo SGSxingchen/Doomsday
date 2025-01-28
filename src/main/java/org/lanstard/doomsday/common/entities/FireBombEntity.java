@@ -10,14 +10,25 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import org.lanstard.doomsday.common.items.ModItem;
 
 import java.util.List;
 
 public class FireBombEntity extends ThrowableItemProjectile {
-    private static final float MAX_DAMAGE = 10.0f;
-    private static final float MIN_DAMAGE = 4.0f;
-    private static final float EXPLOSION_RADIUS = 4.0f;
+    private static final float BASE_MAX_DAMAGE = 10.0f;      // 基础最大伤害
+    private static final float BASE_MIN_DAMAGE = 4.0f;       // 基础最小伤害
+    private static final float MID_MAX_DAMAGE = 15.0f;       // 中等强化最大伤害
+    private static final float MID_MIN_DAMAGE = 6.0f;        // 中等强化最小伤害
+    private static final float HIGH_MAX_DAMAGE = 20.0f;      // 高等强化最大伤害
+    private static final float HIGH_MIN_DAMAGE = 8.0f;       // 高等强化最小伤害
+    private static final float BASE_RADIUS = 4.0f;           // 基础爆炸半径
+    private static final float MID_RADIUS = 5.0f;            // 中等强化爆炸半径
+    private static final float HIGH_RADIUS = 6.0f;           // 高等强化爆炸半径
+    
+    private int enhancedLevel = 0;    // 0=普通, 1=中等强化, 2=高等强化
 
     public FireBombEntity(EntityType<? extends ThrowableItemProjectile> type, Level level) {
         super(type, level);
@@ -30,6 +41,10 @@ public class FireBombEntity extends ThrowableItemProjectile {
     @Override
     protected Item getDefaultItem() {
         return ModItem.FIRE_BOMB.get();
+    }
+    
+    public void setEnhanced(int level) {
+        this.enhancedLevel = level;
     }
 
     @Override
@@ -49,36 +64,72 @@ public class FireBombEntity extends ThrowableItemProjectile {
     private void explode(Vec3 location) {
         // 生成爆炸粒子效果
         if (level() instanceof ServerLevel serverLevel) {
+            // 根据强化等级调整粒子效果
+            int explosionParticles = enhancedLevel == 2 ? 40 : (enhancedLevel == 1 ? 30 : 20);
+            int cloudParticles = enhancedLevel == 2 ? 100 : (enhancedLevel == 1 ? 75 : 50);
+            float radius = enhancedLevel == 2 ? HIGH_RADIUS : (enhancedLevel == 1 ? MID_RADIUS : BASE_RADIUS);
+            
+            // 爆炸粒子
             serverLevel.sendParticles(ParticleTypes.EXPLOSION,
                 location.x, location.y, location.z,
-                20, // 粒子数量
-                EXPLOSION_RADIUS/2, EXPLOSION_RADIUS/2, EXPLOSION_RADIUS/2, // 扩散范围
-                0.1 // 速度
+                explosionParticles,
+                radius/2, radius/2, radius/2,
+                0.1
             );
             
-            // 生成白色粒子
+            // 白色粒子
             serverLevel.sendParticles(ParticleTypes.CLOUD,
                 location.x, location.y, location.z,
-                50, // 粒子数量
-                EXPLOSION_RADIUS/2, EXPLOSION_RADIUS/2, EXPLOSION_RADIUS/2, // 扩散范围
-                0.1 // 速度
+                cloudParticles,
+                radius/2, radius/2, radius/2,
+                0.1
             );
+            
+            // 强化等级≥1时添加火焰粒子
+            if (enhancedLevel >= 1) {
+                serverLevel.sendParticles(ParticleTypes.FLAME,
+                    location.x, location.y, location.z,
+                    enhancedLevel == 2 ? 60 : 40,
+                    radius/2, radius/2, radius/2,
+                    0.1
+                );
+            }
         }
 
         // 对范围内的生物造成伤害
+        float radius = enhancedLevel == 2 ? HIGH_RADIUS : (enhancedLevel == 1 ? MID_RADIUS : BASE_RADIUS);
         List<LivingEntity> entities = level().getEntitiesOfClass(LivingEntity.class,
-            getBoundingBox().inflate(EXPLOSION_RADIUS));
+            getBoundingBox().inflate(radius));
+
+        float maxDamage = enhancedLevel == 2 ? HIGH_MAX_DAMAGE : (enhancedLevel == 1 ? MID_MAX_DAMAGE : BASE_MAX_DAMAGE);
+        float minDamage = enhancedLevel == 2 ? HIGH_MIN_DAMAGE : (enhancedLevel == 1 ? MID_MIN_DAMAGE : BASE_MIN_DAMAGE);
 
         for (LivingEntity entity : entities) {
             // 计算与爆炸中心的距离
             double distance = entity.position().distanceTo(location);
             
-            if (distance <= EXPLOSION_RADIUS) {
+            if (distance <= radius) {
                 // 根据距离计算伤害值
-                float damage = MAX_DAMAGE - (MAX_DAMAGE - MIN_DAMAGE) * (float)(distance / EXPLOSION_RADIUS);
+                float damage = maxDamage - (maxDamage - minDamage) * (float)(distance / radius);
                 
                 // 造成魔法伤害
                 entity.hurt(level().damageSources().magic(), damage);
+                
+                // 根据强化等级添加额外效果
+                if (enhancedLevel >= 1) {
+                    // 中等强化及以上造成燃烧
+                    int fireDuration = enhancedLevel == 2 ? 10 : 5; // 高等强化10秒,中等强化5秒
+                    entity.setSecondsOnFire(fireDuration);
+                    
+                    if (enhancedLevel == 2) {
+                        // 高等强化额外造成虚弱效果
+                        entity.addEffect(new MobEffectInstance(
+                            MobEffects.WEAKNESS,
+                            100,  // 5秒
+                            0    // 等级I
+                        ));
+                    }
+                }
             }
         }
 
@@ -95,5 +146,31 @@ public class FireBombEntity extends ThrowableItemProjectile {
         if (level().isClientSide) {
             setYRot(-level().getGameTime() * 20); // 让实体旋转
         }
+        
+        // 在服务端产生飞行粒子效果
+        if (!level().isClientSide && enhancedLevel > 0) {
+            if (level() instanceof ServerLevel serverLevel) {
+                int particleCount = enhancedLevel == 2 ? 2 : 1;
+                for (int i = 0; i < particleCount; i++) {
+                    serverLevel.sendParticles(ParticleTypes.FLAME,
+                        this.getX() + (random.nextDouble() - 0.5) * 0.2,
+                        this.getY() + (random.nextDouble() - 0.5) * 0.2,
+                        this.getZ() + (random.nextDouble() - 0.5) * 0.2,
+                        1, 0.0, 0.0, 0.0, 0.0);
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("EnhancedLevel", this.enhancedLevel);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.enhancedLevel = tag.getInt("EnhancedLevel");
     }
 } 

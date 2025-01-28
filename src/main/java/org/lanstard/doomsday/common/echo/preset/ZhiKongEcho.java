@@ -29,6 +29,7 @@ public class ZhiKongEcho extends Echo {
             0,  // 无主动技能消耗
             CONTINUOUS_SANITY_COST
         );
+        setActive(false);
     }
 
     @Override
@@ -63,8 +64,11 @@ public class ZhiKongEcho extends Echo {
                 SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
             }
         }
-        
-        // 根据是否蹲下应用不同效果
+        if(SanityManager.getFaith(player) >= 5 && !player.isCreative() && !player.isSpectator() ) {
+            player.getAbilities().mayfly = true;
+            player.getAbilities().flying = true;
+            player.onUpdateAbilities();
+        }
         if (player.isShiftKeyDown()) {
             // 缓降效果
             player.removeEffect(MobEffects.LEVITATION);
@@ -82,6 +86,11 @@ public class ZhiKongEcho extends Echo {
         // 移除效果
         player.removeEffect(MobEffects.LEVITATION);
         player.removeEffect(MobEffects.SLOW_FALLING);
+        if(SanityManager.getFaith(player) >= 5 && !player.isCreative() && !player.isSpectator()) {
+            player.getAbilities().mayfly = false;
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
+        }
     }
 
     @Override
@@ -105,8 +114,8 @@ public class ZhiKongEcho extends Echo {
             } else {
                 player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，滞空之力显现..."));
             }
-            
             setActiveAndUpdate(player, true);
+            notifyEchoClocks(player);
             onActivate(player);
         } else {
             // 直接关闭，不需要检查理智值

@@ -15,7 +15,7 @@ public class NuoYiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.NUOYI;
     private static final int GIVE_SANITY_COST = 20;          // 给予物品消耗
     private static final int TAKE_SANITY_COST = 40;          // 获取物品消耗
-    private static final int COOL_DOWN = 30 * 20;                // 30秒冷却
+    private static final int COOL_DOWN = 30 * 20;            // 30秒冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
     
@@ -124,7 +124,9 @@ public class NuoYiEcho extends Echo {
 
             // 消耗理智
             if (!freeCost) {
-                SanityManager.modifySanity(player, -TAKE_SANITY_COST);
+                int actualCost = faith >= MIN_FAITH_REQUIREMENT ? TAKE_SANITY_COST / 2 : TAKE_SANITY_COST;
+                SanityManager.modifySanity(player, -actualCost);
+                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神..."));
             }
         } else {
             // 转移副手物品
@@ -147,12 +149,17 @@ public class NuoYiEcho extends Echo {
 
             // 消耗理智
             if (!freeCost) {
-                SanityManager.modifySanity(player, -GIVE_SANITY_COST);
+                int actualCost = faith >= MIN_FAITH_REQUIREMENT ? GIVE_SANITY_COST / 2 : GIVE_SANITY_COST;
+                SanityManager.modifySanity(player, -actualCost);
+                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神..."));
             }
         }
 
         // 设置冷却
-        cooldownEndTime = System.currentTimeMillis() + (COOL_DOWN * 50);
+        long cooldown = faith >= MIN_FAITH_REQUIREMENT ? COOL_DOWN / 2 : COOL_DOWN;
+        cooldownEndTime = System.currentTimeMillis() + (cooldown * 50);
+        updateState(player);
+        notifyEchoClocks(player);
     }
 
     private ItemStack getRandomItemFromInventory(ServerPlayer player) {

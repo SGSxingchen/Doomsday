@@ -128,6 +128,8 @@ public class TiZuiEcho extends Echo {
         }
         player.sendSystemMessage(Component.literal("§b[十日终焉] §f...你与" + boundTargetName + "的命运已然相连..."));
         target.sendSystemMessage(Component.literal("§b[十日终焉] §f..." + player.getName().getString() + "与你立下了替罪之契..."));
+        updateState(player);
+        notifyEchoClocks(player);
     }
 
     @Override

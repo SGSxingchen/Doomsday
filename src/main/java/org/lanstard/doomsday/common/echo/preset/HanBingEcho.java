@@ -12,9 +12,10 @@ import org.lanstard.doomsday.common.entities.IceBlockEntity;
 public class HanBingEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.HANBING;
     private static final int SANITY_COST = 10;               // 理智消耗
-    private static final int COOL_DOWN = 8 * 20;                 // 8秒冷却
-    private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
+    private static final int COOL_DOWN = 8 * 20;             // 8秒冷却
+    private static final int MID_BELIEF = 5;                 // 中等信念要求
     private static final int MIN_BELIEF = 10;                // 最小信念要求
+    private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     
     private long cooldownEndTime = 0;
 
@@ -75,22 +76,45 @@ public class HanBingEcho extends Echo {
         int currentSanity = SanityManager.getSanity(player);
         int currentBelief = SanityManager.getBeliefLevel(player);
         boolean freeCost = currentSanity <= FREE_COST_THRESHOLD && currentBelief >= MIN_BELIEF;
+        
+        // 根据信念等级调整消耗
+        int actualCost = SANITY_COST;
+        if (currentBelief >= MID_BELIEF) {
+            actualCost = SANITY_COST / 2;  // 信念≥5时消耗减半
+        }
+        
         if (!freeCost) {
-            SanityManager.modifySanity(player, -SANITY_COST);
+            SanityManager.modifySanity(player, -actualCost);
         }
 
         // 发射寒冰实体
         Level level = player.level();
         IceBlockEntity iceBlock = new IceBlockEntity(level, player);
-        iceBlock.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+        
+        // 根据信念等级设置冰块特性
+        if (currentBelief >= MID_BELIEF) {
+            iceBlock.setEnhanced(true);  // 设置为增强状态
+            // 增加发射速度和精确度
+            iceBlock.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 2.0F, 0.5F);
+        } else {
+            iceBlock.setEnhanced(false);
+            iceBlock.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+        }
+        
         level.addFreshEntity(iceBlock);
 
         // 设置冷却时间
-        cooldownEndTime = System.currentTimeMillis() + COOL_DOWN * 50; // 转换为毫秒
+        int baseCoolDown = COOL_DOWN;
+        if (currentBelief >= MID_BELIEF) {
+            baseCoolDown = (int)(COOL_DOWN * 0.75);  // 信念≥5时冷却时间减少25%
+        }
+        cooldownEndTime = System.currentTimeMillis() + baseCoolDown * 50;
+        notifyEchoClocks(player);
         updateState(player);
 
         // 发送使用提示
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...寒冰之力爆发，冻结周围的一切..."));
+        String beliefLevel = currentBelief >= MIN_BELIEF ? "坚定" : (currentBelief >= MID_BELIEF ? "稳固" : "微弱");
+        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...寒冰(" + beliefLevel + ")之力爆发，冻结周围的一切..."));
     }
 
     @Override

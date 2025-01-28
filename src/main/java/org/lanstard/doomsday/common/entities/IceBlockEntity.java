@@ -12,13 +12,17 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 
 public class IceBlockEntity extends ThrowableItemProjectile {
-    private static final float DAMAGE = 15.0f;
-    private static final float SPLIT_DAMAGE = 8.0f;
+    private static final float DAMAGE = 16.0f;
+    private static final float ENHANCED_DAMAGE = 24.0f;  // 增强状态伤害
+    private static final float SPLIT_DAMAGE = 10.0f;
+    private static final float ENHANCED_SPLIT_DAMAGE = 15.0f;  // 增强状态分裂伤害
     private static final float SPLIT_SPEED_MULTIPLIER = 0.8f;
     private int splitCount = 0;  // 分裂次数计数
     private static final int MAX_SPLIT = 2;  // 最大分裂次数
+    private boolean enhanced = false;  // 增强状态标记
 
     public IceBlockEntity(EntityType<? extends ThrowableItemProjectile> type, Level level) {
         super(type, level);
@@ -35,29 +39,57 @@ public class IceBlockEntity extends ThrowableItemProjectile {
         this.splitCount = splitCount;
     }
 
+    public void setEnhanced(boolean enhanced) {
+        this.enhanced = enhanced;
+    }
+
     @Override
     protected Item getDefaultItem() {
         return Items.BLUE_ICE;
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if (level().isClientSide && enhanced) {
+            // 增强状态下的粒子效果
+            level().addParticle(ParticleTypes.SNOWFLAKE,
+                getX(), getY(), getZ(),
+                0, 0, 0);
+        }
+    }
+
+    @Override
     protected void onHitEntity(EntityHitResult result) {
         if (!level().isClientSide && result.getEntity() instanceof LivingEntity target) {
-            // 根据是否为分裂箭决定伤害
-            float damage = splitCount > 0 ? SPLIT_DAMAGE : DAMAGE;
+            // 根据是否为分裂箭和增强状态决定伤害
+            float damage = splitCount > 0 ? 
+                (enhanced ? ENHANCED_SPLIT_DAMAGE : SPLIT_DAMAGE) : 
+                (enhanced ? ENHANCED_DAMAGE : DAMAGE);
+            
             target.hurt(damageSources().freeze(), damage);
+            
+            // 增强状态下添加缓慢效果
+            if (enhanced) {
+                target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 
+                    100,  // 5秒
+                    1    // 等级II
+                ));
+            }
             
             // 生成冰冻粒子效果
             if (level() instanceof ServerLevel serverLevel) {
+                int particleCount = enhanced ? 30 : 20;  // 增强状态下更多粒子
                 serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
                     getX(), getY(), getZ(),
-                    20,  // 粒子数量
-                    0.5, 0.5, 0.5,  // 扩散范围
-                    0.1  // 速度
+                    particleCount,
+                    0.5, 0.5, 0.5,
+                    0.1
                 );
             }
             
-            discard();  // 命中后消失
+            discard();
         }
     }
 
@@ -85,6 +117,7 @@ public class IceBlockEntity extends ThrowableItemProjectile {
             for (int i = 0; i < 3; i++) {
                 IceBlockEntity splitArrow = new IceBlockEntity(level(), getOwner() instanceof LivingEntity ? (LivingEntity)getOwner() : null, splitCount + 1);
                 splitArrow.setPos(getX(), getY(), getZ());
+                splitArrow.setEnhanced(this.enhanced);  // 继承增强状态
                 
                 // 计算分散角度（-60度、0度、60度）
                 double angle = Math.PI * 2 * (i - 1) / 3;  // 将360度均分为3份
@@ -102,8 +135,9 @@ public class IceBlockEntity extends ThrowableItemProjectile {
                     .add(splitDirection.scale(1 - reflectionWeight))
                     .normalize();
                 
-                // 设置新的速度（增加1.3倍）
-                Vec3 newMotion = finalDirection.scale(motion.length() * SPLIT_SPEED_MULTIPLIER);
+                // 设置新的速度
+                double speedMultiplier = enhanced ? SPLIT_SPEED_MULTIPLIER * 1.2 : SPLIT_SPEED_MULTIPLIER;
+                Vec3 newMotion = finalDirection.scale(motion.length() * speedMultiplier);
                 splitArrow.setDeltaMovement(newMotion);
                 
                 level().addFreshEntity(splitArrow);
@@ -111,15 +145,30 @@ public class IceBlockEntity extends ThrowableItemProjectile {
             
             // 生成冰冻粒子效果
             if (level() instanceof ServerLevel serverLevel) {
+                int particleCount = enhanced ? 45 : 30;  // 增强状态下更多粒子
                 serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
                     getX(), getY(), getZ(),
-                    30,  // 粒子数量
-                    0.5, 0.5, 0.5,  // 扩散范围
-                    0.1  // 速度
+                    particleCount,
+                    0.5, 0.5, 0.5,
+                    0.1
                 );
             }
         }
         
-        discard();  // 原箭消失
+        discard();
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putBoolean("Enhanced", enhanced);
+        tag.putInt("SplitCount", splitCount);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        enhanced = tag.getBoolean("Enhanced");
+        splitCount = tag.getInt("SplitCount");
     }
 } 
