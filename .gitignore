@@ -121,3 +121,6 @@ runs/
 # Analysis files
 mod_analysis_results.json
 mod_analyzer.py
+
+# 游戏资源文件
+src/十日终焉贴图模型等/
