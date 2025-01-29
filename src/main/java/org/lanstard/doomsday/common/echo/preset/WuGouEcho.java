@@ -65,7 +65,7 @@ public class WuGouEcho extends Echo {
         var start = player.getEyePosition();
         var end = start.add(lookVec.x * EchoConfig.WUGU_BASE_REACH.get(), lookVec.y * EchoConfig.WUGU_BASE_REACH.get(), lookVec.z * EchoConfig.WUGU_BASE_REACH.get());
         
-        var box = player.getBoundingBox().expandTowards(lookVec.x * EchoConfig.WUGU_BASE_REACH.get(), lookVec.y * EchoConfig.WUGU_BASE_REACH.get(), lookVec.z * EchoConfig.WUGU_BASE_REACH.get()).inflate(1.0D);
+        var box = player.getBoundingBox().expandTowards(lookVec.x * EchoConfig.WUGU_BASE_REACH.get(), lookVec.y * EchoConfig.WUGU_BASE_REACH.get(), lookVec.z * EchoConfig.WUGU_BASE_REACH.get()).inflate(EchoConfig.WUGU_TARGET_BOX_INFLATE.get());
         var targets = player.level().getEntitiesOfClass(ServerPlayer.class, box, 
             entity -> entity != player && entity.isPickable() && entity.distanceToSqr(start.x, start.y, start.z) <= EchoConfig.WUGU_BASE_REACH.get() * EchoConfig.WUGU_BASE_REACH.get());
         
@@ -106,7 +106,7 @@ public class WuGouEcho extends Echo {
         
         // 如果信念值大于等于中等信念要求，则恢复量翻倍
         if (faith >= EchoConfig.WUGU_MID_FAITH.get()) {
-            healAmount *= 2;
+            healAmount *= EchoConfig.WUGU_HIGH_FAITH_MULTIPLIER.get().intValue();
             
             // 如果信念值足够高，则进行范围治疗
             final ServerPlayer target = mainTarget;
@@ -115,7 +115,8 @@ public class WuGouEcho extends Echo {
                 entity -> entity != player && entity != target);
                 
             for (var nearbyPlayer : nearbyPlayers) {
-                SanityManager.modifySanity(nearbyPlayer, healAmount / 2);
+                int rangeHealAmount = (int)(healAmount * EchoConfig.WUGU_RANGE_HEAL_RATIO.get());
+                SanityManager.modifySanity(nearbyPlayer, rangeHealAmount);
                 nearbyPlayer.sendSystemMessage(Component.translatable("message.doomsday.wugu.range_heal"));
             }
         }

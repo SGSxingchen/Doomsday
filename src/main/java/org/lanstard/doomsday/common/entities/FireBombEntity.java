@@ -14,20 +14,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import org.lanstard.doomsday.common.items.ModItem;
+import org.lanstard.doomsday.config.EchoConfig;
 
 import java.util.List;
 
 public class FireBombEntity extends ThrowableItemProjectile {
-    private static final float BASE_MAX_DAMAGE = 10.0f;      // 基础最大伤害
-    private static final float BASE_MIN_DAMAGE = 4.0f;       // 基础最小伤害
-    private static final float MID_MAX_DAMAGE = 15.0f;       // 中等强化最大伤害
-    private static final float MID_MIN_DAMAGE = 6.0f;        // 中等强化最小伤害
-    private static final float HIGH_MAX_DAMAGE = 20.0f;      // 高等强化最大伤害
-    private static final float HIGH_MIN_DAMAGE = 8.0f;       // 高等强化最小伤害
-    private static final float BASE_RADIUS = 4.0f;           // 基础爆炸半径
-    private static final float MID_RADIUS = 5.0f;            // 中等强化爆炸半径
-    private static final float HIGH_RADIUS = 6.0f;           // 高等强化爆炸半径
-    
     private int enhancedLevel = 0;    // 0=普通, 1=中等强化, 2=高等强化
 
     public FireBombEntity(EntityType<? extends ThrowableItemProjectile> type, Level level) {
@@ -67,7 +58,7 @@ public class FireBombEntity extends ThrowableItemProjectile {
             // 根据强化等级调整粒子效果
             int explosionParticles = enhancedLevel == 2 ? 40 : (enhancedLevel == 1 ? 30 : 20);
             int cloudParticles = enhancedLevel == 2 ? 100 : (enhancedLevel == 1 ? 75 : 50);
-            float radius = enhancedLevel == 2 ? HIGH_RADIUS : (enhancedLevel == 1 ? MID_RADIUS : BASE_RADIUS);
+            float radius = getRadius();
             
             // 爆炸粒子
             serverLevel.sendParticles(ParticleTypes.EXPLOSION,
@@ -97,12 +88,12 @@ public class FireBombEntity extends ThrowableItemProjectile {
         }
 
         // 对范围内的生物造成伤害
-        float radius = enhancedLevel == 2 ? HIGH_RADIUS : (enhancedLevel == 1 ? MID_RADIUS : BASE_RADIUS);
+        float radius = getRadius();
         List<LivingEntity> entities = level().getEntitiesOfClass(LivingEntity.class,
             getBoundingBox().inflate(radius));
 
-        float maxDamage = enhancedLevel == 2 ? HIGH_MAX_DAMAGE : (enhancedLevel == 1 ? MID_MAX_DAMAGE : BASE_MAX_DAMAGE);
-        float minDamage = enhancedLevel == 2 ? HIGH_MIN_DAMAGE : (enhancedLevel == 1 ? MID_MIN_DAMAGE : BASE_MIN_DAMAGE);
+        float maxDamage = getMaxDamage();
+        float minDamage = getMinDamage();
 
         for (LivingEntity entity : entities) {
             // 计算与爆炸中心的距离
@@ -118,14 +109,16 @@ public class FireBombEntity extends ThrowableItemProjectile {
                 // 根据强化等级添加额外效果
                 if (enhancedLevel >= 1) {
                     // 中等强化及以上造成燃烧
-                    int fireDuration = enhancedLevel == 2 ? 10 : 5; // 高等强化10秒,中等强化5秒
+                    int fireDuration = enhancedLevel == 2 ? 
+                        EchoConfig.FIRE_BOMB_HIGH_BURN_DURATION.get() : 
+                        EchoConfig.FIRE_BOMB_MID_BURN_DURATION.get();
                     entity.setSecondsOnFire(fireDuration);
                     
                     if (enhancedLevel == 2) {
                         // 高等强化额外造成虚弱效果
                         entity.addEffect(new MobEffectInstance(
                             MobEffects.WEAKNESS,
-                            100,  // 5秒
+                            EchoConfig.FIRE_BOMB_WEAKNESS_DURATION.get(),  // 虚弱持续时间
                             0    // 等级I
                         ));
                     }
@@ -135,6 +128,30 @@ public class FireBombEntity extends ThrowableItemProjectile {
 
         // 移除实体
         discard();
+    }
+
+    private float getRadius() {
+        return switch (enhancedLevel) {
+            case 2 -> EchoConfig.FIRE_BOMB_HIGH_RADIUS.get().floatValue();
+            case 1 -> EchoConfig.FIRE_BOMB_MID_RADIUS.get().floatValue();
+            default -> EchoConfig.FIRE_BOMB_BASE_RADIUS.get().floatValue();
+        };
+    }
+
+    private float getMaxDamage() {
+        return switch (enhancedLevel) {
+            case 2 -> EchoConfig.FIRE_BOMB_HIGH_MAX_DAMAGE.get().floatValue();
+            case 1 -> EchoConfig.FIRE_BOMB_MID_MAX_DAMAGE.get().floatValue();
+            default -> EchoConfig.FIRE_BOMB_BASE_MAX_DAMAGE.get().floatValue();
+        };
+    }
+
+    private float getMinDamage() {
+        return switch (enhancedLevel) {
+            case 2 -> EchoConfig.FIRE_BOMB_HIGH_MIN_DAMAGE.get().floatValue();
+            case 1 -> EchoConfig.FIRE_BOMB_MID_MIN_DAMAGE.get().floatValue();
+            default -> EchoConfig.FIRE_BOMB_BASE_MIN_DAMAGE.get().floatValue();
+        };
     }
 
     // 让实体始终面向玩家视角

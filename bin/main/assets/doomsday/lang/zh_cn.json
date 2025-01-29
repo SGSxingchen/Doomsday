@@ -96,5 +96,16 @@
   "message.doomsday.wugu.heal_target_and_nearby": "...无垢之力涤荡心神，为 %s 恢复了 %s 点理智，并对周围 %s 名玩家产生了治疗效果",
   "message.doomsday.wugu.heal_received": "...%s 的无垢之力为你恢复了 %s 点理智",
   "message.doomsday.wugu.heal_nearby_received": "...%s 的无垢之力余波为你恢复了 %s 点理智",
-  "message.doomsday.wugu.not_continuous": "...无垢之力不可持续施展..."
+  "message.doomsday.wugu.not_continuous": "...无垢之力不可持续施展...",
+  "message.doomsday.baoran.cooldown": "...爆燃之法尚需%s秒冷却...",
+  "message.doomsday.baoran.no_items": "...背包中没有可转化的物品...",
+  "message.doomsday.baoran.low_sanity": "...心神不宁，难以施展爆燃之法...",
+  "message.doomsday.baoran.cost": "...消耗了%s点心神之力...",
+  "message.doomsday.baoran.convert.base": "...微弱的爆燃之力转化了%s个物品（最多可转化%s个）...",
+  "message.doomsday.baoran.convert.mid": "...稳固的爆燃之力转化了%s个物品（最多可转化%s个）...",
+  "message.doomsday.baoran.convert.high": "...坚定的爆燃之力转化了%s个物品（最多可转化%s个）...",
+  "message.doomsday.baoran.convert_item.base": "...%s在爆燃之力下化为了普通爆燃弹...",
+  "message.doomsday.baoran.convert_item.mid": "...%s在爆燃之力下化为了中等爆燃弹...",
+  "message.doomsday.baoran.convert_item.high": "...%s在爆燃之力下化为了高等爆燃弹...",
+  "message.doomsday.baoran.not_continuous": "...爆燃之法不支持持续施展..."
 } 
