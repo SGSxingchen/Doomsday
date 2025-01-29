@@ -19,6 +19,7 @@ import net.minecraftforge.network.NetworkDirection;
 import org.lanstard.doomsday.network.packet.DuoXinPoStatusPacket;
 import org.joml.Vector3f;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.MoverType;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,6 +36,9 @@ public class DuoXinPoEcho extends Echo {
     private static final int CONTINUOUS_SANITY_COST = 5; // 每秒持续消耗的理智值
     private static final int ACTIVE_SANITY_COST = 100; // 主动使用消耗的理智值
     private static final int TOGGLE_SANITY_COST = 30; // 开启持续效果的消耗
+    private static final double BASE_MOVEMENT_SPEED = 0.4; // 基础移动速度调整为更合理的值
+    private static final double MOVEMENT_MULTIPLIER = 20.0; // 移动速度倍率
+    private static final int SYNC_INTERVAL = 2; // 同步间隔（ticks）
     
     // 粒子效果相关
     private static final float RED = 1.0F;
@@ -48,10 +52,10 @@ public class DuoXinPoEcho extends Echo {
     private int tickCounter = 0;
     
     // 添加数据包发送限制
-    private static final int PACKET_SEND_INTERVAL = 2; // 每2tick发送一次
     private int packetCounter = 0;
     
     // 只需要记录控制者的上一次角度
+    private Vec3 lastPosition = null;
     private float lastControllerYRot = 0;
     private float lastControllerXRot = 0;
     private float lastControllerYHeadRot = 0;
@@ -223,10 +227,6 @@ public class DuoXinPoEcho extends Echo {
                 .append(targetEntity.getName())
                 .append(Component.literal(" §f已为你所控...")));
             
-            if (targetEntity instanceof Mob mob) {
-                mob.setTarget(null);
-                mob.setNoAi(true);
-            }
             notifyEchoClocks(player);
             updateState(player); // 更新状态
         }
@@ -288,6 +288,30 @@ public class DuoXinPoEcho extends Echo {
     private void handleControlledTargets(ServerPlayer controller) {
         long currentTime = System.currentTimeMillis();
         
+        // 计算控制者的移动
+        Vec3 controllerMotion;
+        if (packetCounter >= SYNC_INTERVAL) {
+            Vec3 currentPos = controller.position();
+            if (lastPosition == null) {
+                lastPosition = currentPos;
+                controllerMotion = Vec3.ZERO;
+            } else {
+                controllerMotion = currentPos.subtract(lastPosition);
+                lastPosition = currentPos;
+            }
+            packetCounter = 0;
+        } else {
+            packetCounter++;
+            return;
+        }
+        
+        // 计算镜像移动
+        Vec3 mirroredMotion = new Vec3(
+            -controllerMotion.x,
+            0,
+            -controllerMotion.z
+        ).scale(0.5);
+        
         // 处理玩家目标
         Iterator<Map.Entry<UUID, Long>> it = controlledTargets.entrySet().iterator();
         while (it.hasNext()) {
@@ -315,20 +339,36 @@ public class DuoXinPoEcho extends Echo {
                 continue;
             }
 
-            // 同步动作
-            syncMovement(controller, target);
+            // 检查距离
+            if (controller.distanceTo(target) > CONTROL_RANGE * 1.5) {
+                controlledTargets.remove(target.getUUID());
+                target.sendSystemMessage(Component.literal("§b[十日终焉] §f...距离过远，夺心之法已解除..."));
+                continue;
+            }
+
+            // 应用移动
+            target.setDeltaMovement(mirroredMotion);
+            
+            // 处理跳跃
+            if (controller.getDeltaMovement().y > 0 && target.onGround()) {
+                target.addDeltaMovement(new Vec3(0, 0.42, 0));
+            }
+
+            // 同步动量到客户端
+            if (!target.level().isClientSide) {
+                target.level().broadcastEntityEvent(target, (byte) 38);
+                for (ServerPlayer players : ((ServerLevel)target.level()).players()) {
+                    players.connection.send(new ClientboundSetEntityMotionPacket(target));
+                }
+            }
             
             // 更新状态显示
-            long remainingTime = (entry.getValue() - currentTime) / 1000; // 转换为秒
-            
-            // 为控制者显示状态
+            long remainingTime = (entry.getValue() - currentTime) / 1000;
             NetworkManager.getChannel().sendTo(
                 new DuoXinPoStatusPacket("controller", target.getName().getString(), remainingTime),
                 controller.connection.connection,
                 NetworkDirection.PLAY_TO_CLIENT
             );
-            
-            // 为被控制者显示状态
             NetworkManager.getChannel().sendTo(
                 new DuoXinPoStatusPacket("controlled", controller.getName().getString(), remainingTime),
                 target.connection.connection,
@@ -346,9 +386,6 @@ public class DuoXinPoEcho extends Echo {
             // 检查控制时间是否结束
             Long endTime = controlledEntityEndTimes.get(entityId);
             if (endTime != null && currentTime > endTime) {
-                if (entity instanceof Mob mob) {
-                    mob.setNoAi(false);
-                }
                 entityIt.remove();
                 controlledEntityEndTimes.remove(entityId);
                 continue;
@@ -357,19 +394,34 @@ public class DuoXinPoEcho extends Echo {
             if (!entity.isAlive()) {
                 entityIt.remove();
                 controlledEntityEndTimes.remove(entityId);
-                if (entity instanceof Mob mob) {
-                    mob.setNoAi(false);
-                }
                 continue;
             }
             
-            // 同步动作
-            syncMovement(controller, entity);
+            // 检查距离
+            if (controller.distanceTo(entity) > CONTROL_RANGE * 1.5) {
+                controlledEntities.remove(entityId);
+                controlledEntityEndTimes.remove(entityId);
+                continue;
+            }
+            
+            // 应用移动
+            entity.setDeltaMovement(mirroredMotion);
+            
+            // 处理跳跃
+            if (controller.getDeltaMovement().y > 0 && entity.onGround()) {
+                entity.addDeltaMovement(new Vec3(0, 0.42, 0));
+            }
+
+            // 同步动量到客户端
+            if (!entity.level().isClientSide) {
+                entity.level().broadcastEntityEvent(entity, (byte) 38);
+                for (ServerPlayer players : ((ServerLevel)entity.level()).players()) {
+                    players.connection.send(new ClientboundSetEntityMotionPacket(entity));
+                }
+            }
             
             // 计算并显示剩余时间
             long remainingTime = endTime != null ? (endTime - currentTime) / 1000 : 30;
-            
-            // 为控制者显示状态
             NetworkManager.getChannel().sendTo(
                 new DuoXinPoStatusPacket("controller", entity.getName().getString(), remainingTime),
                 controller.connection.connection,
@@ -377,90 +429,31 @@ public class DuoXinPoEcho extends Echo {
             );
         }
         
-        // 当目标列表发生变化时，更新状态
+        // 更新视角
         if (!controlledTargets.isEmpty() || !controlledEntities.isEmpty()) {
-            updateState(controller);
-        }
-    }
-
-    private void syncMovement(ServerPlayer controller, LivingEntity target) {
-        try {
-            // 增加距离检查
-            if (controller.distanceTo(target) > CONTROL_RANGE * 1.5) {
-                // 如果距离过远，自动解除控制
-                if (target instanceof ServerPlayer targetPlayer) {
-                    controlledTargets.remove(targetPlayer.getUUID());
-                    targetPlayer.sendSystemMessage(Component.literal("§b[十日终焉] §f...距离过远，夺心之法已解除..."));
-                } else {
-                    UUID entityId = null;
-                    for (Map.Entry<UUID, LivingEntity> entry : controlledEntities.entrySet()) {
-                        if (entry.getValue() == target) {
-                            entityId = entry.getKey();
-                            break;
-                        }
-                    }
-                    if (entityId != null) {
-                        controlledEntities.remove(entityId);
-                        controlledEntityEndTimes.remove(entityId);
-                        if (target instanceof Mob mob) {
-                            mob.setNoAi(false);
-                        }
-                    }
-                }
-                return;
-            }
-
-            // 限制数据包发送频率
-            packetCounter++;
-            if (packetCounter >= PACKET_SEND_INTERVAL) {
-                packetCounter = 0;
-                
-                // 计算中点位置
-                Vec3 controllerPos = controller.position();
-                Vec3 targetPos = target.position();
-                // Vec3 midPoint = controllerPos.add(targetPos).scale(0.5);
-                
-                // 计算控制者相对于中点的位移
-                Vec3 controllerMotion = controller.getDeltaMovement();
-                
-                // 计算镜像位移
-                Vec3 mirroredMotion = new Vec3(
-                    -controllerMotion.x,
-                    controllerMotion.y,
-                    -controllerMotion.z
-                );
-                
-                // 应用镜像移动
-                target.setDeltaMovement(mirroredMotion);
-                
-                // 同步动量到客户端
-                if (!target.level().isClientSide) {
-                    target.level().broadcastEntityEvent(target, (byte) 38);
-                    for (ServerPlayer players : ((ServerLevel)target.level()).players()) {
-                        players.connection.send(new ClientboundSetEntityMotionPacket(target));
-                    }
-                }
-                
-                // 计算控制者的角度变化
-                float yRotDelta = controller.getYRot() - lastControllerYRot;
-                float xRotDelta = controller.getXRot() - lastControllerXRot;
-                float yHeadRotDelta = controller.getYHeadRot() - lastControllerYHeadRot;
-                
-                // 应用镜像旋转（水平旋转需要反向）
-                target.setYRot(target.getYRot() - yRotDelta);
-                target.setXRot(Mth.clamp(target.getXRot() + xRotDelta, -90.0F, 90.0F));
-                
-                if (target instanceof ServerPlayer targetPlayer) {
-                    // 对玩家特别处理头部旋转（同样需要反向）
-                    targetPlayer.setYHeadRot(targetPlayer.getYHeadRot() - yHeadRotDelta);
+            // 计算控制者的角度变化
+            float yRotDelta = controller.getYRot() - lastControllerYRot;
+            float xRotDelta = controller.getXRot() - lastControllerXRot;
+            float yHeadRotDelta = controller.getYHeadRot() - lastControllerYHeadRot;
+            
+            // 更新所有目标的视角
+            for (ServerPlayer target : controller.getServer().getPlayerList().getPlayers()) {
+                if (controlledTargets.containsKey(target.getUUID())) {
+                    target.setYRot(target.getYRot() - yRotDelta);
+                    target.setXRot(Mth.clamp(target.getXRot() + xRotDelta, -90.0F, 90.0F));
+                    target.setYHeadRot(target.getYHeadRot() - yHeadRotDelta);
                     
-                    // 广播头部旋转到所有客户端
                     for (ServerPlayer player : controller.getServer().getPlayerList().getPlayers()) {
-                        player.connection.send(new ClientboundRotateHeadPacket(targetPlayer, 
-                            (byte)(targetPlayer.getYHeadRot() * 256.0F / 360.0F)));
+                        player.connection.send(new ClientboundRotateHeadPacket(target, 
+                            (byte)(target.getYHeadRot() * 256.0F / 360.0F)));
                     }
-                } else if (target instanceof Mob mob) {
-                    // Mob的头部旋转跟随身体旋转
+                }
+            }
+            
+            for (LivingEntity entity : controlledEntities.values()) {
+                if (entity instanceof Mob mob) {
+                    mob.setYRot(mob.getYRot() - yRotDelta);
+                    mob.setXRot(Mth.clamp(mob.getXRot() + xRotDelta, -90.0F, 90.0F));
                     mob.yHeadRot = mob.getYRot();
                     mob.yHeadRotO = mob.yHeadRot;
                     
@@ -469,38 +462,17 @@ public class DuoXinPoEcho extends Echo {
                             (byte)(mob.yHeadRot * 256.0F / 360.0F)));
                     }
                 }
-                
-                // 更新控制者的上一次角度记录
-                lastControllerYRot = controller.getYRot();
-                lastControllerXRot = controller.getXRot();
-                lastControllerYHeadRot = controller.getYHeadRot();
             }
             
-            // 同步跳跃（镜像效果）
-            if (controller.getDeltaMovement().y > 0 && target.onGround()) {
-                Vec3 currentMotion = target.getDeltaMovement();
-                target.setDeltaMovement(new Vec3(-currentMotion.x, 0.42, -currentMotion.z));
-                
-                if (!target.level().isClientSide) {
-                    target.level().broadcastEntityEvent(target, (byte) 38);
-                    for (ServerPlayer players : ((ServerLevel)target.level()).players()) {
-                        players.connection.send(new ClientboundSetEntityMotionPacket(target));
-                    }
-                }
-            }
+            // 更新控制者的上一次角度记录
+            lastControllerYRot = controller.getYRot();
+            lastControllerXRot = controller.getXRot();
+            lastControllerYHeadRot = controller.getYHeadRot();
             
-        } catch (Exception e) {
-            // 发生错误时解除控制
-            if (target instanceof ServerPlayer targetPlayer) {
-                controlledTargets.remove(targetPlayer.getUUID());
-            } else {
-                controlledEntities.clear();
-                controlledEntities.clear();
-                controlledEntityEndTimes.clear();
-            }
+            updateState(controller);
         }
     }
-    
+
     private void spawnConnectionParticles(ServerPlayer player, LivingEntity target) {
         if (!(player.level() instanceof ServerLevel serverLevel)) return;
         
@@ -630,13 +602,9 @@ public class DuoXinPoEcho extends Echo {
     // 添加清理方法
     private void cleanup() {
         controlledTargets.clear();
-        for (LivingEntity entity : controlledEntities.values()) {
-            if (entity instanceof Mob mob) {
-                mob.setNoAi(false);
-            }
-        }
         controlledEntities.clear();
         controlledEntityEndTimes.clear();
+        lastPosition = null;
         lastControllerYRot = 0;
         lastControllerXRot = 0;
         lastControllerYHeadRot = 0;

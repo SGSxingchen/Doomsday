@@ -55,7 +55,7 @@ public class EchoEffectEvents {
             for (Echo echo : EchoManager.getPlayerEchoes(otherPlayer)) {
                 if (echo instanceof ShuangShengHuaEcho shuangShengHuaEcho) {
                     if (shuangShengHuaEcho.isLinkedWith(player)) {
-                        if(shuangShengHuaEcho.onDamage(player, event.getAmount(), true)){
+                        if(shuangShengHuaEcho.onDamage(player, event.getAmount(), false)){
                             event.setCanceled(true);
                         }
                         return;
