@@ -1,7 +1,6 @@
 package org.lanstard.doomsday.common.blocks.entity;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -9,7 +8,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.lanstard.doomsday.client.renderer.world3DText.World3DTextPreset;
 import org.lanstard.doomsday.common.echo.EchoManager;
 import org.lanstard.doomsday.common.sounds.ModSounds;
 import org.lanstard.doomsday.network.NetworkManager;
@@ -22,7 +20,6 @@ public class EchoClockBlockEntity extends BlockEntity {
     private static final int TEXT_DISPLAY_DURATION = 3 * 60 * 1000; // 3分钟 = 3 * 60 * 20 ticks
     private static final float TEXT_SCALE = 5.0f;
     private static final int TEXT_COLOR = 0xFFFFFF;
-    private static final double EFFECT_RANGE = 64.0; // 64格范围
     
     // 添加随机偏移范围
     private static final double OFFSET_RANGE = 1.0; // 随机偏移±2格
@@ -71,7 +68,7 @@ public class EchoClockBlockEntity extends BlockEntity {
                     worldPosition.getY() + 0.5 + offset[1],
                     worldPosition.getZ() + 0.5 + offset[2],
                     ModSounds.CLOCK.get(),
-                    SoundSource.MASTER,
+                    SoundSource.BLOCKS,
                     8.0F,  // 增加音量
                     1.0F   // 音调
                 );
