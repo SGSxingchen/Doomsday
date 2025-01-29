@@ -46,6 +46,12 @@ public class EchoConfig {
     public static final ForgeConfigSpec.IntValue FIRE_BOMB_MID_BURN_DURATION;
     public static final ForgeConfigSpec.IntValue FIRE_BOMB_HIGH_BURN_DURATION;
     public static final ForgeConfigSpec.IntValue FIRE_BOMB_WEAKNESS_DURATION;
+    public static final ForgeConfigSpec.DoubleValue FIRE_BOMB_BASE_SPEED;
+    public static final ForgeConfigSpec.DoubleValue FIRE_BOMB_MID_SPEED;
+    public static final ForgeConfigSpec.DoubleValue FIRE_BOMB_HIGH_SPEED;
+    public static final ForgeConfigSpec.DoubleValue FIRE_BOMB_BASE_INACCURACY;
+    public static final ForgeConfigSpec.DoubleValue FIRE_BOMB_MID_INACCURACY;
+    public static final ForgeConfigSpec.DoubleValue FIRE_BOMB_HIGH_INACCURACY;
 
     static {
         BUILDER.comment("十日终焉 - 回响配置");
@@ -190,6 +196,30 @@ public class EchoConfig {
         FIRE_BOMB_WEAKNESS_DURATION = BUILDER
             .comment("爆燃弹高等强化虚弱效果持续时间（tick）")
             .defineInRange("weakness_duration", 100, 20, 1200);
+            
+        FIRE_BOMB_BASE_SPEED = BUILDER
+            .comment("爆燃弹基础投掷速度")
+            .defineInRange("base_speed", 1.5, 0.1, 10.0);
+            
+        FIRE_BOMB_MID_SPEED = BUILDER
+            .comment("爆燃弹中等强化投掷速度")
+            .defineInRange("mid_speed", 1.75, 0.1, 10.0);
+            
+        FIRE_BOMB_HIGH_SPEED = BUILDER
+            .comment("爆燃弹高等强化投掷速度")
+            .defineInRange("high_speed", 2.0, 0.1, 10.0);
+            
+        FIRE_BOMB_BASE_INACCURACY = BUILDER
+            .comment("爆燃弹基础不精确度（越大越不精确）")
+            .defineInRange("base_inaccuracy", 1.0, 0.0, 5.0);
+            
+        FIRE_BOMB_MID_INACCURACY = BUILDER
+            .comment("爆燃弹中等强化不精确度（越大越不精确）")
+            .defineInRange("mid_inaccuracy", 0.75, 0.0, 5.0);
+            
+        FIRE_BOMB_HIGH_INACCURACY = BUILDER
+            .comment("爆燃弹高等强化不精确度（越大越不精确）")
+            .defineInRange("high_inaccuracy", 0.5, 0.0, 5.0);
             
         BUILDER.pop();
 

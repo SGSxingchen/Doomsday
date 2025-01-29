@@ -107,5 +107,11 @@
   "message.doomsday.baoran.convert_item.base": "...%s在爆燃之力下化为了普通爆燃弹...",
   "message.doomsday.baoran.convert_item.mid": "...%s在爆燃之力下化为了中等爆燃弹...",
   "message.doomsday.baoran.convert_item.high": "...%s在爆燃之力下化为了高等爆燃弹...",
-  "message.doomsday.baoran.not_continuous": "...爆燃之法不支持持续施展..."
+  "message.doomsday.baoran.not_continuous": "...爆燃之法不支持持续施展...",
+  "item.doomsday.fire_bomb.enhance_level.base": "§6强化等级: 普通",
+  "item.doomsday.fire_bomb.enhance_level.mid": "§6强化等级: 中等",
+  "item.doomsday.fire_bomb.enhance_level.high": "§6强化等级: 高等",
+  "item.doomsday.fire_bomb.damage": "§c伤害: %s-%s",
+  "item.doomsday.fire_bomb.effect.mid": "§7效果: 燃烧(%s秒)",
+  "item.doomsday.fire_bomb.effect.high": "§7效果: 燃烧(%s秒) + 虚弱(%s秒)"
 } 

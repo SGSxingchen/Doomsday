@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.chat.Component;
 import org.lanstard.doomsday.common.entities.FireBombEntity;
+import org.lanstard.doomsday.config.EchoConfig;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -32,17 +33,17 @@ public class FireBombItem extends Item {
             }
             
             // 根据强化等级调整投掷速度和精确度
-            float speed = 1.5F;
-            float inaccuracy = 1.0F;
+            float speed = EchoConfig.FIRE_BOMB_BASE_SPEED.get().floatValue();
+            float inaccuracy = EchoConfig.FIRE_BOMB_BASE_INACCURACY.get().floatValue();
             
             if (itemstack.hasTag()) {
                 int enhancedLevel = itemstack.getTag().getInt("EnhancedLevel");
                 if (enhancedLevel >= 2) {
-                    speed = 2.0F;
-                    inaccuracy = 0.5F;
+                    speed = EchoConfig.FIRE_BOMB_HIGH_SPEED.get().floatValue();
+                    inaccuracy = EchoConfig.FIRE_BOMB_HIGH_INACCURACY.get().floatValue();
                 } else if (enhancedLevel >= 1) {
-                    speed = 1.75F;
-                    inaccuracy = 0.75F;
+                    speed = EchoConfig.FIRE_BOMB_MID_SPEED.get().floatValue();
+                    inaccuracy = EchoConfig.FIRE_BOMB_MID_INACCURACY.get().floatValue();
                 }
             }
             
@@ -65,19 +66,32 @@ public class FireBombItem extends Item {
         // 添加强化等级提示
         if (stack.hasTag() && stack.getTag().contains("EnhancedLevel")) {
             int enhancedLevel = stack.getTag().getInt("EnhancedLevel");
-            String levelText = enhancedLevel >= 2 ? "高等" : (enhancedLevel >= 1 ? "中等" : "普通");
-            tooltip.add(Component.literal("§6强化等级: " + levelText));
+            String levelKey = enhancedLevel >= 2 ? "high" : (enhancedLevel >= 1 ? "mid" : "base");
+            tooltip.add(Component.translatable("item.doomsday.fire_bomb.enhance_level." + levelKey));
             
             // 添加伤害提示
-            float maxDamage = enhancedLevel >= 2 ? 20.0f : (enhancedLevel >= 1 ? 15.0f : 10.0f);
-            float minDamage = enhancedLevel >= 2 ? 8.0f : (enhancedLevel >= 1 ? 6.0f : 4.0f);
-            tooltip.add(Component.literal("§c伤害: " + minDamage + "-" + maxDamage));
+            float maxDamage;
+            float minDamage;
+            if (enhancedLevel >= 2) {
+                maxDamage = EchoConfig.FIRE_BOMB_HIGH_MAX_DAMAGE.get().floatValue();
+                minDamage = EchoConfig.FIRE_BOMB_HIGH_MIN_DAMAGE.get().floatValue();
+            } else if (enhancedLevel >= 1) {
+                maxDamage = EchoConfig.FIRE_BOMB_MID_MAX_DAMAGE.get().floatValue();
+                minDamage = EchoConfig.FIRE_BOMB_MID_MIN_DAMAGE.get().floatValue();
+            } else {
+                maxDamage = EchoConfig.FIRE_BOMB_BASE_MAX_DAMAGE.get().floatValue();
+                minDamage = EchoConfig.FIRE_BOMB_BASE_MIN_DAMAGE.get().floatValue();
+            }
+            tooltip.add(Component.translatable("item.doomsday.fire_bomb.damage", minDamage, maxDamage));
             
             // 添加效果提示
             if (enhancedLevel >= 2) {
-                tooltip.add(Component.literal("§7效果: 燃烧(10秒) + 虚弱(5秒)"));
+                tooltip.add(Component.translatable("item.doomsday.fire_bomb.effect.high", 
+                    EchoConfig.FIRE_BOMB_HIGH_BURN_DURATION.get(),
+                    EchoConfig.FIRE_BOMB_WEAKNESS_DURATION.get() / 20));
             } else if (enhancedLevel >= 1) {
-                tooltip.add(Component.literal("§7效果: 燃烧(5秒)"));
+                tooltip.add(Component.translatable("item.doomsday.fire_bomb.effect.mid",
+                    EchoConfig.FIRE_BOMB_MID_BURN_DURATION.get()));
             }
         }
     }
