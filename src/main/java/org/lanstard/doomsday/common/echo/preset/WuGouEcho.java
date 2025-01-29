@@ -109,9 +109,10 @@ public class WuGouEcho extends Echo {
             healAmount *= 2;
             
             // 如果信念值足够高，则进行范围治疗
+            final ServerPlayer target = mainTarget;
             var nearbyPlayers = player.level().getEntitiesOfClass(ServerPlayer.class, 
-                mainTarget.getBoundingBox().inflate(EchoConfig.WUGU_HIGH_FAITH_RANGE.get()),
-                entity -> entity != player && entity != mainTarget);
+                target.getBoundingBox().inflate(EchoConfig.WUGU_HIGH_FAITH_RANGE.get()),
+                entity -> entity != player && entity != target);
                 
             for (var nearbyPlayer : nearbyPlayers) {
                 SanityManager.modifySanity(nearbyPlayer, healAmount / 2);
