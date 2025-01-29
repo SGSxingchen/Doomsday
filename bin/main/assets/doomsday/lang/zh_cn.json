@@ -87,5 +87,14 @@
   "item.doomsday.white_coat": "白大褂",
   "item.doomsday.white_coat.tooltip": "蕴含着无垢之力的神秘衣物",
   "item.doomsday.growth_seed": "催熟之种",
-  "item.doomsday.growth_seed.tooltip": "蕴含着茂木之力的神秘种子"
+  "item.doomsday.growth_seed.tooltip": "蕴含着茂木之力的神秘种子",
+  "message.doomsday.wugu.cooldown": "...无垢之力尚需%s秒恢复...",
+  "message.doomsday.wugu.low_sanity": "...理智不足，无法使用无垢回响",
+  "message.doomsday.wugu.no_target": "...未找到合适的目标...",
+  "message.doomsday.wugu.self_target": "...无法对自己使用无垢回响...",
+  "message.doomsday.wugu.heal_target": "...无垢之力涤荡心神，为 %s 恢复了 %s 点理智",
+  "message.doomsday.wugu.heal_target_and_nearby": "...无垢之力涤荡心神，为 %s 恢复了 %s 点理智，并对周围 %s 名玩家产生了治疗效果",
+  "message.doomsday.wugu.heal_received": "...%s 的无垢之力为你恢复了 %s 点理智",
+  "message.doomsday.wugu.heal_nearby_received": "...%s 的无垢之力余波为你恢复了 %s 点理智",
+  "message.doomsday.wugu.not_continuous": "...无垢之力不可持续施展..."
 } 

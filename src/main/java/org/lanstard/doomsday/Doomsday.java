@@ -16,6 +16,7 @@ import org.lanstard.doomsday.common.blocks.entity.ModBlockEntities;
 import org.lanstard.doomsday.common.effects.ModEffects;
 import org.lanstard.doomsday.common.entities.ModEntities;
 import org.lanstard.doomsday.config.DoomsdayConfig;
+import org.lanstard.doomsday.config.EchoConfig;
 import org.lanstard.doomsday.network.ModMessages;
 import org.lanstard.doomsday.common.events.ChatEvents;
 import org.lanstard.doomsday.common.events.InteractionEvents;
@@ -66,5 +67,6 @@ public class Doomsday {
         
         // 注册配置（最后注册）
         DoomsdayConfig.register();
+        EchoConfig.register();
     }
 }

@@ -21,7 +21,7 @@ public class JingLeiEcho extends Echo {
     private static final int FREE_COST_THRESHOLD = 300;
     private static final int RANGE = 64;
     private static final int BASE_COOL_DOWN = 10 * 20;       // 基础冷却8秒
-    private static final float BASE_DAMAGE = 15.0f;          // 基础伤害
+    private static final float BASE_DAMAGE = 12.0f;          // 基础伤害
     private static final float DAMAGE_PER_FAITH = 1.5f;     // 每点信念增加的伤害
     private long lastUseTime = 0;
 

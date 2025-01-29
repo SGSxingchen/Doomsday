@@ -10,7 +10,7 @@ public class DoomsdayConfig {
 
     public static final ForgeConfigSpec.IntValue ECHO_ITEM_HEALTH_REDUCTION;
     public static final ForgeConfigSpec.IntValue ECHO_ITEM_SANITY_REDUCTION;
-
+    
     // 本地聊天配置
     public static final ForgeConfigSpec.BooleanValue ENABLE_LOCAL_CHAT;
     public static final ForgeConfigSpec.DoubleValue LOCAL_CHAT_RANGE;
@@ -44,6 +44,6 @@ public class DoomsdayConfig {
     }
 
     public static void register() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC, "doomsday.toml");
     }
 } 

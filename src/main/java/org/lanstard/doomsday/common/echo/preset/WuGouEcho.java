@@ -6,16 +6,9 @@ import net.minecraft.network.chat.Component;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import org.lanstard.doomsday.common.echo.EchoPreset;
+import org.lanstard.doomsday.config.EchoConfig;
 
 public class WuGouEcho extends Echo {
-    private static final int SANITY_COST = 100;
-    private static final int SANITY_HEAL = 200;
-    private static final int MIN_FAITH = 10;
-    private static final int MID_FAITH = 5;  // 添加中等信念要求
-    private static final int FREE_SANITY_THRESHOLD = 300;
-    private static final int COOL_DOWN_TICKS = 1200; // 1分钟 = 60 * 20 ticks
-    private static final double BASE_REACH = 32.0D;
-    private static final double HIGH_FAITH_RANGE = 3.0D; // 高信念时的范围治疗半径
     private long lastUseTime = 0;
     private static final EchoPreset PRESET = EchoPreset.WUGU;
 
@@ -25,7 +18,7 @@ public class WuGouEcho extends Echo {
             PRESET.getDisplayName(),
             PRESET.getType(),
             PRESET.getActivationType(),
-            SANITY_COST,
+            EchoConfig.WUGU_SANITY_COST.get(),
             0
         );
     }
@@ -47,25 +40,18 @@ public class WuGouEcho extends Echo {
 
     @Override
     public boolean doCanUse(ServerPlayer player) {
-        long timeMs = lastUseTime - System.currentTimeMillis();
-        if (timeMs > 0) {
-            long remainingSeconds = timeMs / 20 / 50;
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...无垢之力尚需" + remainingSeconds + "秒恢复..."));
+        long currentTime = player.level().getGameTime();
+        if (currentTime < lastUseTime + EchoConfig.WUGU_COOLDOWN_TICKS.get()) {
+            long remainingTicks = lastUseTime + EchoConfig.WUGU_COOLDOWN_TICKS.get() - currentTime;
+            long remainingSeconds = remainingTicks / 20;
+            player.sendSystemMessage(Component.translatable("message.doomsday.wugu.cooldown", remainingSeconds));
             return false;
         }
         
-        // 检查信仰和理智
-        int faith = SanityManager.getFaith(player);
+        // 检查理智值是否足够
         int sanity = SanityManager.getSanity(player);
-        
-        // 当信仰大于等于10且理智小于300时，不消耗理智
-        if (faith >= MIN_FAITH && sanity < FREE_SANITY_THRESHOLD) {
-            return true;
-        }
-        
-        // 其他情况需要消耗理智
-        if (sanity < SANITY_COST) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...理智不足，无法使用无垢回响"));
+        if (sanity < EchoConfig.WUGU_SANITY_COST.get()) {
+            player.sendSystemMessage(Component.translatable("message.doomsday.wugu.low_sanity"));
             return false;
         }
         
@@ -74,19 +60,14 @@ public class WuGouEcho extends Echo {
 
     @Override
     protected void doUse(ServerPlayer player) {
-        // 检查是否需要消耗理智值
-        int currentSanity = SanityManager.getSanity(player);
-        int faith = SanityManager.getFaith(player);
-        boolean freeCast = faith >= MIN_FAITH && currentSanity < FREE_SANITY_THRESHOLD;
-        
         // 获取玩家视线所指的目标
         var lookVec = player.getLookAngle();
         var start = player.getEyePosition();
-        var end = start.add(lookVec.x * BASE_REACH, lookVec.y * BASE_REACH, lookVec.z * BASE_REACH);
+        var end = start.add(lookVec.x * EchoConfig.WUGU_BASE_REACH.get(), lookVec.y * EchoConfig.WUGU_BASE_REACH.get(), lookVec.z * EchoConfig.WUGU_BASE_REACH.get());
         
-        var box = player.getBoundingBox().expandTowards(lookVec.x * BASE_REACH, lookVec.y * BASE_REACH, lookVec.z * BASE_REACH).inflate(1.0D);
+        var box = player.getBoundingBox().expandTowards(lookVec.x * EchoConfig.WUGU_BASE_REACH.get(), lookVec.y * EchoConfig.WUGU_BASE_REACH.get(), lookVec.z * EchoConfig.WUGU_BASE_REACH.get()).inflate(1.0D);
         var targets = player.level().getEntitiesOfClass(ServerPlayer.class, box, 
-            entity -> entity != player && entity.isPickable() && entity.distanceToSqr(start.x, start.y, start.z) <= BASE_REACH * BASE_REACH);
+            entity -> entity != player && entity.isPickable() && entity.distanceToSqr(start.x, start.y, start.z) <= EchoConfig.WUGU_BASE_REACH.get() * EchoConfig.WUGU_BASE_REACH.get());
         
         ServerPlayer mainTarget = null;
         double minDist = Double.MAX_VALUE;
@@ -105,85 +86,53 @@ public class WuGouEcho extends Echo {
         }
         
         if (mainTarget == null) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...未找到合适的目标..."));
+            player.sendSystemMessage(Component.translatable("message.doomsday.wugu.no_target"));
             return;
         }
         
         if (mainTarget == player) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...无法对自己使用无垢回响..."));
+            player.sendSystemMessage(Component.translatable("message.doomsday.wugu.self_target"));
             return;
         }
-
-        // 计算治疗量
-        int healAmount = SANITY_HEAL;
-        if (faith >= MID_FAITH) {
-            healAmount = (int)(SANITY_HEAL * 1.5); // 信念≥5时提升50%治疗量
-        }
         
-        // 只有在不满足免费释放条件时才消耗理智
-        if (!freeCast) {
-            SanityManager.modifySanity(player, -SANITY_COST);
-        }
-
-        // 恢复主目标的理智值
-        final ServerPlayer finalMainTarget = mainTarget; // 创建final变量
-        SanityManager.modifySanity(finalMainTarget, healAmount);
+        // 获取玩家的信念值
+        int faith = SanityManager.getFaith(player);
         
-        // 信念≥5时，对主目标周围的玩家进行范围治疗
-        if (faith >= MID_FAITH) {
-            var nearbyPlayers = finalMainTarget.level().getEntitiesOfClass(ServerPlayer.class, 
-                finalMainTarget.getBoundingBox().inflate(HIGH_FAITH_RANGE),
-                entity -> entity != finalMainTarget && entity != player);
-                
-            for (ServerPlayer nearbyPlayer : nearbyPlayers) {
-                SanityManager.modifySanity(nearbyPlayer, healAmount / 2); // 范围治疗效果为主目标的50%
-                nearbyPlayer.sendSystemMessage(Component.literal("§b[十日终焉] §f...")
-                    .append(player.getDisplayName())
-                    .append(Component.literal(" 的无垢之力余波为你恢复了 "))
-                    .append(Component.literal(String.valueOf(healAmount / 2)))
-                    .append(Component.literal(" 点理智")));
-            }
+        // 消耗理智值
+        SanityManager.modifySanity(player, -EchoConfig.WUGU_SANITY_COST.get());
+        
+        // 恢复目标玩家的理智值
+        int healAmount = EchoConfig.WUGU_SANITY_HEAL.get();
+        
+        // 如果信念值大于等于中等信念要求，则恢复量翻倍
+        if (faith >= EchoConfig.WUGU_MID_FAITH.get()) {
+            healAmount *= 2;
             
-            // 发送范围治疗效果的消息
-            if (!nearbyPlayers.isEmpty()) {
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...无垢之力涤荡心神，为 ")
-                    .append(finalMainTarget.getDisplayName())
-                    .append(Component.literal(" 恢复了 "))
-                    .append(Component.literal(String.valueOf(healAmount)))
-                    .append(Component.literal(" 点理智，并对周围 "))
-                    .append(Component.literal(String.valueOf(nearbyPlayers.size())))
-                    .append(Component.literal(" 名玩家产生了治疗效果")));
-            } else {
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...无垢之力涤荡心神，为 ")
-                    .append(finalMainTarget.getDisplayName())
-                    .append(Component.literal(" 恢复了 "))
-                    .append(Component.literal(String.valueOf(healAmount)))
-                    .append(Component.literal(" 点理智")));
+            // 如果信念值足够高，则进行范围治疗
+            var nearbyPlayers = player.level().getEntitiesOfClass(ServerPlayer.class, 
+                mainTarget.getBoundingBox().inflate(EchoConfig.WUGU_HIGH_FAITH_RANGE.get()),
+                entity -> entity != player && entity != mainTarget);
+                
+            for (var nearbyPlayer : nearbyPlayers) {
+                SanityManager.modifySanity(nearbyPlayer, healAmount / 2);
+                nearbyPlayer.sendSystemMessage(Component.translatable("message.doomsday.wugu.range_heal"));
             }
-        } else {
-            // 原始效果的消息
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...无垢之力涤荡心神，为 ")
-                .append(finalMainTarget.getDisplayName())
-                .append(Component.literal(" 恢复了 "))
-                .append(Component.literal(String.valueOf(healAmount)))
-                .append(Component.literal(" 点理智")));
         }
         
-        finalMainTarget.sendSystemMessage(Component.literal("§b[十日终焉] §f...")
-            .append(player.getDisplayName())
-            .append(Component.literal(" 的无垢之力为你恢复了 "))
-            .append(Component.literal(String.valueOf(healAmount)))
-            .append(Component.literal(" 点理智")));
-
-        // 设置冷却时间
+        SanityManager.modifySanity(mainTarget, healAmount);
+        mainTarget.sendSystemMessage(Component.translatable("message.doomsday.wugu.healed"));
+        
+        // 更新最后使用时间
         lastUseTime = player.level().getGameTime();
+        
+        // 更新状态
         updateState(player);
         notifyEchoClocks(player);
     }
 
     @Override
     public void toggleContinuous(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...此法不可持续施展..."));
+        player.sendSystemMessage(Component.translatable("message.doomsday.wugu.not_continuous"));
     }
 
     @Override
