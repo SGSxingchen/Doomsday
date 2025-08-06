@@ -130,3 +130,4 @@ doomsitem-1.0.0
 
 # Claude Code 相关文件
 CLAUDE.md
+/.claude/settings.local.json

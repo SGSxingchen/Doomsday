@@ -16,6 +16,9 @@ import org.lanstard.doomsday.common.items.echo.MoldyEyeItem;
 import org.lanstard.doomsday.common.items.echo.HeartLockItem;
 import org.lanstard.doomsday.common.items.equipment.curios.SoulClockItem;
 import org.lanstard.doomsday.common.items.equipment.curios.SoulCompassItem;
+import org.lanstard.doomsday.common.items.hunt.HuntCompassItem;
+import org.lanstard.doomsday.common.items.hunt.EndBladeItem;
+import org.lanstard.doomsday.common.items.hunt.InvisibilityCloakItem;
 import org.lanstard.doomsday.common.items.equipment.armor.ShenJunArmorItem;
 import org.lanstard.doomsday.common.items.medical.BeliefPointsItem;
 import org.lanstard.doomsday.common.items.medical.MedkitItem;
@@ -129,6 +132,16 @@ public class ModItem {
                 tooltip.add(Component.translatable("item.doomsday.kidney.tooltip").withStyle(ChatFormatting.GRAY));
             }
         });
+
+    // 狩猎物品
+    public static final RegistryObject<Item> HUNT_COMPASS = ITEMS.register("hunt_compass",
+        () -> new HuntCompassItem());
+
+    public static final RegistryObject<Item> END_BLADE = ITEMS.register("end_blade",
+        () -> new EndBladeItem());
+
+    public static final RegistryObject<Item> INVISIBILITY_CLOAK = ITEMS.register("invisibility_cloak",
+        () -> new InvisibilityCloakItem());
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

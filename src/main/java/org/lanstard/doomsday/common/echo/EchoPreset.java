@@ -1,6 +1,7 @@
 package org.lanstard.doomsday.common.echo;
 
 import org.lanstard.doomsday.common.echo.preset.*;
+import org.lanstard.doomsday.common.echo.preset.WuZhongShouEcho;
 public enum EchoPreset {
     TIANXINGJIAN("天行健", EchoType.ACTIVE, 100, 0) {
         @Override
@@ -301,6 +302,13 @@ public enum EchoPreset {
         @Override
         public Echo createEcho() {
             return new JiaHuoEcho();
+        }
+    },
+
+    WUZHONGSHOU("无终狩", EchoType.ACTIVE, 100, 0) {
+        @Override
+        public Echo createEcho() {
+            return new WuZhongShouEcho();
         }
     };
 

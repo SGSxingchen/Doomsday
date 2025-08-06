@@ -49,6 +49,8 @@
   "effect.doomsday.full_blind": "全盲",
   "effect.doomsday.flash": "爆闪",
   "effect.doomsday.heart_mark": "心之印",
+  "effect.doomsday.hunted_mark": "狩猎标记",
+  "effect.doomsday.hunt_instinct": "狩猎本能",
   
   "item.doomsday.soul_compass.tooltip": "一个能显示方向的神秘指南针",
   "item.doomsday.soul_clock.tooltip": "一个能显示时间的神秘钟表",
@@ -155,7 +157,27 @@
   "echo.lingwen": "灵闻",
   "echo.lunxi": "轮息",
   "echo.jiahuo": "嫁祸",
+  "echo.wuzhongshou": "无终狩",
   
   "item.doomsday.kidney": "腰子",
-  "item.doomsday.kidney.tooltip": "被掏出的腰子，蕴含着生命的精华"
+  "item.doomsday.kidney.tooltip": "被掏出的腰子，蕴含着生命的精华",
+  
+  "item.doomsday.hunt_compass": "狩猎指南针",
+  "item.doomsday.hunt_compass.tooltip": "追踪被标记猎物的神秘指南针",
+  "item.doomsday.end_blade": "终末匕首",
+  "item.doomsday.end_blade.tooltip": "锋利如末日之刃的狩猎武器",
+  "item.doomsday.invisibility_cloak": "隐形斗篷",
+  "item.doomsday.invisibility_cloak.tooltip": "如影随形的神秘斗篷",
+  
+  "message.doomsday.wuzhongshou.low_sanity": "...心神不足，难以施展无终狩之法...",
+  "message.doomsday.wuzhongshou.no_target": "...未找到合适的猎物...",
+  "message.doomsday.wuzhongshou.self_target": "...无法狩猎自己...",
+  "message.doomsday.wuzhongshou.already_marked": "...此猎物已被标记...",
+  "message.doomsday.wuzhongshou.mark_success": "...狩猎标记已生效，目标：",
+  "message.doomsday.wuzhongshou.marked_by": "...你被 ",
+  "message.doomsday.wuzhongshou.marked_by_suffix": " 标记为猎物...",
+  "message.doomsday.wuzhongshou.items_given": "...狩猎装备已准备就绪...",
+  "message.doomsday.wuzhongshou.activated": "...狩猎本能觉醒...",
+  "message.doomsday.wuzhongshou.deactivated": "...狩猎本能沉寂...",
+  "message.doomsday.wuzhongshou.hunt_warning": "§c⚠ 你正在被狩猎，快跑！"
 } 

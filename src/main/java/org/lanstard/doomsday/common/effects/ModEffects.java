@@ -26,6 +26,12 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> HEART_MARK = MOB_EFFECTS.register(
         "heart_mark", HeartMarkEffect::new);
         
+    public static final RegistryObject<MobEffect> HUNTED_MARK = MOB_EFFECTS.register(
+        "hunted_mark", HuntedMarkEffect::new);
+        
+    public static final RegistryObject<MobEffect> HUNT_INSTINCT = MOB_EFFECTS.register(
+        "hunt_instinct", HuntInstinctEffect::new);
+        
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }
