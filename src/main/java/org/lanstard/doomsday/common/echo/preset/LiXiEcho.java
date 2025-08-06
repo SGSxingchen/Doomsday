@@ -5,33 +5,22 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
+import org.lanstard.doomsday.config.EchoConfig;
 
 public class LiXiEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.LIXI;
-    private static final int SANITY_COST = 10;               // 理智消耗
-    private static final int BASE_COOL_DOWN = 5 * 1;         // 基础冷却0.25秒
-    private static final int DAMAGE_COOL_DOWN = 8 * 20;      // 伤害冷却8秒
-    private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
-    private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
-    private static final int MID_FAITH = 5;                  // 中等信念要求
-    private static final int DAMAGE_FAITH = 8;               // 伤害所需信念
-    private static final double BASE_REACH = 32.0D;          // 基础距离
-    private static final double MID_REACH = 30.0D;           // 中等信念距离
-    private static final double HIGH_REACH = 64.0D;          // 高等信念距离
-    private static final float BASE_DAMAGE = 8.0f;           // 基础伤害
-    private static final float DAMAGE_PER_FAITH = 1.0f;      // 每点信念增加的伤害
-    private static final double DAMAGE_RADIUS = 5.0D;        // 伤害范围
-    private static final float DIRECT_TARGET_DAMAGE_MULTIPLIER = 1.2f; // 直接目标伤害倍率
-    private static final int CHARGING_DURATION = 5 * 20; // 5秒 = 100 ticks
     
     private long cooldownEndTime = 0;
     private boolean isCharging = false;
@@ -44,10 +33,14 @@ public class LiXiEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            
-            SANITY_COST,  // 主动技能消耗
-            0            // 无被动消耗
+            EchoConfig.LIXI_SANITY_COST.get(),
+            0
         );
+    }
+
+    private boolean isBlockUnbreakable(Block block) {
+        String blockId = ForgeRegistries.BLOCKS.getKey(block).toString();
+        return EchoConfig.LIXI_UNBREAKABLE_BLOCKS.get().contains(blockId);
     }
 
     @Override
@@ -78,7 +71,7 @@ public class LiXiEcho extends Echo {
             
             // 每秒显示一次进度提示
             if (chargingTicks % 20 == 0) {
-                int secondsRemaining = (CHARGING_DURATION - chargingTicks) / 20;
+                int secondsRemaining = (EchoConfig.LIXI_CHARGING_DURATION_TICKS.get() - chargingTicks) / 20;
                 player.sendSystemMessage(Component.literal("§e[十日终焉] §f离析充能中... " + secondsRemaining + "秒"));
             }
             
@@ -88,7 +81,7 @@ public class LiXiEcho extends Echo {
             }
             
             // 充能完成
-            if (chargingTicks >= CHARGING_DURATION) {
+            if (chargingTicks >= EchoConfig.LIXI_CHARGING_DURATION_TICKS.get()) {
                 executeDisintegration(player);
                 resetCharging(player);
             }
@@ -117,10 +110,10 @@ public class LiXiEcho extends Echo {
         // 检查理智值和信念值
         int currentSanity = SanityManager.getSanity(player);
         int faith = SanityManager.getFaith(player);
-        boolean freeCost = faith >= MIN_FAITH_REQUIREMENT && currentSanity < FREE_COST_THRESHOLD;
+        boolean freeCost = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() && currentSanity < EchoConfig.LIXI_FREE_COST_THRESHOLD.get();
 
         // 如果不是免费释放，检查理智是否足够
-        if (!freeCost && currentSanity < SANITY_COST) {
+        if (!freeCost && currentSanity < EchoConfig.LIXI_SANITY_COST.get()) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以引动离析之力..."));
             return false;
         }
@@ -138,8 +131,8 @@ public class LiXiEcho extends Echo {
 
         // 检查玩家指向的目标
         int faith = SanityManager.getFaith(player);
-        double reach = faith >= MIN_FAITH_REQUIREMENT ? HIGH_REACH : 
-                      (faith >= MID_FAITH ? MID_REACH : BASE_REACH);
+        double reach = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() ? EchoConfig.LIXI_HIGH_REACH.get() : 
+                      (faith >= EchoConfig.LIXI_MID_FAITH.get() ? EchoConfig.LIXI_MID_REACH.get() : EchoConfig.LIXI_BASE_REACH.get());
         
         HitResult hitResult = player.pick(reach, 0.0F, false);
         
@@ -153,11 +146,18 @@ public class LiXiEcho extends Echo {
         
         // 如果击中方块，开始充能
         if (hitResult.getType() == HitResult.Type.BLOCK) {
-            BlockPos pos = ((BlockHitResult) hitResult).getBlockPos();
+            BlockPos pos = null;
+            if (hitResult instanceof BlockHitResult) {
+                pos = ((BlockHitResult) hitResult).getBlockPos();
+            }
             ServerLevel level = (ServerLevel) player.level();
             
             // 检查方块是否可以被破坏
-            if (level.getBlockState(pos).getBlock() == Blocks.BEDROCK) {
+            Block targetBlock = null;
+            if (pos != null) {
+                targetBlock = level.getBlockState(pos).getBlock();
+            }
+            if (isBlockUnbreakable(targetBlock)) {
                 player.sendSystemMessage(Component.literal("§c[十日终焉] §f...此方块无法被离析之力影响..."));
                 return;
             }
@@ -175,7 +175,8 @@ public class LiXiEcho extends Echo {
         chargingTicks = 0;
         targetBlockPos = targetPos;
         lastChargingTick = player.level().getGameTime();
-        player.sendSystemMessage(Component.literal("§e[十日终焉] §f开始离析...保持5秒"));
+        int chargingSeconds = EchoConfig.LIXI_CHARGING_DURATION_TICKS.get() / 20;
+        player.sendSystemMessage(Component.literal("§e[十日终焉] §f开始离析...保持" + chargingSeconds + "秒"));
     }
     
     private void resetCharging(ServerPlayer player) {
@@ -201,8 +202,8 @@ public class LiXiEcho extends Echo {
         if (targetBlockPos == null) return false;
         
         int faith = SanityManager.getFaith(player);
-        double reach = faith >= MIN_FAITH_REQUIREMENT ? HIGH_REACH : 
-                      (faith >= MID_FAITH ? MID_REACH : BASE_REACH);
+        double reach = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() ? EchoConfig.LIXI_HIGH_REACH.get() : 
+                      (faith >= EchoConfig.LIXI_MID_FAITH.get() ? EchoConfig.LIXI_MID_REACH.get() : EchoConfig.LIXI_BASE_REACH.get());
         
         HitResult hitResult = player.pick(reach, 0.0F, false);
         
@@ -242,13 +243,13 @@ public class LiXiEcho extends Echo {
         
         // 计算基础伤害
         float damage = 0;
-        if (faith >= DAMAGE_FAITH) {
-            damage = BASE_DAMAGE + faith * DAMAGE_PER_FAITH;
+        if (faith >= EchoConfig.LIXI_DAMAGE_FAITH.get()) {
+            damage = EchoConfig.LIXI_BASE_DAMAGE.get().floatValue() + faith * EchoConfig.LIXI_DAMAGE_PER_FAITH.get().floatValue();
         }
         
         // 对直接目标造成伤害
         if (damage > 0) {
-            target.hurt(target.damageSources().magic(), damage * DIRECT_TARGET_DAMAGE_MULTIPLIER);
+            target.hurt(target.damageSources().magic(), damage * EchoConfig.LIXI_DIRECT_TARGET_DAMAGE_MULTIPLIER.get().floatValue());
             
             // 如果目标是玩家，发送消息提示
             if (target instanceof ServerPlayer targetPlayer) {
@@ -273,24 +274,24 @@ public class LiXiEcho extends Echo {
         
         // 检查理智值和信念值
         int currentSanity = SanityManager.getSanity(player);
-        boolean freeCost = faith >= MIN_FAITH_REQUIREMENT && currentSanity < FREE_COST_THRESHOLD;
+        boolean freeCost = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() && currentSanity < EchoConfig.LIXI_FREE_COST_THRESHOLD.get();
         
         // 消耗理智
         if (!freeCost) {
-            int actualCost = faith >= MID_FAITH ? SANITY_COST / 2 : SANITY_COST;
+            int actualCost = faith >= EchoConfig.LIXI_MID_FAITH.get() ? EchoConfig.LIXI_SANITY_COST.get() / 2 : EchoConfig.LIXI_SANITY_COST.get();
             SanityManager.modifySanity(player, -actualCost);
-            String faithLevel = faith >= MIN_FAITH_REQUIREMENT ? "坚定" : (faith >= MID_FAITH ? "稳固" : "微弱");
-            String damageText = damage > 0 ? String.format("(%.1f伤害)", damage * DIRECT_TARGET_DAMAGE_MULTIPLIER) : "";
+            String faithLevel = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() ? "坚定" : (faith >= EchoConfig.LIXI_MID_FAITH.get() ? "稳固" : "微弱");
+            String damageText = damage > 0 ? String.format("(%.1f伤害)", damage * EchoConfig.LIXI_DIRECT_TARGET_DAMAGE_MULTIPLIER.get().floatValue()) : "";
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，离析之力" + damageText + "(" + faithLevel + ")已生效..."));
         } else {
-            String faithLevel = faith >= MIN_FAITH_REQUIREMENT ? "坚定" : (faith >= MID_FAITH ? "稳固" : "微弱");
-            String damageText = damage > 0 ? String.format("(%.1f伤害)", damage * DIRECT_TARGET_DAMAGE_MULTIPLIER) : "";
+            String faithLevel = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() ? "坚定" : (faith >= EchoConfig.LIXI_MID_FAITH.get() ? "稳固" : "微弱");
+            String damageText = damage > 0 ? String.format("(%.1f伤害)", damage * EchoConfig.LIXI_DIRECT_TARGET_DAMAGE_MULTIPLIER.get().floatValue()) : "";
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，离析之力" + damageText + "(" + faithLevel + ")已生效..."));
         }
         
         // 设置冷却
-        long cooldown = damage > 0 ? DAMAGE_COOL_DOWN : BASE_COOL_DOWN;
-        if (faith >= MID_FAITH) {
+        long cooldown = damage > 0 ? EchoConfig.LIXI_DAMAGE_COOLDOWN_TICKS.get() : EchoConfig.LIXI_BASE_COOLDOWN_TICKS.get();
+        if (faith >= EchoConfig.LIXI_MID_FAITH.get()) {
             cooldown = cooldown / 2;
         }
         cooldownEndTime = System.currentTimeMillis() + (cooldown * 50);
@@ -306,8 +307,8 @@ public class LiXiEcho extends Echo {
         
         // 计算基础伤害
         float damage = 0;
-        if (faith >= DAMAGE_FAITH) {
-            damage = BASE_DAMAGE + faith * DAMAGE_PER_FAITH;
+        if (faith >= EchoConfig.LIXI_DAMAGE_FAITH.get()) {
+            damage = EchoConfig.LIXI_BASE_DAMAGE.get().floatValue() + faith * EchoConfig.LIXI_DAMAGE_PER_FAITH.get().floatValue();
         }
         
         // 移除方块
@@ -316,7 +317,7 @@ public class LiXiEcho extends Echo {
         // 对范围内的生物造成伤害
         boolean causedDamage = false;
         if (damage > 0) {
-            AABB damageBox = new AABB(targetBlockPos).inflate(DAMAGE_RADIUS);
+            AABB damageBox = new AABB(targetBlockPos).inflate(EchoConfig.LIXI_DAMAGE_RADIUS.get());
             for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, damageBox)) {
                 if (entity != player) {
                     entity.hurt(entity.damageSources().magic(), damage);
@@ -346,24 +347,24 @@ public class LiXiEcho extends Echo {
         
         // 检查理智值和信念值
         int currentSanity = SanityManager.getSanity(player);
-        boolean freeCost = faith >= MIN_FAITH_REQUIREMENT && currentSanity < FREE_COST_THRESHOLD;
+        boolean freeCost = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() && currentSanity < EchoConfig.LIXI_FREE_COST_THRESHOLD.get();
         
         // 消耗理智
         if (!freeCost) {
-            int actualCost = faith >= MID_FAITH ? SANITY_COST / 2 : SANITY_COST;
+            int actualCost = faith >= EchoConfig.LIXI_MID_FAITH.get() ? EchoConfig.LIXI_SANITY_COST.get() / 2 : EchoConfig.LIXI_SANITY_COST.get();
             SanityManager.modifySanity(player, -actualCost);
-            String faithLevel = faith >= MIN_FAITH_REQUIREMENT ? "坚定" : (faith >= MID_FAITH ? "稳固" : "微弱");
+            String faithLevel = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() ? "坚定" : (faith >= EchoConfig.LIXI_MID_FAITH.get() ? "稳固" : "微弱");
             String damageText = damage > 0 ? String.format("(%.1f伤害)", damage) : "";
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，离析之力" + damageText + "(" + faithLevel + ")已生效..."));
         } else {
-            String faithLevel = faith >= MIN_FAITH_REQUIREMENT ? "坚定" : (faith >= MID_FAITH ? "稳固" : "微弱");
+            String faithLevel = faith >= EchoConfig.LIXI_MIN_FAITH_REQUIREMENT.get() ? "坚定" : (faith >= EchoConfig.LIXI_MID_FAITH.get() ? "稳固" : "微弱");
             String damageText = damage > 0 ? String.format("(%.1f伤害)", damage) : "";
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，离析之力" + damageText + "(" + faithLevel + ")已生效..."));
         }
         
         // 设置冷却
-        long cooldown = causedDamage ? DAMAGE_COOL_DOWN : BASE_COOL_DOWN;
-        if (faith >= MID_FAITH) {
+        long cooldown = causedDamage ? EchoConfig.LIXI_DAMAGE_COOLDOWN_TICKS.get() : EchoConfig.LIXI_BASE_COOLDOWN_TICKS.get();
+        if (faith >= EchoConfig.LIXI_MID_FAITH.get()) {
             cooldown = cooldown / 2;
         }
         cooldownEndTime = System.currentTimeMillis() + (cooldown * 50);

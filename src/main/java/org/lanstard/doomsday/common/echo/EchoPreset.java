@@ -225,6 +225,13 @@ public enum EchoPreset {
         public Echo createEcho() {
             return new YingHuaEcho();
         }
+    },
+
+    WOLIU("涡流", EchoType.ACTIVE, 50, 0) {
+        @Override
+        public Echo createEcho() {
+            return new WoLiuEcho();
+        }
     };
 
     private final String name;

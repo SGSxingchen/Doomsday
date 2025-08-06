@@ -4,6 +4,8 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 
+import java.util.List;
+
 public class EchoConfig {
     public static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static final ForgeConfigSpec SPEC;
@@ -59,6 +61,31 @@ public class EchoConfig {
     public static final ForgeConfigSpec.IntValue YINGHUA_HIGH_FAITH_THRESHOLD;
     public static final ForgeConfigSpec.DoubleValue YINGHUA_REFLECT_DAMAGE;
     public static final ForgeConfigSpec.IntValue YINGHUA_DAMAGE_SANITY_COST;
+
+    // 涡流回响相关配置
+    public static final ForgeConfigSpec.IntValue WOLIU_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue WOLIU_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.DoubleValue WOLIU_RANGE;
+    public static final ForgeConfigSpec.DoubleValue WOLIU_ATTRACTION_STRENGTH;
+    public static final ForgeConfigSpec.IntValue WOLIU_FAITH_REQUIREMENT;
+
+    // 离析回响相关配置
+    public static final ForgeConfigSpec.IntValue LIXI_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue LIXI_BASE_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.IntValue LIXI_DAMAGE_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.IntValue LIXI_FREE_COST_THRESHOLD;
+    public static final ForgeConfigSpec.IntValue LIXI_MIN_FAITH_REQUIREMENT;
+    public static final ForgeConfigSpec.IntValue LIXI_MID_FAITH;
+    public static final ForgeConfigSpec.IntValue LIXI_DAMAGE_FAITH;
+    public static final ForgeConfigSpec.DoubleValue LIXI_BASE_REACH;
+    public static final ForgeConfigSpec.DoubleValue LIXI_MID_REACH;
+    public static final ForgeConfigSpec.DoubleValue LIXI_HIGH_REACH;
+    public static final ForgeConfigSpec.DoubleValue LIXI_BASE_DAMAGE;
+    public static final ForgeConfigSpec.DoubleValue LIXI_DAMAGE_PER_FAITH;
+    public static final ForgeConfigSpec.DoubleValue LIXI_DAMAGE_RADIUS;
+    public static final ForgeConfigSpec.DoubleValue LIXI_DIRECT_TARGET_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.IntValue LIXI_CHARGING_DURATION_TICKS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> LIXI_UNBREAKABLE_BLOCKS;
 
     static {
         BUILDER.comment("十日终焉 - 回响配置");
@@ -252,6 +279,102 @@ public class EchoConfig {
         YINGHUA_DAMAGE_SANITY_COST = BUILDER
             .comment("硬化回响受到一次伤害扣除的理智值")
             .defineInRange("damage_sanity_cost", 20, 0, 100);
+            
+        BUILDER.pop();
+
+        // 涡流回响配置
+        BUILDER.push("涡流回响");
+        
+        WOLIU_SANITY_COST = BUILDER
+            .comment("涡流回响施法消耗的理智值")
+            .defineInRange("sanity_cost", 50, 0, 1000);
+            
+        WOLIU_COOLDOWN_TICKS = BUILDER
+            .comment("涡流回响的冷却时间（tick，20tick = 1秒）")
+            .defineInRange("cooldown_ticks", 600, 0, 72000);
+            
+        WOLIU_RANGE = BUILDER
+            .comment("涡流回响的吸引范围（方块）")
+            .defineInRange("range", 10.0, 1.0, 32.0);
+            
+        WOLIU_ATTRACTION_STRENGTH = BUILDER
+            .comment("涡流回响的吸引力强度")
+            .defineInRange("attraction_strength", 1.0, 0.1, 5.0);
+            
+        WOLIU_FAITH_REQUIREMENT = BUILDER
+            .comment("涡流回响冷却减半所需的信念值")
+            .defineInRange("faith_requirement", 5, 0, 100);
+            
+        BUILDER.pop();
+
+        // 离析回响配置
+        BUILDER.push("离析回响");
+        
+        LIXI_SANITY_COST = BUILDER
+            .comment("离析回响施法消耗的理智值")
+            .defineInRange("sanity_cost", 10, 0, 1000);
+            
+        LIXI_BASE_COOLDOWN_TICKS = BUILDER
+            .comment("离析回响基础冷却时间（tick，20tick = 1秒）")
+            .defineInRange("base_cooldown_ticks", 5, 0, 1200);
+            
+        LIXI_DAMAGE_COOLDOWN_TICKS = BUILDER
+            .comment("离析回响造成伤害后的冷却时间（tick，20tick = 1秒）")
+            .defineInRange("damage_cooldown_ticks", 160, 0, 1200);
+            
+        LIXI_FREE_COST_THRESHOLD = BUILDER
+            .comment("离析回响免费释放的理智值阈值")
+            .defineInRange("free_cost_threshold", 300, 0, 1000);
+            
+        LIXI_MIN_FAITH_REQUIREMENT = BUILDER
+            .comment("离析回响免费释放的最低信念要求")
+            .defineInRange("min_faith_requirement", 10, 0, 100);
+            
+        LIXI_MID_FAITH = BUILDER
+            .comment("离析回响中等信念要求（达到此信念值时消耗减半且冷却减半）")
+            .defineInRange("mid_faith", 5, 0, 100);
+            
+        LIXI_DAMAGE_FAITH = BUILDER
+            .comment("离析回响造成伤害所需的信念值")
+            .defineInRange("damage_faith", 8, 0, 100);
+            
+        LIXI_BASE_REACH = BUILDER
+            .comment("离析回响基础施法距离（方块）")
+            .defineInRange("base_reach", 32.0, 1.0, 128.0);
+            
+        LIXI_MID_REACH = BUILDER
+            .comment("离析回响中等信念时的施法距离（方块）")
+            .defineInRange("mid_reach", 48.0, 1.0, 128.0);
+            
+        LIXI_HIGH_REACH = BUILDER
+            .comment("离析回响高信念时的施法距离（方块）")
+            .defineInRange("high_reach", 64.0, 1.0, 128.0);
+            
+        LIXI_BASE_DAMAGE = BUILDER
+            .comment("离析回响基础伤害值")
+            .defineInRange("base_damage", 8.0, 0.0, 100.0);
+            
+        LIXI_DAMAGE_PER_FAITH = BUILDER
+            .comment("离析回响每点信念增加的伤害值")
+            .defineInRange("damage_per_faith", 1.0, 0.0, 10.0);
+            
+        LIXI_DAMAGE_RADIUS = BUILDER
+            .comment("离析回响破坏方块时的伤害范围（方块）")
+            .defineInRange("damage_radius", 5.0, 1.0, 32.0);
+            
+        LIXI_DIRECT_TARGET_DAMAGE_MULTIPLIER = BUILDER
+            .comment("离析回响直接目标伤害倍率")
+            .defineInRange("direct_target_damage_multiplier", 1.2, 0.1, 5.0);
+            
+        LIXI_CHARGING_DURATION_TICKS = BUILDER
+            .comment("离析回响充能持续时间（tick，20tick = 1秒）")
+            .defineInRange("charging_duration_ticks", 100, 20, 600);
+        
+        LIXI_UNBREAKABLE_BLOCKS = BUILDER
+            .comment("离析回响无法破坏的方块黑名单（使用方块ID，如minecraft:bedrock）")
+            .defineListAllowEmpty("unbreakable_blocks", 
+                java.util.Arrays.asList("minecraft:bedrock", "minecraft:barrier", "minecraft:command_block", "minecraft:chain_command_block", "minecraft:repeating_command_block", "minecraft:structure_block", "minecraft:jigsaw", "minecraft:structure_void"),
+                obj -> obj instanceof String);
             
         BUILDER.pop();
 

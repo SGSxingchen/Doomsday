@@ -112,5 +112,12 @@
   "item.doomsday.fire_bomb.enhance_level.high": "§6强化等级: 高等",
   "item.doomsday.fire_bomb.damage": "§c伤害: %s-%s",
   "item.doomsday.fire_bomb.effect.mid": "§7效果: 燃烧(%s秒)",
-  "item.doomsday.fire_bomb.effect.high": "§7效果: 燃烧(%s秒) + 虚弱(%s秒)"
+  "item.doomsday.fire_bomb.effect.high": "§7效果: 燃烧(%s秒) + 虚弱(%s秒)",
+  "echo.woliu": "涡流",
+  "message.doomsday.woliu.cooldown": "...涡流之力尚需%s秒恢复...",
+  "message.doomsday.woliu.low_sanity": "...心神不足，难以引动涡流...",
+  "message.doomsday.woliu.no_target": "...范围内没有找到其他玩家...",
+  "message.doomsday.woliu.activated": "...涡流吸引了%s名玩家 (%s效果)",
+  "message.doomsday.woliu.attracted": "...你被涡流的力量吸引...",
+  "message.doomsday.woliu.not_continuous": "...涡流只能主动释放..."
 } 
