@@ -44,10 +44,10 @@ public enum EchoPreset {
         }
     },
 
-    MIQIANKUN("覔乾坤", EchoType.CONTINUOUS, 0, 1) {
+    QIANKUN("乾坤", EchoType.CONTINUOUS, 0, 1) {
         @Override
         public Echo createEcho() {
-            return new MiQianKunEcho();
+            return new QianKunEcho();
         }
     },
 
