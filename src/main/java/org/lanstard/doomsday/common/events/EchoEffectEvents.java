@@ -11,6 +11,7 @@ import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoManager;
 import org.lanstard.doomsday.common.echo.preset.BuMieEcho;
+import org.lanstard.doomsday.common.echo.preset.NaGouEcho;
 import org.lanstard.doomsday.common.echo.preset.ShuangShengHuaEcho;
 import org.lanstard.doomsday.common.echo.preset.TiZuiEcho;
 import org.lanstard.doomsday.common.echo.preset.YingHuaEcho;
@@ -45,6 +46,18 @@ public class EchoEffectEvents {
             if (echo instanceof YingHuaEcho yingHuaEcho) {
                 // 持续状态效果：反弹伤害和理智消耗
                 yingHuaEcho.onPlayerHurt(player, event.getSource(), event.getAmount());
+                break;
+            }
+        }
+        
+        // 检查纳垢回响效果
+        for (Echo echo : EchoManager.getPlayerEchoes(player)) {
+            if (echo instanceof NaGouEcho naGouEcho) {
+                // 尝试用泥土抵挡伤害
+                if (naGouEcho.tryAbsorbDamage(player, event.getSource(), event.getAmount())) {
+                    event.setCanceled(true); // 完全阻挡伤害
+                    return; // 伤害被完全吸收，不需要继续处理
+                }
                 break;
             }
         }

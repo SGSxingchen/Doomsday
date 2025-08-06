@@ -119,5 +119,12 @@
   "message.doomsday.woliu.no_target": "...范围内没有找到其他玩家...",
   "message.doomsday.woliu.activated": "...涡流吸引了%s名玩家 (%s效果)",
   "message.doomsday.woliu.attracted": "...你被涡流的力量吸引...",
-  "message.doomsday.woliu.not_continuous": "...涡流只能主动释放..."
+  "message.doomsday.woliu.not_continuous": "...涡流只能主动释放...",
+  
+  "echo.nagou": "纳垢",
+  "message.doomsday.nagou.activate": "...纳垢之法启动，身躯与大地相连...",
+  "message.doomsday.nagou.deactivate": "...纳垢之法消散，身躯恢复轻盈...",
+  "message.doomsday.nagou.passive": "...纳垢乃持续之法，G键切换开启关闭...",
+  "message.doomsday.nagou.absorb_damage": "...大地之力庇护，消耗了%s个泥土...",
+  "message.doomsday.nagou.insufficient_dirt": "...泥土不足，无法抵挡伤害，需要%s个泥土..."
 } 

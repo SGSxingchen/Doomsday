@@ -69,6 +69,12 @@ public class EchoConfig {
     public static final ForgeConfigSpec.DoubleValue WOLIU_ATTRACTION_STRENGTH;
     public static final ForgeConfigSpec.IntValue WOLIU_FAITH_REQUIREMENT;
 
+    // 纳垢回响相关配置
+    public static final ForgeConfigSpec.IntValue NAGOU_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue NAGOU_DIRT_COST_NORMAL;
+    public static final ForgeConfigSpec.IntValue NAGOU_DIRT_COST_HIGH_FAITH;
+    public static final ForgeConfigSpec.IntValue NAGOU_HIGH_FAITH_THRESHOLD;
+
     // 离析回响相关配置
     public static final ForgeConfigSpec.IntValue LIXI_SANITY_COST;
     public static final ForgeConfigSpec.IntValue LIXI_BASE_COOLDOWN_TICKS;
@@ -304,6 +310,27 @@ public class EchoConfig {
         WOLIU_FAITH_REQUIREMENT = BUILDER
             .comment("涡流回响冷却减半所需的信念值")
             .defineInRange("faith_requirement", 5, 0, 100);
+            
+        BUILDER.pop();
+
+        // 纳垢回响配置
+        BUILDER.push("纳垢回响");
+        
+        NAGOU_SANITY_COST = BUILDER
+            .comment("纳垢回响激活消耗的理智值")
+            .defineInRange("sanity_cost", 50, 0, 1000);
+            
+        NAGOU_DIRT_COST_NORMAL = BUILDER
+            .comment("纳垢回响普通情况下抵挡一次伤害消耗的泥土数量")
+            .defineInRange("dirt_cost_normal", 30, 1, 64);
+            
+        NAGOU_DIRT_COST_HIGH_FAITH = BUILDER
+            .comment("纳垢回响高信念时抵挡一次伤害消耗的泥土数量")
+            .defineInRange("dirt_cost_high_faith", 20, 1, 64);
+            
+        NAGOU_HIGH_FAITH_THRESHOLD = BUILDER
+            .comment("纳垢回响高信念阈值（达到此信念值时减少泥土消耗）")
+            .defineInRange("high_faith_threshold", 5, 0, 100);
             
         BUILDER.pop();
 

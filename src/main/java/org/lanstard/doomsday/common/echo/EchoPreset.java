@@ -86,6 +86,13 @@ public enum EchoPreset {
         }
     },
 
+    NAGOU("纳垢", EchoType.CONTINUOUS, 50, 0) {
+        @Override
+        public Echo createEcho() {
+            return new NaGouEcho();
+        }
+    },
+
     YANPIN("赝品", EchoType.ACTIVE, 200, 0) {
         @Override
         public Echo createEcho() {
