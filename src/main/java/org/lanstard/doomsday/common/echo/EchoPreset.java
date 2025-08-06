@@ -246,6 +246,27 @@ public enum EchoPreset {
         public Echo createEcho() {
             return new XinSuoEcho();
         }
+    },
+
+    SHISHANG("失熵", EchoType.ACTIVE, 400, 0) {
+        @Override
+        public Echo createEcho() {
+            return new ShiShangEcho();
+        }
+    },
+
+    WUCHANG("无常", EchoType.ACTIVE, 50, 0) {
+        @Override
+        public Echo createEcho() {
+            return new WuChangEcho();
+        }
+    },
+
+    TANNANG("探囊", EchoType.ACTIVE, 50, 0) {
+        @Override
+        public Echo createEcho() {
+            return new TanNangEcho();
+        }
     };
 
     private final String name;

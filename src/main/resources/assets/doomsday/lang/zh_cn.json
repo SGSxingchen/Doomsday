@@ -140,5 +140,11 @@
   "message.doomsday.xinsuo.marked_by": "...你被 ",
   "message.doomsday.xinsuo.marked_by_suffix": " 施加了心之印...",
   "message.doomsday.xinsuo.heart_lock_obtained": "...获得了心锁，来自 ",
-  "message.doomsday.xinsuo.not_continuous": "...心锁之法不支持持续施展..."
+  "message.doomsday.xinsuo.not_continuous": "...心锁之法不支持持续施展...",
+  
+  "echo.shishang": "失熵",
+  
+  "echo.wuchang": "无常",
+  
+  "echo.tannang": "探囊"
 } 

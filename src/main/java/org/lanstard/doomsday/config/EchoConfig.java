@@ -102,6 +102,24 @@ public class EchoConfig {
     public static final ForgeConfigSpec.DoubleValue XINSUO_BASE_REACH;
     public static final ForgeConfigSpec.DoubleValue XINSUO_TARGET_BOX_INFLATE;
 
+    // 失熵回响相关配置
+    public static final ForgeConfigSpec.IntValue SHISHANG_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue SHISHANG_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.DoubleValue SHISHANG_DEATH_DAMAGE;
+
+    // 无常回响相关配置
+    public static final ForgeConfigSpec.IntValue WUCHANG_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue WUCHANG_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.IntValue WUCHANG_HIGH_FAITH_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.IntValue WUCHANG_HIGH_FAITH_THRESHOLD;
+    public static final ForgeConfigSpec.IntValue WUCHANG_DURATION_TICKS;
+
+    // 探囊回响相关配置
+    public static final ForgeConfigSpec.IntValue TANNANG_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue TANNANG_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.DoubleValue TANNANG_BASE_REACH;
+    public static final ForgeConfigSpec.DoubleValue TANNANG_TARGET_BOX_INFLATE;
+
     static {
         BUILDER.comment("十日终焉 - 回响配置");
         
@@ -443,6 +461,69 @@ public class EchoConfig {
             
         XINSUO_TARGET_BOX_INFLATE = BUILDER
             .comment("心锁回响目标检测的碰撞箱扩展范围（方块）")
+            .defineInRange("target_box_inflate", 1.0, 0.1, 3.0);
+            
+        BUILDER.pop();
+
+        // 失熵回响配置
+        BUILDER.push("失熵回响");
+        
+        SHISHANG_SANITY_COST = BUILDER
+            .comment("失熵回响施法消耗的理智值")
+            .defineInRange("sanity_cost", 400, 0, 1000);
+            
+        SHISHANG_COOLDOWN_TICKS = BUILDER
+            .comment("失熵回响的冷却时间（tick，20tick = 1秒）")
+            .defineInRange("cooldown_ticks", 1200, 0, 72000);
+            
+        SHISHANG_DEATH_DAMAGE = BUILDER
+            .comment("失熵回响造成的死亡伤害（设置为高值确保必死）")
+            .defineInRange("death_damage", 1000.0, 100.0, 10000.0);
+            
+        BUILDER.pop();
+
+        // 无常回响配置
+        BUILDER.push("无常回响");
+        
+        WUCHANG_SANITY_COST = BUILDER
+            .comment("无常回响施法消耗的理智值")
+            .defineInRange("sanity_cost", 50, 0, 1000);
+            
+        WUCHANG_COOLDOWN_TICKS = BUILDER
+            .comment("无常回响的冷却时间（tick，20tick = 1秒，36000tick = 30分钟）")
+            .defineInRange("cooldown_ticks", 36000, 0, 144000);
+            
+        WUCHANG_HIGH_FAITH_COOLDOWN_TICKS = BUILDER
+            .comment("无常回响高信念时的冷却时间（tick，24000tick = 20分钟）")
+            .defineInRange("high_faith_cooldown_ticks", 24000, 0, 144000);
+            
+        WUCHANG_HIGH_FAITH_THRESHOLD = BUILDER
+            .comment("无常回响的高信念要求（达到此信念值时冷却时间减少）")
+            .defineInRange("high_faith_threshold", 10, 0, 100);
+            
+        WUCHANG_DURATION_TICKS = BUILDER
+            .comment("无常回响临时回响的持续时间（tick，36000tick = 30分钟）")
+            .defineInRange("duration_ticks", 36000, 1200, 144000);
+            
+        BUILDER.pop();
+
+        // 探囊回响配置
+        BUILDER.push("探囊回响");
+        
+        TANNANG_SANITY_COST = BUILDER
+            .comment("探囊回响施法消耗的理智值")
+            .defineInRange("sanity_cost", 50, 0, 1000);
+            
+        TANNANG_COOLDOWN_TICKS = BUILDER
+            .comment("探囊回响的冷却时间（tick，20tick = 1秒，400tick = 20秒）")
+            .defineInRange("cooldown_ticks", 400, 0, 72000);
+            
+        TANNANG_BASE_REACH = BUILDER
+            .comment("探囊回响的基础施法距离（方块）")
+            .defineInRange("base_reach", 32.0, 1.0, 64.0);
+            
+        TANNANG_TARGET_BOX_INFLATE = BUILDER
+            .comment("探囊回响目标检测的碰撞箱扩展范围（方块）")
             .defineInRange("target_box_inflate", 1.0, 0.1, 3.0);
             
         BUILDER.pop();
