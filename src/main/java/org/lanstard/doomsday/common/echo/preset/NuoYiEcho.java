@@ -27,7 +27,6 @@ public class NuoYiEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
             GIVE_SANITY_COST,  // 默认消耗
             0                  // 无被动消耗
         );

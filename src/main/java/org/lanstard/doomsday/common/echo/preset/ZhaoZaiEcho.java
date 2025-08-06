@@ -54,7 +54,7 @@ public class ZhaoZaiEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             SUMMON_SANITY_COST,  // 主动技能消耗100理智
             0   // 无被动消耗
         );

@@ -45,7 +45,7 @@ public class JinFengEcho extends Echo {
     private final Random random = new Random();
 
     public JinFengEcho() {
-        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), PRESET.getActivationType(), SANITY_COST, 0);
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), SANITY_COST, 0);
     }
 
     @Override

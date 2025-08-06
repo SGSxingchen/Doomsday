@@ -49,10 +49,9 @@ public class EchoStatusScreen extends Screen {
         int yOffset = 30;
         for (Echo echo : echoes) {
             Component echoText = Component.literal(String.format(
-                "%s (%s - %s)",
+                "%s (%s)",
                 echo.getName(),
-                echo.getType(),
-                echo.getActivationType()
+                echo.getType()
             ));
             guiGraphics.drawString(font, echoText, leftPos + 10, topPos + yOffset, 0xFFFFFF);
             yOffset += 12;

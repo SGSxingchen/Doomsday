@@ -2,231 +2,231 @@ package org.lanstard.doomsday.common.echo;
 
 import org.lanstard.doomsday.common.echo.preset.*;
 public enum EchoPreset {
-    TIANXINGJIAN("天行健", EchoType.ACTIVE, ActivationType.AWAKENING, 100, 0) {
+    TIANXINGJIAN("天行健", EchoType.ACTIVE, 100, 0) {
         @Override
         public Echo createEcho() {
             return new TianXingJianEcho();
         }
     },
     
-    DUOXINPO("夺心魄", EchoType.CONTINUOUS, ActivationType.AWAKENING, 50, 5) {
+    DUOXINPO("夺心魄", EchoType.CONTINUOUS, 50, 5) {
         @Override
         public Echo createEcho() {
             return new DuoXinPoEcho();
         }
     },
     
-    BREAKALL("破万法", EchoType.ACTIVE, ActivationType.AWAKENING, 200, 0) {
+    BREAKALL("破万法", EchoType.ACTIVE, 200, 0) {
         @Override
         public Echo createEcho() {
             return new BreakAllEcho();
         }
     },
     
-    SHENGSHENGBUXI("生生不息", EchoType.CONTINUOUS, ActivationType.AWAKENING, 10, 2) {
+    SHENGSHENGBUXI("生生不息", EchoType.CONTINUOUS, 10, 2) {
         @Override
         public Echo createEcho() {
             return new ShengShengBuXiEcho();
         }
     },
     
-    SHUANGSHENGHUA("双生花", EchoType.CONTINUOUS, ActivationType.AWAKENING, 50, 2) {
+    SHUANGSHENGHUA("双生花", EchoType.CONTINUOUS, 50, 2) {
         @Override
         public Echo createEcho() {
             return new ShuangShengHuaEcho();
         }
     },
 
-    SUOQIANSHAN("缩千山", EchoType.CONTINUOUS, ActivationType.AWAKENING, 100, 1) {
+    SUOQIANSHAN("缩千山", EchoType.CONTINUOUS, 100, 1) {
         @Override
         public Echo createEcho() {
             return new SuoQianShanEcho();
         }
     },
 
-    MIQIANKUN("覔乾坤", EchoType.CONTINUOUS, ActivationType.AWAKENING, 0, 1) {
+    MIQIANKUN("覔乾坤", EchoType.CONTINUOUS, 0, 1) {
         @Override
         public Echo createEcho() {
             return new MiQianKunEcho();
         }
     },
 
-    LIXI("离析", EchoType.ACTIVE, ActivationType.AWAKENING, 10, 0) {
+    LIXI("离析", EchoType.ACTIVE, 10, 0) {
         @Override
         public Echo createEcho() {
             return new LiXiEcho();
         }
     },
 
-    YUSHENJUN("御神君", EchoType.CONTINUOUS, ActivationType.AWAKENING, 200, 1) {
+    YUSHENJUN("御神君", EchoType.CONTINUOUS, 200, 1) {
         @Override
         public Echo createEcho() {
             return new YuShenJunEcho();
         }
     },
     
-    ZHAOZAI("招灾", EchoType.CONTINUOUS, ActivationType.AWAKENING, 0, 1) {
+    ZHAOZAI("招灾", EchoType.CONTINUOUS, 0, 1) {
         @Override
         public Echo createEcho() {
             return new ZhaoZaiEcho();
         }
     },
 
-    HUOSHUI("祸水", EchoType.CONTINUOUS, ActivationType.AWAKENING, 0, 0) {
+    HUOSHUI("祸水", EchoType.CONTINUOUS, 0, 0) {
         @Override
         public Echo createEcho() {
             return new HuoShuiEcho();
         }
     },
 
-    NUOYI("挪移", EchoType.ACTIVE, ActivationType.AWAKENING, 30, 0) {
+    NUOYI("挪移", EchoType.ACTIVE, 30, 0) {
         @Override
         public Echo createEcho() {
             return new NuoYiEcho();
         }
     },
 
-    YANPIN("赝品", EchoType.ACTIVE, ActivationType.AWAKENING, 200, 0) {
+    YANPIN("赝品", EchoType.ACTIVE, 200, 0) {
         @Override
         public Echo createEcho() {
             return new YanPinEcho();
         }
     },
 
-    KUILEI("傀儡", EchoType.ACTIVE, ActivationType.AWAKENING, 150, 0) {
+    KUILEI("傀儡", EchoType.ACTIVE, 150, 0) {
         @Override
         public Echo createEcho() {
             return new KuiLeiEcho();
         }
     },
 
-    JINFENG("劲风", EchoType.ACTIVE, ActivationType.AWAKENING, 200, 0) {
+    JINFENG("劲风", EchoType.ACTIVE, 200, 0) {
         @Override
         public Echo createEcho() {
             return new JinFengEcho();
         }
     },
 
-    ZHIKONG("滞空", EchoType.CONTINUOUS, ActivationType.AWAKENING, 30, 1) {
+    ZHIKONG("滞空", EchoType.CONTINUOUS, 30, 1) {
         @Override
         public Echo createEcho() {
             return new ZhiKongEcho();
         }
     },
 
-    BAOSHAN("爆闪", EchoType.ACTIVE, ActivationType.IMPLANT, 20, 0) {
+    BAOSHAN("爆闪", EchoType.ACTIVE, 20, 0) {
         @Override
         public Echo createEcho() {
             return new BaoShanEcho();
         }
     },
 
-    YINNI("隐匿", EchoType.CONTINUOUS, ActivationType.IMPLANT, 30, 1) {
+    YINNI("隐匿", EchoType.CONTINUOUS, 30, 1) {
         @Override
         public Echo createEcho() {
             return new YinNiEcho();
         }
     },
 
-    MANLI("蛮力", EchoType.ACTIVE, ActivationType.IMPLANT, 150, 0) {
+    MANLI("蛮力", EchoType.ACTIVE, 150, 0) {
         @Override
         public Echo createEcho() {
             return new ManLiEcho();
         }
     },
 
-    LINGSHI("灵视", EchoType.ACTIVE, ActivationType.IMPLANT, 20, 0) {
+    LINGSHI("灵视", EchoType.ACTIVE, 20, 0) {
         @Override
         public Echo createEcho() {
             return new LingShiEcho();
         }
     },
 
-    TIZUI("替罪", EchoType.ACTIVE, ActivationType.TRIGGER, 50, 0) {
+    TIZUI("替罪", EchoType.ACTIVE, 50, 0) {
         @Override
         public Echo createEcho() {
             return new TiZuiEcho();
         }
     },
 
-    QIAOWU("巧物", EchoType.PASSIVE, ActivationType.TRIGGER, 0, 0) {
+    QIAOWU("巧物", EchoType.PASSIVE, 0, 0) {
         @Override
         public Echo createEcho() {
             return new QiaoWuEcho();
         }
     },
 
-    YUEQIAN("跃迁", EchoType.ACTIVE, ActivationType.TRIGGER, 50, 0) {
+    YUEQIAN("跃迁", EchoType.ACTIVE, 50, 0) {
         @Override
         public Echo createEcho() {
             return new YueQianEcho();
         }
     },
 
-    BAORAN("爆燃", EchoType.ACTIVE, ActivationType.TRIGGER, 20, 0) {
+    BAORAN("爆燃", EchoType.ACTIVE, 20, 0) {
         @Override
         public Echo createEcho() {
             return new BaoRanEcho();
         }
     },
 
-    BUMIE("不灭", EchoType.ACTIVE, ActivationType.TRIGGER, 500, 0) {
+    BUMIE("不灭", EchoType.ACTIVE, 500, 0) {
         @Override
         public Echo createEcho() {
             return new BuMieEcho();
         }
     },
 
-    WANGYOU("忘忧", EchoType.CONTINUOUS, ActivationType.TRIGGER, 10, 2) {
+    WANGYOU("忘忧", EchoType.CONTINUOUS, 10, 2) {
         @Override
         public Echo createEcho() {
             return new WangYouEcho();
         }
     },
 
-    ZHIYU("治愈", EchoType.CONTINUOUS, ActivationType.TRIGGER, 20, 2) {
+    ZHIYU("治愈", EchoType.CONTINUOUS, 20, 2) {
         @Override
         public Echo createEcho() {
             return new ZhiYuEcho();
         }
     },
 
-    JINGLEI("惊雷", EchoType.ACTIVE, ActivationType.TRIGGER, 20, 0) {
+    JINGLEI("惊雷", EchoType.ACTIVE, 20, 0) {
         @Override
         public Echo createEcho() {
             return new JingLeiEcho();
         }
     },
 
-    HANBING("寒冰", EchoType.ACTIVE, ActivationType.TRIGGER, 20, 0) {
+    HANBING("寒冰", EchoType.ACTIVE, 20, 0) {
         @Override
         public Echo createEcho() {
             return new HanBingEcho();
         }
     },
 
-    YUANWU("原物", EchoType.ACTIVE, ActivationType.TRIGGER, 10, 0) {
+    YUANWU("原物", EchoType.ACTIVE, 10, 0) {
         @Override
         public Echo createEcho() {
             return new YuanWuEcho();
         }
     },
 
-    WUGU("无垢", EchoType.ACTIVE, ActivationType.TRIGGER, 100, 0) {
+    WUGU("无垢", EchoType.ACTIVE, 100, 0) {
         @Override
         public Echo createEcho() {
             return new WuGouEcho();
         }
     },
 
-    MAOMU("茂木", EchoType.ACTIVE, ActivationType.TRIGGER, 20, 0) {
+    MAOMU("茂木", EchoType.ACTIVE, 20, 0) {
         @Override
         public Echo createEcho() {
             return new MaoMuEcho();
         }
     },
 
-    JIAJIE("嫁接", EchoType.PASSIVE, ActivationType.AWAKENING, 0, 0) {
+    JIAJIE("嫁接", EchoType.PASSIVE, 0, 0) {
         @Override
         public Echo createEcho() {
             return new JiaJieEcho();
@@ -235,25 +235,16 @@ public enum EchoPreset {
 
     private final String name;
     private final EchoType type;
-    private final ActivationType activationType;
     private final int sanityConsumption;
     private final int continuousSanityConsumption;
 
-    EchoPreset(String name, EchoType type, ActivationType activationType, int sanityConsumption, int continuousSanityConsumption) {
+    EchoPreset(String name, EchoType type, int sanityConsumption, int continuousSanityConsumption) {
         this.name = name;
         this.type = type;
-        this.activationType = activationType;
         this.sanityConsumption = sanityConsumption;
         this.continuousSanityConsumption = continuousSanityConsumption;
     }
 
-    EchoPreset(String name, EchoType type, ActivationType activationType, int sanityConsumption, int continuousSanityConsumption, int sanityConsumptionTrigger, int continuousSanityConsumptionTrigger) {
-        this.name = name;
-        this.type = type;
-        this.activationType = activationType;
-        this.sanityConsumption = sanityConsumption;
-        this.continuousSanityConsumption = continuousSanityConsumption;
-    }
 
     public abstract Echo createEcho();
 
@@ -265,9 +256,6 @@ public enum EchoPreset {
         return type;
     }
 
-    public ActivationType getActivationType() {
-        return activationType;
-    }
 
     public int getSanityConsumption() {
         return sanityConsumption;

@@ -29,7 +29,7 @@ public class YinNiEcho extends Echo {
     private final List<UUID> selectedTargets = new ArrayList<>(); // 选中的目标列表
 
     public YinNiEcho() {
-        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), PRESET.getActivationType(), TOGGLE_SANITY_COST, CONTINUOUS_SANITY_COST);
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), TOGGLE_SANITY_COST, CONTINUOUS_SANITY_COST);
     }
 
     @Override

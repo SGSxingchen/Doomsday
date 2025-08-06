@@ -191,11 +191,10 @@ public class EchoCommand {
         for (Echo echo : echoData.getActiveEchoes()) {
             String status = echo.isDisabled() ? "§c[已禁用]§r" : "§a[可用]§r";
             source.sendSuccess(() -> Component.literal(
-                String.format("%s - 名称:%s, 类型:%s, 激活方式:%s, 理智消耗:%d", 
+                String.format("%s - 名称:%s, 类型:%s, 理智消耗:%d", 
                     status,
                     echo.getName(),
                     echo.getType(),
-                    echo.getActivationType(),
                     echo.getSanityConsumption())
             ), false);
         }

@@ -30,7 +30,7 @@ public class JingLeiEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             SANITY_COST,
             0
         );

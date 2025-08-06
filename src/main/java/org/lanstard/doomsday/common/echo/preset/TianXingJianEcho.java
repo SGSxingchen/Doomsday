@@ -31,7 +31,7 @@ public class TianXingJianEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             PRESET.getSanityConsumption()
         );
     }

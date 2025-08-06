@@ -9,7 +9,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoType;
-import org.lanstard.doomsday.common.echo.ActivationType;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import net.minecraft.nbt.CompoundTag;
 
@@ -23,7 +22,7 @@ public class YueQianEcho extends Echo {
     private long lastUseTime = 0;
 
     public YueQianEcho() {
-        super("yueqian", "跃迁", EchoType.ACTIVE, ActivationType.TRIGGER, SANITY_COST);
+        super("yueqian", "跃迁", EchoType.ACTIVE, SANITY_COST);
     }
 
     @Override

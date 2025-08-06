@@ -17,7 +17,6 @@ public class WuGouEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
             EchoConfig.WUGU_SANITY_COST.get(),
             0
         );

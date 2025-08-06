@@ -25,7 +25,7 @@ public class ZhiKongEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             0,  // 无主动技能消耗
             CONTINUOUS_SANITY_COST
         );

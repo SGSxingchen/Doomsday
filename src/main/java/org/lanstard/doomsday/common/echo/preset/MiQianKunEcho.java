@@ -43,7 +43,7 @@ public class MiQianKunEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             0,  // 主动技能不消耗理智
             CONTINUOUS_SANITY_COST
         );

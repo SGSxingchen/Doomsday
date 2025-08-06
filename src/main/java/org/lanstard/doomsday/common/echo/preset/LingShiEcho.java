@@ -23,7 +23,7 @@ public class LingShiEcho extends Echo {
     private static final int HIGH_RANGE = 30;            // 高等信念检测范围
 
     public LingShiEcho() {
-        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), PRESET.getActivationType(), SANITY_COST, 0);
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), SANITY_COST, 0);
     }
 
     @Override

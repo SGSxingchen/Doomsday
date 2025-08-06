@@ -23,7 +23,7 @@ public class BaoShanEcho extends Echo {
     private long cooldownEndTime = 0;
 
     public BaoShanEcho() {
-        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), PRESET.getActivationType(), SANITY_COST, 0);
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), SANITY_COST, 0);
     }
 
     @Override

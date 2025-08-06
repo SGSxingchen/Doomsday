@@ -39,7 +39,7 @@ public class ShengShengBuXiEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             PRESET.getSanityConsumption(),
             PRESET.getContinuousSanityConsumption()
         );

@@ -52,7 +52,7 @@ public class YuShenJunEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             ACTIVE_SANITY_COST,
             CONTINUOUS_SANITY_COST
         );

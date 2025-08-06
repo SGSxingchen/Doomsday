@@ -8,23 +8,21 @@ public abstract class Echo {
     private final String id;
     private final String name;
     private final EchoType type;
-    private final ActivationType activationType;
     private final int sanityConsumption; // 主动动作理智消耗（仅作为参考值）
     private final int continuousSanityConsumption; // 持续消耗的理智值（仅作为参考值）
     private boolean isActive; //用于辨别回响是否被激活
     private long disabledUntil = 0; // 禁用状态持续到的时间戳
     
-    public Echo(String id, String name, EchoType type, ActivationType activationType, int sanityConsumption, int continuousSanityConsumption) {
+    public Echo(String id, String name, EchoType type, int sanityConsumption, int continuousSanityConsumption) {
         this.id = id;
         this.name = name;
         this.type = type;
-        this.activationType = activationType;
         this.sanityConsumption = sanityConsumption;
         this.continuousSanityConsumption = continuousSanityConsumption;
     }
     
-    public Echo(String id, String name, EchoType type, ActivationType activationType, int sanityConsumption) {
-        this(id, name, type, activationType, sanityConsumption, 0);
+    public Echo(String id, String name, EchoType type, int sanityConsumption) {
+        this(id, name, type, sanityConsumption, 0);
     }
     
     /**
@@ -57,7 +55,6 @@ public abstract class Echo {
         tag.putString("id", id);
         tag.putString("name", name);
         tag.putString("type", type.name());
-        tag.putString("activationType", activationType.name());
         tag.putInt("sanityConsumption", sanityConsumption);
         tag.putInt("continuousSanityConsumption", continuousSanityConsumption);
         tag.putBoolean("isActive", isActive);
@@ -75,7 +72,6 @@ public abstract class Echo {
                 id,
                 tag.getString("name"),
                 EchoType.valueOf(tag.getString("type")),
-                ActivationType.valueOf(tag.getString("activationType")),
                 tag.getInt("sanityConsumption"),
                 tag.getInt("continuousSanityConsumption")
             );
@@ -115,9 +111,6 @@ public abstract class Echo {
         return type;
     }
     
-    public ActivationType getActivationType() {
-        return activationType;
-    }
     
     public int getSanityConsumption() {
         return sanityConsumption;

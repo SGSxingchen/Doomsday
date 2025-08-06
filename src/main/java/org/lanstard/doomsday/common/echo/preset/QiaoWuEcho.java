@@ -12,7 +12,7 @@ public class QiaoWuEcho extends Echo {
     private static final int FREE_COST_THRESHOLD = 300; // 免费释放阈值
 
     public QiaoWuEcho() {
-        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), PRESET.getActivationType(), 0, 0);
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), 0, 0);
         setActive(true); // 始终处于激活状态
     }
 

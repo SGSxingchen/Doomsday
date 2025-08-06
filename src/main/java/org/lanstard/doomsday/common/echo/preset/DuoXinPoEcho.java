@@ -65,7 +65,6 @@ public class DuoXinPoEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
             ACTIVE_SANITY_COST,  // 使用固定值100点理智消耗
             PRESET.getContinuousSanityConsumption()
         );

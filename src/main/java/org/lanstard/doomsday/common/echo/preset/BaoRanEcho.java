@@ -6,7 +6,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoType;
-import org.lanstard.doomsday.common.echo.ActivationType;
 import org.lanstard.doomsday.common.items.ModItem;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import org.lanstard.doomsday.config.EchoConfig;
@@ -19,7 +18,7 @@ public class BaoRanEcho extends Echo {
     private long lastUseTime = 0;
 
     public BaoRanEcho() {
-        super("baoran", "爆燃", EchoType.ACTIVE, ActivationType.TRIGGER, EchoConfig.BAORAN_SANITY_COST.get());
+        super("baoran", "爆燃", EchoType.ACTIVE, EchoConfig.BAORAN_SANITY_COST.get());
     }
 
     @Override

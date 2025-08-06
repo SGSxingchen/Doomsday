@@ -25,7 +25,7 @@ public class WangYouEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             SANITY_COST,
             CONTINUOUS_SANITY_COST
         );

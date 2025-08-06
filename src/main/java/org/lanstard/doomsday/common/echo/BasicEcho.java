@@ -3,12 +3,12 @@ package org.lanstard.doomsday.common.echo;
 import net.minecraft.server.level.ServerPlayer;
 
 public class BasicEcho extends Echo {
-    public BasicEcho(String id, String name, EchoType type, ActivationType activationType, int sanityConsumption, int continuousSanityConsumption) {
-        super(id, name, type, activationType, sanityConsumption, continuousSanityConsumption);
+    public BasicEcho(String id, String name, EchoType type, int sanityConsumption, int continuousSanityConsumption) {
+        super(id, name, type, sanityConsumption, continuousSanityConsumption);
     }
     
-    public BasicEcho(String id, String name, EchoType type, ActivationType activationType, int sanityConsumption) {
-        super(id, name, type, activationType, sanityConsumption, 0);
+    public BasicEcho(String id, String name, EchoType type, int sanityConsumption) {
+        super(id, name, type, sanityConsumption, 0);
     }
     @Override
     public void toggleContinuous(ServerPlayer player) {}

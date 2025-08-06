@@ -60,7 +60,7 @@ public class HuoShuiEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            PRESET.getActivationType(),
+            
             0,  // 无主动技能消耗
             0   // 无被动消耗
         );

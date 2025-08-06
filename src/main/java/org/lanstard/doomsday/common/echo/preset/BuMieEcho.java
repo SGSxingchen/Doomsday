@@ -5,7 +5,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoType;
-import org.lanstard.doomsday.common.echo.ActivationType;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 
 public class BuMieEcho extends Echo {
@@ -25,7 +24,7 @@ public class BuMieEcho extends Echo {
     private float storedDamage = 0;                         // 储存的伤害值
 
     public BuMieEcho() {
-        super("bumie", "不灭", EchoType.ACTIVE, ActivationType.TRIGGER, SANITY_COST);
+        super("bumie", "不灭", EchoType.ACTIVE, SANITY_COST);
     }
 
     @Override

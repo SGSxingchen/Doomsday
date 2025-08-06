@@ -26,7 +26,7 @@ public class ManLiEcho extends Echo {
     private long cooldownEndTime = 0;                    // 冷却结束时间
 
     public ManLiEcho() {
-        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), PRESET.getActivationType(), SANITY_COST, 0);
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), SANITY_COST, 0);
     }
 
     @Override
