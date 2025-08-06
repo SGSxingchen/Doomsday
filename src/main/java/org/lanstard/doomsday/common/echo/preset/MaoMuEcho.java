@@ -12,13 +12,9 @@ import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import org.lanstard.doomsday.common.entities.ModEntities;
 import org.lanstard.doomsday.common.entities.MuaEntity;
+import org.lanstard.doomsday.config.EchoConfig;
 
 public class MaoMuEcho extends Echo {
-    private static final int SANITY_COST = 20;
-    private static final int MIN_FAITH = 10;
-    private static final int MID_FAITH = 5;                  // 中等信念要求
-    private static final int FREE_SANITY_THRESHOLD = 300;
-    private static final int COOLDOWN_TICKS = 100; // 5秒 = 5 * 20 ticks
     private long cooldownEndTime = 0;
     private static final EchoPreset PRESET = EchoPreset.MAOMU;
 
@@ -28,7 +24,7 @@ public class MaoMuEcho extends Echo {
             PRESET.getDisplayName(),
             PRESET.getType(),
             
-            SANITY_COST,
+            EchoConfig.MAOMU_SANITY_COST.get(),
             0
         );
     }
@@ -67,12 +63,12 @@ public class MaoMuEcho extends Echo {
         int sanity = SanityManager.getSanity(player);
         
         // 当信仰大于等于10且理智小于300时，不消耗理智
-        if (faith >= MIN_FAITH && sanity < FREE_SANITY_THRESHOLD) {
+        if (faith >= EchoConfig.MAOMU_MIN_FAITH.get() && sanity < EchoConfig.MAOMU_FREE_SANITY_THRESHOLD.get()) {
             return true;
         }
         
         // 其他情况需要消耗理智
-        if (sanity < SANITY_COST) {
+        if (sanity < EchoConfig.MAOMU_SANITY_COST.get()) {
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...理智不足，无法使用茂木回响"));
             return false;
         }
@@ -85,7 +81,7 @@ public class MaoMuEcho extends Echo {
         // 检查是否需要消耗理智值
         int currentSanity = SanityManager.getSanity(player);
         int faith = SanityManager.getFaith(player);
-        boolean freeCast = faith >= MIN_FAITH && currentSanity < FREE_SANITY_THRESHOLD;
+        boolean freeCast = faith >= EchoConfig.MAOMU_MIN_FAITH.get() && currentSanity < EchoConfig.MAOMU_FREE_SANITY_THRESHOLD.get();
         
         // 获取玩家视线所指的方块
         double reach = 32.0D;
@@ -102,7 +98,7 @@ public class MaoMuEcho extends Echo {
         // 只有在不满足免费释放条件时才消耗理智
         if (!freeCast) {
             // 根据信念等级减少消耗
-            int actualCost = faith >= MID_FAITH ? SANITY_COST / 2 : SANITY_COST;
+            int actualCost = faith >= EchoConfig.MAOMU_MID_FAITH.get() ? EchoConfig.MAOMU_SANITY_COST.get() / 2 : EchoConfig.MAOMU_SANITY_COST.get();
             SanityManager.modifySanity(player, -actualCost);
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神..."));
         }
@@ -116,7 +112,7 @@ public class MaoMuEcho extends Echo {
         player.sendSystemMessage(Component.literal("§b[十日终焉] §f...茂木之力凝聚，召唤出了一个茂木造物..."));
 
         // 设置冷却时间
-        long cooldown = faith >= MID_FAITH ? COOLDOWN_TICKS / 2 : COOLDOWN_TICKS;
+        long cooldown = faith >= EchoConfig.MAOMU_MID_FAITH.get() ? EchoConfig.MAOMU_COOLDOWN_TICKS.get() / 2 : EchoConfig.MAOMU_COOLDOWN_TICKS.get();
         cooldownEndTime = System.currentTimeMillis() + (cooldown * 50);
         updateState(player);
         notifyEchoClocks(player);

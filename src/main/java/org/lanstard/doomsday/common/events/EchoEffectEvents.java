@@ -1,10 +1,12 @@
 package org.lanstard.doomsday.common.events;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
+import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lanstard.doomsday.Doomsday;
@@ -17,6 +19,8 @@ import org.lanstard.doomsday.common.echo.preset.NaGouEcho;
 import org.lanstard.doomsday.common.echo.preset.ShuangShengHuaEcho;
 import org.lanstard.doomsday.common.echo.preset.TiZuiEcho;
 import org.lanstard.doomsday.common.echo.preset.YingHuaEcho;
+import org.lanstard.doomsday.common.effects.ModEffects;
+import org.lanstard.doomsday.common.data.HeartMarkData;
 
 import java.util.List;
 
@@ -144,6 +148,34 @@ public class EchoEffectEvents {
                         }
                     }
                 }
+            }
+        }
+    }
+    
+    @SubscribeEvent
+    public static void onEffectRemoved(MobEffectEvent.Remove event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        
+        // 检查是否是心之印效果被移除
+        if (event.getEffect() != null && event.getEffect() == ModEffects.HEART_MARK.get()) {
+            // 清理HeartMarkData中的记录
+            if (player.level() instanceof ServerLevel serverLevel) {
+                HeartMarkData data = HeartMarkData.get(serverLevel);
+                data.unmarkPlayer(player.getUUID());
+            }
+        }
+    }
+    
+    @SubscribeEvent
+    public static void onEffectExpired(MobEffectEvent.Expired event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        
+        // 检查是否是心之印效果过期
+        if (event.getEffectInstance() != null && event.getEffectInstance().getEffect() == ModEffects.HEART_MARK.get()) {
+            // 清理HeartMarkData中的记录
+            if (player.level() instanceof ServerLevel serverLevel) {
+                HeartMarkData data = HeartMarkData.get(serverLevel);
+                data.unmarkPlayer(player.getUUID());
             }
         }
     }

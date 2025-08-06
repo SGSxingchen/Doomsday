@@ -2,6 +2,7 @@ package org.lanstard.doomsday.common.echo.preset;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.phys.Vec3;
@@ -10,6 +11,7 @@ import org.lanstard.doomsday.common.echo.BasicEcho;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.effects.ModEffects;
 import org.lanstard.doomsday.common.sanity.SanityManager;
+import org.lanstard.doomsday.common.data.HeartMarkData;
 import org.lanstard.doomsday.config.EchoConfig;
 
 import java.util.List;
@@ -78,14 +80,14 @@ public class XinSuoEcho extends BasicEcho {
             true  // 显示图标
         );
         
-        // 在效果的NBT中存储施法者信息
-        CompoundTag effectNBT = new CompoundTag();
-        effectNBT.putString("caster_uuid", player.getUUID().toString());
-        effectNBT.putString("caster_name", player.getName().getString());
-        heartMarkEffect.save(effectNBT);
-        
         // 为目标添加心之印效果
         target.addEffect(heartMarkEffect);
+        
+        // 在HeartMarkData中记录施法者信息
+        if (player.level() instanceof ServerLevel serverLevel) {
+            HeartMarkData data = HeartMarkData.get(serverLevel);
+            data.markPlayer(target.getUUID(), player.getUUID());
+        }
         
         // 发送消息
         player.sendSystemMessage(Component.translatable("message.doomsday.xinsuo.cast_success")

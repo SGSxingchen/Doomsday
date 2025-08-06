@@ -4,14 +4,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import org.lanstard.doomsday.common.echo.Echo;
+import org.lanstard.doomsday.common.echo.BasicEcho;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import net.minecraft.nbt.CompoundTag;
 
 import java.util.Random;
 
-public class NuoYiEcho extends Echo {
+public class NuoYiEcho extends BasicEcho {
     private static final EchoPreset PRESET = EchoPreset.NUOYI;
     private static final int GIVE_SANITY_COST = 20;          // 给予物品消耗
     private static final int TAKE_SANITY_COST = 40;          // 获取物品消耗
@@ -30,26 +30,6 @@ public class NuoYiEcho extends Echo {
             GIVE_SANITY_COST,  // 默认消耗
             0                  // 无被动消耗
         );
-    }
-
-    @Override
-    public void onActivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...挪移之力涌动，虚实交错..."));
-    }
-
-    @Override
-    public void onUpdate(ServerPlayer player) {
-        // 纯主动技能，无需更新
-    }
-
-    @Override
-    public void onDeactivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...挪移之力消散..."));
-    }
-
-    @Override
-    public void toggleContinuous(ServerPlayer player) {
-        // 这是一个主动技能，不需要切换
     }
 
     @Override
@@ -157,8 +137,6 @@ public class NuoYiEcho extends Echo {
         // 设置冷却
         long cooldown = faith >= MIN_FAITH_REQUIREMENT ? COOL_DOWN / 2 : COOL_DOWN;
         cooldownEndTime = System.currentTimeMillis() + (cooldown * 50);
-        updateState(player);
-        notifyEchoClocks(player);
     }
 
     private ItemStack getRandomItemFromInventory(ServerPlayer player) {

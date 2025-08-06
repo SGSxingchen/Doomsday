@@ -15,6 +15,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import org.lanstard.doomsday.common.sanity.SanityManager;
+import org.lanstard.doomsday.config.EchoConfig;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -26,7 +27,6 @@ import java.util.UUID;
 
 public class MuaEntity extends Monster implements GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final int MAX_LIFE;
     private int timeToLive = 0;
     private UUID ownerUUID;
     @Nullable
@@ -35,7 +35,6 @@ public class MuaEntity extends Monster implements GeoEntity {
     public MuaEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
         this.setNoAi(true); // 禁用AI，使其不会移动
-        MAX_LIFE = 200;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -60,7 +59,7 @@ public class MuaEntity extends Monster implements GeoEntity {
         
         if (!this.level().isClientSide) {
             timeToLive++;
-            if (timeToLive > MAX_LIFE) {
+            if (timeToLive > EchoConfig.MAOMU_ENTITY_LIFETIME.get()) {
                 this.remove(RemovalReason.DISCARDED);
                 return;
             }
@@ -70,8 +69,8 @@ public class MuaEntity extends Monster implements GeoEntity {
                 return;
             }
 
-            // 获取3x3范围内的所有生物
-            AABB box = this.getBoundingBox().inflate(3.0D);
+            // 获取配置范围内的所有生物
+            AABB box = this.getBoundingBox().inflate(EchoConfig.MAOMU_EFFECT_RANGE.get());
             List<LivingEntity> nearbyEntities = this.level().getEntitiesOfClass(LivingEntity.class, box);
 
             for (LivingEntity entity : nearbyEntities) {
@@ -88,8 +87,11 @@ public class MuaEntity extends Monster implements GeoEntity {
                     }
                 }
 
-                // 给予缓慢X效果
-                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 9, false, false));
+                // 给予缓慢效果 - 使用配置文件中的值
+                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 
+                    EchoConfig.MAOMU_EFFECT_DURATION.get(), 
+                    EchoConfig.MAOMU_SLOWNESS_LEVEL.get(), 
+                    false, true));
             }
         }
     }

@@ -7,6 +7,8 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.effect.MobEffectInstance;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
@@ -23,6 +25,7 @@ public class TiZuiEcho extends Echo {
     
     private UUID boundTargetId = null;                      // 绑定目标的UUID
     private String boundTargetName = null;                  // 绑定目标的名字（用于显示）
+    private boolean isTriggering = false;                   // 防止重复触发
 
     public TiZuiEcho() {
         super(
@@ -145,6 +148,7 @@ public class TiZuiEcho extends Echo {
             tag.putUUID("boundTargetId", boundTargetId);
             tag.putString("boundTargetName", boundTargetName);
         }
+        tag.putBoolean("isTriggering", isTriggering);
         return tag;
     }
     
@@ -155,14 +159,25 @@ public class TiZuiEcho extends Echo {
             echo.boundTargetId = tag.getUUID("boundTargetId");
             echo.boundTargetName = tag.getString("boundTargetName");
         }
+        echo.isTriggering = tag.getBoolean("isTriggering");
         return echo;
     }
 
     // 当绑定的目标即将死亡时调用此方法
     public void onTargetDeath(ServerPlayer target, ServerPlayer owner) {
-        if (target.getUUID().equals(boundTargetId)) {
-            // 阻止目标死亡
+        if (target.getUUID().equals(boundTargetId) && !isTriggering) {
+            isTriggering = true; // 防止重复触发
+            
+            // 阻止目标死亡并给予3秒抗性V
             target.setHealth(1.0f);
+            target.addEffect(new MobEffectInstance(
+                MobEffects.DAMAGE_RESISTANCE, 
+                60, // 3秒 = 60 ticks
+                4,  // 等级V (0为I级)
+                false, // 不是环境效果
+                true,  // 显示粒子
+                true   // 显示图标
+            ));
             
             // 替罪者死亡
             owner.kill();
@@ -170,6 +185,7 @@ public class TiZuiEcho extends Echo {
             // 解除绑定
             boundTargetId = null;
             boundTargetName = null;
+            isTriggering = false;
             
             // 发送消息
             target.sendSystemMessage(Component.literal("§b[十日终焉] §f..." + owner.getName().getString() + "替你承担了死亡..."));

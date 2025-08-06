@@ -1,6 +1,7 @@
 package org.lanstard.doomsday.common.events;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.nbt.CompoundTag;
@@ -19,6 +20,7 @@ import org.lanstard.doomsday.common.items.echo.AbstractEchoStorageItem;
 import org.lanstard.doomsday.common.items.echo.HeartLockItem;
 import org.lanstard.doomsday.common.items.tools.ChiselItem;
 import org.lanstard.doomsday.common.effects.ModEffects;
+import org.lanstard.doomsday.common.data.HeartMarkData;
 import top.theillusivec4.curios.api.CuriosCapability;
 
 import java.util.List;
@@ -109,21 +111,13 @@ public class EchoDeathEvents {
         MobEffectInstance heartMarkEffect = deadPlayer.getEffect(ModEffects.HEART_MARK.get());
         if (heartMarkEffect == null) return;
         
-        // 从效果的NBT中获取施法者信息
-        CompoundTag effectTag = new CompoundTag();
-        heartMarkEffect.save(effectTag);
+        // 从HeartMarkData获取施法者信息
+        if (!(deadPlayer.level() instanceof ServerLevel serverLevel)) return;
         
-        if (!effectTag.contains("caster_uuid")) return;
+        HeartMarkData data = HeartMarkData.get(serverLevel);
+        UUID casterUuid = data.getCaster(deadPlayer.getUUID());
         
-        String casterUuidString = effectTag.getString("caster_uuid");
-        String casterName = effectTag.getString("caster_name");
-        
-        UUID casterUuid;
-        try {
-            casterUuid = UUID.fromString(casterUuidString);
-        } catch (IllegalArgumentException e) {
-            return;
-        }
+        if (casterUuid == null) return;
         
         // 查找施法者
         ServerPlayer caster = deadPlayer.getServer().getPlayerList().getPlayer(casterUuid);
@@ -141,6 +135,9 @@ public class EchoDeathEvents {
         // 发送消息通知
         caster.sendSystemMessage(Component.translatable("message.doomsday.xinsuo.heart_lock_obtained")
             .append(deadPlayer.getDisplayName()));
+        
+        // 清除HeartMarkData中的记录
+        data.unmarkPlayer(deadPlayer.getUUID());
         
         // 移除心之印效果（虽然玩家死亡时效果会自动清除，但为了确保）
         deadPlayer.removeEffect(ModEffects.HEART_MARK.get());

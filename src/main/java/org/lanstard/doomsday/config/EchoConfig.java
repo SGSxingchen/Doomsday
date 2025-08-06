@@ -145,6 +145,17 @@ public class EchoConfig {
     public static final ForgeConfigSpec.DoubleValue WUZHONGSHOU_HUNT_INSTINCT_DAMAGE_PER_LEVEL;
     public static final ForgeConfigSpec.DoubleValue WUZHONGSHOU_HUNT_INSTINCT_SPEED_PER_LEVEL;
 
+    // 茂木回响相关配置
+    public static final ForgeConfigSpec.IntValue MAOMU_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue MAOMU_MIN_FAITH;
+    public static final ForgeConfigSpec.IntValue MAOMU_MID_FAITH;
+    public static final ForgeConfigSpec.IntValue MAOMU_FREE_SANITY_THRESHOLD;
+    public static final ForgeConfigSpec.IntValue MAOMU_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.DoubleValue MAOMU_EFFECT_RANGE;
+    public static final ForgeConfigSpec.IntValue MAOMU_EFFECT_DURATION;
+    public static final ForgeConfigSpec.IntValue MAOMU_SLOWNESS_LEVEL;
+    public static final ForgeConfigSpec.IntValue MAOMU_ENTITY_LIFETIME;
+
     static {
         BUILDER.comment("十日终焉 - 回响配置");
         
@@ -641,6 +652,47 @@ public class EchoConfig {
         WUZHONGSHOU_HUNT_INSTINCT_SPEED_PER_LEVEL = BUILDER
             .comment("无终狩回响每级狩猎本能增加的攻击速度（百分比）")
             .defineInRange("hunt_instinct_speed_per_level", 5.0, 0.0, 50.0);
+            
+        BUILDER.pop();
+
+        // 茂木回响配置
+        BUILDER.push("茂木回响");
+        
+        MAOMU_SANITY_COST = BUILDER
+            .comment("茂木回响施法消耗的理智值")
+            .defineInRange("sanity_cost", 20, 0, 1000);
+            
+        MAOMU_MIN_FAITH = BUILDER
+            .comment("免费施法所需的最低信念值")
+            .defineInRange("min_faith", 10, 0, 20);
+            
+        MAOMU_MID_FAITH = BUILDER
+            .comment("中等信念值（减半消耗和冷却）")
+            .defineInRange("mid_faith", 5, 0, 20);
+            
+        MAOMU_FREE_SANITY_THRESHOLD = BUILDER
+            .comment("免费施法的理智值阈值（低于此值时不消耗理智）")
+            .defineInRange("free_sanity_threshold", 300, 0, 1000);
+            
+        MAOMU_COOLDOWN_TICKS = BUILDER
+            .comment("茂木回响冷却时间（tick）")
+            .defineInRange("cooldown_ticks", 100, 0, 1200);
+            
+        MAOMU_EFFECT_RANGE = BUILDER
+            .comment("茂木造物的缓慢效果范围（方块）")
+            .defineInRange("effect_range", 5.0, 1.0, 10.0);
+            
+        MAOMU_EFFECT_DURATION = BUILDER
+            .comment("缓慢效果持续时间（tick）")
+            .defineInRange("effect_duration", 60, 20, 200);
+            
+        MAOMU_SLOWNESS_LEVEL = BUILDER
+            .comment("缓慢效果等级（0-9）")
+            .defineInRange("slowness_level", 4, 0, 9);
+            
+        MAOMU_ENTITY_LIFETIME = BUILDER
+            .comment("茂木造物存在时间（tick）")
+            .defineInRange("entity_lifetime", 200, 100, 1200);
             
         BUILDER.pop();
 

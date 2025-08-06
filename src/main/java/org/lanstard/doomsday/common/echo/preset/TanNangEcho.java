@@ -8,6 +8,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -66,6 +67,12 @@ public class TanNangEcho extends BasicEcho {
         
         if (target == player) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f无法对自己使用探囊之法..."));
+            return;
+        }
+        
+        // 检查目标是否是OP或创造模式
+        if (!canStealFromTarget(target)) {
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f探囊之法无法对此目标生效..."));
             return;
         }
         
@@ -198,7 +205,10 @@ public class TanNangEcho extends BasicEcho {
         
         for (Player player : nearbyPlayers) {
             if (player == caster) continue;
-            if (!(player instanceof ServerPlayer)) continue;
+            if (!(player instanceof ServerPlayer serverPlayer)) continue;
+            
+            // 检查目标是否可以被偷取
+            if (!canStealFromTarget(serverPlayer)) continue;
             
             // 检查玩家是否在射线路径上
             AABB playerBounds = player.getBoundingBox();
@@ -206,12 +216,36 @@ public class TanNangEcho extends BasicEcho {
                 double distance = caster.distanceTo(player);
                 if (distance < closestDistance) {
                     closestDistance = distance;
-                    closestTarget = (ServerPlayer) player;
+                    closestTarget = serverPlayer;
                 }
             }
         }
         
         return closestTarget;
+    }
+    
+    /**
+     * 检查是否可以对目标玩家使用探囊之法
+     * @param target 目标玩家
+     * @return true 如果可以偷取，false 如果不能偷取
+     */
+    private boolean canStealFromTarget(ServerPlayer target) {
+        // 检查是否是OP
+        if (target.hasPermissions(2)) { // 权限等级2以上通常是OP
+            return false;
+        }
+        
+        // 检查是否是创造模式
+        if (target.gameMode.getGameModeForPlayer() == GameType.CREATIVE) {
+            return false;
+        }
+        
+        // 检查是否是观察者模式
+        if (target.gameMode.getGameModeForPlayer() == GameType.SPECTATOR) {
+            return false;
+        }
+        
+        return true;
     }
     
     private ItemStack stealRandomItem(ServerPlayer target) {
