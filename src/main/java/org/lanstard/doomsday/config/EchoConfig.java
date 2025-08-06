@@ -123,6 +123,28 @@ public class EchoConfig {
     public static final ForgeConfigSpec.IntValue TANNANG_KIDNEY_HEALTH_LOSS;
     public static final ForgeConfigSpec.IntValue TANNANG_MAX_KIDNEY_COUNT;
 
+    // 轮息回响相关配置
+    public static final ForgeConfigSpec.IntValue LUNXI_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue LUNXI_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.DoubleValue LUNXI_BASE_REACH;
+    public static final ForgeConfigSpec.DoubleValue LUNXI_TARGET_BOX_INFLATE;
+
+    // 嫁祸回响相关配置
+    public static final ForgeConfigSpec.IntValue JIAHUO_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue JIAHUO_DAMAGE_SANITY_COST;
+    public static final ForgeConfigSpec.DoubleValue JIAHUO_TRANSFER_RANGE;
+
+    // 无终狩回响相关配置
+    public static final ForgeConfigSpec.IntValue WUZHONGSHOU_MARK_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue WUZHONGSHOU_HUNT_DURATION_TICKS;
+    public static final ForgeConfigSpec.DoubleValue WUZHONGSHOU_BASE_REACH;
+    public static final ForgeConfigSpec.DoubleValue WUZHONGSHOU_TARGET_BOX_INFLATE;
+    public static final ForgeConfigSpec.IntValue WUZHONGSHOU_HUNT_SUCCESS_FAITH;
+    public static final ForgeConfigSpec.IntValue WUZHONGSHOU_HUNT_FAILURE_SANITY_LOSS;
+    public static final ForgeConfigSpec.DoubleValue WUZHONGSHOU_WARNING_DISTANCE;
+    public static final ForgeConfigSpec.DoubleValue WUZHONGSHOU_HUNT_INSTINCT_DAMAGE_PER_LEVEL;
+    public static final ForgeConfigSpec.DoubleValue WUZHONGSHOU_HUNT_INSTINCT_SPEED_PER_LEVEL;
+
     static {
         BUILDER.comment("十日终焉 - 回响配置");
         
@@ -540,6 +562,85 @@ public class EchoConfig {
         TANNANG_MAX_KIDNEY_COUNT = BUILDER
             .comment("每个玩家最多可以被掏的腰子数量")
             .defineInRange("max_kidney_count", 2, 1, 10);
+            
+        BUILDER.pop();
+
+        // 轮息回响配置
+        BUILDER.push("轮息回响");
+        
+        LUNXI_SANITY_COST = BUILDER
+            .comment("轮息回响施法消耗的理智值")
+            .defineInRange("sanity_cost", 200, 0, 1000);
+            
+        LUNXI_COOLDOWN_TICKS = BUILDER
+            .comment("轮息回响的冷却时间（tick，20tick = 1秒，12000tick = 10分钟）")
+            .defineInRange("cooldown_ticks", 12000, 0, 72000);
+            
+        LUNXI_BASE_REACH = BUILDER
+            .comment("轮息回响的基础施法距离（方块）")
+            .defineInRange("base_reach", 32.0, 1.0, 64.0);
+            
+        LUNXI_TARGET_BOX_INFLATE = BUILDER
+            .comment("轮息回响目标检测的碰撞箱扩展范围（方块）")
+            .defineInRange("target_box_inflate", 1.0, 0.1, 3.0);
+            
+        BUILDER.pop();
+
+        // 嫁祸回响配置
+        BUILDER.push("嫁祸回响");
+        
+        JIAHUO_SANITY_COST = BUILDER
+            .comment("嫁祸回响激活消耗的理智值")
+            .defineInRange("sanity_cost", 0, 0, 1000);
+            
+        JIAHUO_DAMAGE_SANITY_COST = BUILDER
+            .comment("嫁祸回响转移伤害时消耗的理智值")
+            .defineInRange("damage_sanity_cost", 20, 0, 100);
+            
+        JIAHUO_TRANSFER_RANGE = BUILDER
+            .comment("嫁祸回响的伤害转移检测范围（方块）")
+            .defineInRange("transfer_range", 10.0, 1.0, 32.0);
+            
+        BUILDER.pop();
+
+        // 无终狩回响配置
+        BUILDER.push("无终狩回响");
+        
+        WUZHONGSHOU_MARK_SANITY_COST = BUILDER
+            .comment("无终狩回响标记目标消耗的理智值")
+            .defineInRange("mark_sanity_cost", 100, 0, 1000);
+            
+        WUZHONGSHOU_HUNT_DURATION_TICKS = BUILDER
+            .comment("无终狩回响狩猎持续时间（tick，36000tick = 30分钟）")
+            .defineInRange("hunt_duration_ticks", 36000, 1200, 144000);
+            
+        WUZHONGSHOU_BASE_REACH = BUILDER
+            .comment("无终狩回响的基础施法距离（方块）")
+            .defineInRange("base_reach", 32.0, 1.0, 64.0);
+            
+        WUZHONGSHOU_TARGET_BOX_INFLATE = BUILDER
+            .comment("无终狩回响目标检测的碰撞箱扩展范围（方块）")
+            .defineInRange("target_box_inflate", 1.0, 0.1, 3.0);
+            
+        WUZHONGSHOU_HUNT_SUCCESS_FAITH = BUILDER
+            .comment("无终狩回响狩猎成功获得的信念点数")
+            .defineInRange("hunt_success_faith", 2, 1, 10);
+            
+        WUZHONGSHOU_HUNT_FAILURE_SANITY_LOSS = BUILDER
+            .comment("无终狩回响狩猎失败扣除的理智值")
+            .defineInRange("hunt_failure_sanity_loss", 400, 0, 1000);
+            
+        WUZHONGSHOU_WARNING_DISTANCE = BUILDER
+            .comment("无终狩回响警告显示距离（方块）")
+            .defineInRange("warning_distance", 30.0, 1.0, 64.0);
+            
+        WUZHONGSHOU_HUNT_INSTINCT_DAMAGE_PER_LEVEL = BUILDER
+            .comment("无终狩回响每级狩猎本能增加的近战伤害")
+            .defineInRange("hunt_instinct_damage_per_level", 1.0, 0.0, 10.0);
+            
+        WUZHONGSHOU_HUNT_INSTINCT_SPEED_PER_LEVEL = BUILDER
+            .comment("无终狩回响每级狩猎本能增加的攻击速度（百分比）")
+            .defineInRange("hunt_instinct_speed_per_level", 5.0, 0.0, 50.0);
             
         BUILDER.pop();
 

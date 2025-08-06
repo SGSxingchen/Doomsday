@@ -11,6 +11,7 @@ import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoManager;
 import org.lanstard.doomsday.common.echo.preset.BuMieEcho;
+import org.lanstard.doomsday.common.echo.preset.JiaHuoEcho;
 import org.lanstard.doomsday.common.echo.preset.LiXiEcho;
 import org.lanstard.doomsday.common.echo.preset.NaGouEcho;
 import org.lanstard.doomsday.common.echo.preset.ShuangShengHuaEcho;
@@ -41,6 +42,17 @@ public class EchoEffectEvents {
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        
+        // 检查嫁祸回响效果 - 优先处理，因为如果伤害被转移就不需要其他处理
+        for (Echo echo : EchoManager.getPlayerEchoes(player)) {
+            if (echo instanceof JiaHuoEcho jiaHuoEcho) {
+                if (jiaHuoEcho.tryTransferDamage(player, event.getSource(), event.getAmount())) {
+                    event.setCanceled(true); // 取消对原玩家的伤害
+                    return; // 伤害已转移，不需要继续处理
+                }
+                break;
+            }
+        }
         
         // 检查硬化回响效果
         for (Echo echo : EchoManager.getPlayerEchoes(player)) {

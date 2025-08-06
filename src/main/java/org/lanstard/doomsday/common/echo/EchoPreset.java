@@ -288,6 +288,20 @@ public enum EchoPreset {
         public Echo createEcho() {
             return new LingWenEcho();
         }
+    },
+
+    LUNXI("轮息", EchoType.ACTIVE, 200, 0) {
+        @Override
+        public Echo createEcho() {
+            return new LunXiEcho();
+        }
+    },
+
+    JIAHUO("嫁祸", EchoType.CONTINUOUS, 0, 0) {
+        @Override
+        public Echo createEcho() {
+            return new JiaHuoEcho();
+        }
     };
 
     private final String name;
