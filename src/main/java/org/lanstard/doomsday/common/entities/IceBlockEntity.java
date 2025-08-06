@@ -15,10 +15,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 
 public class IceBlockEntity extends ThrowableItemProjectile {
-    private static final float DAMAGE = 16.0f;
-    private static final float ENHANCED_DAMAGE = 24.0f;  // 增强状态伤害
-    private static final float SPLIT_DAMAGE = 10.0f;
-    private static final float ENHANCED_SPLIT_DAMAGE = 15.0f;  // 增强状态分裂伤害
+    private static final float DAMAGE = 10.7f;      // 原16.0 * 2/3
+    private static final float ENHANCED_DAMAGE = 16.0f;  // 原24.0 * 2/3
+    private static final float SPLIT_DAMAGE = 6.7f;     // 原10.0 * 2/3
+    private static final float ENHANCED_SPLIT_DAMAGE = 10.0f;  // 原15.0 * 2/3
     private static final float SPLIT_SPEED_MULTIPLIER = 0.8f;
     private int splitCount = 0;  // 分裂次数计数
     private static final int MAX_SPLIT = 2;  // 最大分裂次数

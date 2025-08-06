@@ -75,7 +75,11 @@ public class WoLiuEcho extends BasicEcho {
         
         // 获取使用者位置
         Vec3 userPos = player.position();
-        double range = EchoConfig.WOLIU_RANGE.get();
+        double baseRange = EchoConfig.WOLIU_RANGE.get();
+        
+        // 根据信念值和配置倍率调整范围
+        double faithRangeMultiplier = EchoConfig.WOLIU_FAITH_RANGE_MULTIPLIER.get();
+        double range = baseRange * (1.0 + faith * faithRangeMultiplier);
         
         // 创建检测范围
         AABB searchBox = AABB.ofSize(userPos, range * 2, range * 2, range * 2);
@@ -93,7 +97,11 @@ public class WoLiuEcho extends BasicEcho {
         
         // 对每个玩家施加吸引力
         int affectedCount = 0;
-        double attractionStrength = EchoConfig.WOLIU_ATTRACTION_STRENGTH.get();
+        double baseAttractionStrength = EchoConfig.WOLIU_ATTRACTION_STRENGTH.get();
+        
+        // 根据信念值和配置倍率调整引力强度  
+        double faithStrengthMultiplier = EchoConfig.WOLIU_FAITH_STRENGTH_MULTIPLIER.get();
+        double attractionStrength = baseAttractionStrength * (1.0 + faith * faithStrengthMultiplier);
         
         for (ServerPlayer target : nearbyPlayers) {
             Vec3 targetPos = target.position();

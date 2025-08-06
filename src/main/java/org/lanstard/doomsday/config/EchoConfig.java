@@ -68,6 +68,8 @@ public class EchoConfig {
     public static final ForgeConfigSpec.DoubleValue WOLIU_RANGE;
     public static final ForgeConfigSpec.DoubleValue WOLIU_ATTRACTION_STRENGTH;
     public static final ForgeConfigSpec.IntValue WOLIU_FAITH_REQUIREMENT;
+    public static final ForgeConfigSpec.DoubleValue WOLIU_FAITH_RANGE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue WOLIU_FAITH_STRENGTH_MULTIPLIER;
 
     // 纳垢回响相关配置
     public static final ForgeConfigSpec.IntValue NAGOU_SANITY_COST;
@@ -312,11 +314,19 @@ public class EchoConfig {
             
         WOLIU_ATTRACTION_STRENGTH = BUILDER
             .comment("涡流回响的吸引力强度")
-            .defineInRange("attraction_strength", 1.0, 0.1, 5.0);
+            .defineInRange("attraction_strength", 1.5, 0.1, 5.0);
             
         WOLIU_FAITH_REQUIREMENT = BUILDER
             .comment("涡流回响冷却减半所需的信念值")
             .defineInRange("faith_requirement", 5, 0, 100);
+            
+        WOLIU_FAITH_RANGE_MULTIPLIER = BUILDER
+            .comment("涡流回响每点信念对范围的增益倍率（范围=基础范围*(1+信念*倍率)）")
+            .defineInRange("faith_range_multiplier", 0.1, 0.0, 1.0);
+            
+        WOLIU_FAITH_STRENGTH_MULTIPLIER = BUILDER
+            .comment("涡流回响每点信念对引力强度的增益倍率（强度=基础强度*(1+信念*倍率)）")
+            .defineInRange("faith_strength_multiplier", 0.15, 0.0, 1.0);
             
         BUILDER.pop();
 

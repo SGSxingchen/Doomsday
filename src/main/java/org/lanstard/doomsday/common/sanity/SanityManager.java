@@ -64,6 +64,11 @@ public class SanityManager {
         if (sanityData == null) return;
         sanityData.modifyFaith(player.getUUID(), delta);
         
+        // 如果是增加信念，同时增加100当前理智值
+        if (delta > 0) {
+            modifySanity(player, 100);
+        }
+        
         // 强制刷新属性以立即更新血条显示
         refreshPlayerAttributes(player);
         
