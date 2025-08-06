@@ -119,6 +119,9 @@ public class EchoConfig {
     public static final ForgeConfigSpec.IntValue TANNANG_COOLDOWN_TICKS;
     public static final ForgeConfigSpec.DoubleValue TANNANG_BASE_REACH;
     public static final ForgeConfigSpec.DoubleValue TANNANG_TARGET_BOX_INFLATE;
+    public static final ForgeConfigSpec.IntValue TANNANG_KIDNEY_FAITH_COST;
+    public static final ForgeConfigSpec.IntValue TANNANG_KIDNEY_HEALTH_LOSS;
+    public static final ForgeConfigSpec.IntValue TANNANG_MAX_KIDNEY_COUNT;
 
     static {
         BUILDER.comment("十日终焉 - 回响配置");
@@ -525,6 +528,18 @@ public class EchoConfig {
         TANNANG_TARGET_BOX_INFLATE = BUILDER
             .comment("探囊回响目标检测的碰撞箱扩展范围（方块）")
             .defineInRange("target_box_inflate", 1.0, 0.1, 3.0);
+            
+        TANNANG_KIDNEY_FAITH_COST = BUILDER
+            .comment("探囊回响掏腰子所需的信念值")
+            .defineInRange("kidney_faith_cost", 10, 0, 100);
+            
+        TANNANG_KIDNEY_HEALTH_LOSS = BUILDER
+            .comment("被掏腰子时扣除的生命值上限（单位：半颗心）")
+            .defineInRange("kidney_health_loss", 8, 1, 20);
+            
+        TANNANG_MAX_KIDNEY_COUNT = BUILDER
+            .comment("每个玩家最多可以被掏的腰子数量")
+            .defineInRange("max_kidney_count", 2, 1, 10);
             
         BUILDER.pop();
 

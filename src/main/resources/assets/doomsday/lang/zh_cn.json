@@ -152,5 +152,8 @@
   
   "echo.lingxiu": "灵嗅",
   
-  "echo.lingwen": "灵闻"
+  "echo.lingwen": "灵闻",
+  
+  "item.doomsday.kidney": "腰子",
+  "item.doomsday.kidney.tooltip": "被掏出的腰子，蕴含着生命的精华"
 } 

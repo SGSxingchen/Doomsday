@@ -122,6 +122,14 @@ public class ModItem {
     public static final RegistryObject<Item> HEART_LOCK = ITEMS.register("heart_lock",
         () -> new HeartLockItem(new Item.Properties()));
 
+    public static final RegistryObject<Item> KIDNEY = ITEMS.register("kidney",
+        () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)) {
+            @Override
+            public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+                tooltip.add(Component.translatable("item.doomsday.kidney.tooltip").withStyle(ChatFormatting.GRAY));
+            }
+        });
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

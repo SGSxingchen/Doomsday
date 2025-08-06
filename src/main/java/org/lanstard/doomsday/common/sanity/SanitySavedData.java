@@ -14,6 +14,7 @@ public class SanitySavedData extends SavedData {
     private final Map<UUID, Integer> playerSanity;
     private final Map<UUID, Integer> playerFaith;
     private final Map<UUID, Integer> playerMaxSanityModifier;
+    private final Map<UUID, Integer> playerKidneyCount;
     private static final int BASE_MAX_SANITY = SanityConfig.getConfig().sanity_limits.max;
     private static final int MIN_SANITY = SanityConfig.getConfig().sanity_limits.min;
     private static final int FAITH_SANITY_BONUS = 100;
@@ -22,6 +23,7 @@ public class SanitySavedData extends SavedData {
         this.playerSanity = new HashMap<>();
         this.playerFaith = new HashMap<>();
         this.playerMaxSanityModifier = new HashMap<>();
+        this.playerKidneyCount = new HashMap<>();
     }
     
     public SanitySavedData(CompoundTag tag) {
@@ -33,9 +35,11 @@ public class SanitySavedData extends SavedData {
             int sanity = playerTag.getInt("sanity");
             int faith = playerTag.getInt("faith");
             int maxSanityMod = playerTag.getInt("maxSanityMod");
+            int kidneyCount = playerTag.getInt("kidneyCount");
             playerSanity.put(playerId, sanity);
             playerFaith.put(playerId, faith);
             playerMaxSanityModifier.put(playerId, maxSanityMod);
+            playerKidneyCount.put(playerId, kidneyCount);
         }
     }
     
@@ -49,6 +53,7 @@ public class SanitySavedData extends SavedData {
             playerTag.putInt("sanity", entry.getValue());
             playerTag.putInt("faith", playerFaith.getOrDefault(playerId, 0));
             playerTag.putInt("maxSanityMod", playerMaxSanityModifier.getOrDefault(playerId, 0));
+            playerTag.putInt("kidneyCount", playerKidneyCount.getOrDefault(playerId, 0));
             playerList.add(playerTag);
         }
         tag.put("players", playerList);
@@ -98,5 +103,19 @@ public class SanitySavedData extends SavedData {
         int currentMod = playerMaxSanityModifier.getOrDefault(playerId, 0);
         playerMaxSanityModifier.put(playerId, currentMod + delta);
         this.setDirty();
+    }
+    
+    public int getKidneyCount(UUID playerId) {
+        return playerKidneyCount.getOrDefault(playerId, 0);
+    }
+    
+    public void addKidneyCount(UUID playerId) {
+        int currentCount = getKidneyCount(playerId);
+        playerKidneyCount.put(playerId, currentCount + 1);
+        this.setDirty();
+    }
+    
+    public boolean canHarvestKidney(UUID playerId, int maxKidneyCount) {
+        return getKidneyCount(playerId) < maxKidneyCount;
     }
 } 

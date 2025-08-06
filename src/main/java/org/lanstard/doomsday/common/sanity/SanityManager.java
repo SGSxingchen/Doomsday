@@ -95,6 +95,22 @@ public class SanityManager {
         return getSanity(player) >= requiredSanity;
     }
     
+    public static int getKidneyCount(ServerPlayer player) {
+        if (sanityData == null) return 0;
+        return sanityData.getKidneyCount(player.getUUID());
+    }
+    
+    public static void addKidneyCount(ServerPlayer player) {
+        if (sanityData != null) {
+            sanityData.addKidneyCount(player.getUUID());
+        }
+    }
+    
+    public static boolean canHarvestKidney(ServerPlayer player, int maxKidneyCount) {
+        if (sanityData == null) return true;
+        return sanityData.canHarvestKidney(player.getUUID(), maxKidneyCount);
+    }
+    
     public static void syncToClient(ServerPlayer player) {
         if (server != null && sanityData != null) {
             int currentSanity = sanityData.getSanity(player.getUUID());

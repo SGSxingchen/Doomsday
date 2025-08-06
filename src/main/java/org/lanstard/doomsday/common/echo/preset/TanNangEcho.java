@@ -3,6 +3,8 @@ package org.lanstard.doomsday.common.echo.preset;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
@@ -10,8 +12,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.ChatFormatting;
 import org.lanstard.doomsday.common.echo.BasicEcho;
 import org.lanstard.doomsday.common.echo.EchoType;
+import org.lanstard.doomsday.common.items.ModItem;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import org.lanstard.doomsday.config.EchoConfig;
 
@@ -68,11 +72,18 @@ public class TanNangEcho extends BasicEcho {
         // 更新最后使用时间
         lastUseTime = player.level().getGameTime();
         
+        // 检查是否有足够信念掏腰子
+        int currentFaith = SanityManager.getFaith(player);
+        int kidneyFaithCost = EchoConfig.TANNANG_KIDNEY_FAITH_COST.get();
+        int maxKidneyCount = EchoConfig.TANNANG_MAX_KIDNEY_COUNT.get();
+        boolean canHarvestKidney = currentFaith >= kidneyFaithCost && 
+                                   SanityManager.canHarvestKidney(target, maxKidneyCount);
+        
         // 消耗理智值
         int sanityCost = EchoConfig.TANNANG_SANITY_COST.get();
         SanityManager.modifySanity(player, -sanityCost);
         
-        // 获取目标玩家的随机物品
+        // 先执行普通的物品掏取逻辑
         ItemStack stolenItem = stealRandomItem(target);
         
         if (stolenItem.isEmpty()) {
@@ -90,6 +101,70 @@ public class TanNangEcho extends BasicEcho {
             
             // 通知目标玩家
             target.sendSystemMessage(Component.literal("§c[十日终焉] §f你感觉到有什么东西被" + player.getDisplayName().getString() + "的探囊之法取走了..."));
+        }
+        
+        // 如果可以掏腰子，额外掏腰子（100%概率）
+        if (canHarvestKidney) {
+            // 消耗信念值
+            SanityManager.modifyFaith(player, -kidneyFaithCost);
+            
+            // 增加目标的腰子被掏次数
+            SanityManager.addKidneyCount(target);
+            
+            // 减少目标的最大生命值
+            int healthLoss = EchoConfig.TANNANG_KIDNEY_HEALTH_LOSS.get();
+            AttributeInstance maxHealthAttribute = target.getAttribute(Attributes.MAX_HEALTH);
+            if (maxHealthAttribute != null) {
+                double currentMaxHealth = maxHealthAttribute.getBaseValue();
+                double newMaxHealth = Math.max(6.0, currentMaxHealth - healthLoss); // 至少保留3颗心
+                maxHealthAttribute.setBaseValue(newMaxHealth);
+                
+                // 如果当前生命值超过新的最大生命值，则调整当前生命值
+                if (target.getHealth() > newMaxHealth) {
+                    target.setHealth((float) newMaxHealth);
+                }
+            }
+            
+            // 给施法者腰子物品
+            ItemStack kidneyItem = new ItemStack(ModItem.KIDNEY.get());
+            
+            // 添加署名信息到NBT数据
+            CompoundTag nbt = kidneyItem.getOrCreateTag();
+            nbt.putString("OriginalOwner", target.getDisplayName().getString());
+            nbt.putString("HarvesterName", player.getDisplayName().getString());
+            nbt.putLong("HarvestTime", player.level().getGameTime());
+            
+            // 设置自定义显示名称和Lore
+            CompoundTag display = new CompoundTag();
+            display.putString("Name", Component.Serializer.toJson(
+                Component.literal("新鲜的腰子").withStyle(ChatFormatting.RED, ChatFormatting.BOLD)
+            ));
+            
+            // 创建Lore列表
+            net.minecraft.nbt.ListTag lore = new net.minecraft.nbt.ListTag();
+            lore.add(net.minecraft.nbt.StringTag.valueOf(Component.Serializer.toJson(
+                Component.literal("来源: " + target.getDisplayName().getString()).withStyle(ChatFormatting.GRAY)
+            )));
+            lore.add(net.minecraft.nbt.StringTag.valueOf(Component.Serializer.toJson(
+                Component.literal("掏取者: " + player.getDisplayName().getString()).withStyle(ChatFormatting.GRAY)
+            )));
+            lore.add(net.minecraft.nbt.StringTag.valueOf(Component.Serializer.toJson(
+                Component.literal("蕴含着生命的精华...").withStyle(ChatFormatting.ITALIC, ChatFormatting.DARK_PURPLE)
+            )));
+            
+            display.put("Lore", lore);
+            nbt.put("display", display);
+            
+            if (!player.getInventory().add(kidneyItem)) {
+                player.drop(kidneyItem, false);
+                player.sendSystemMessage(Component.literal("§d[十日终焉] §f额外掏出了" + target.getDisplayName().getString() + "的腰子，但背包已满，腰子掉落在地上..."));
+            } else {
+                player.sendSystemMessage(Component.literal("§d[十日终焉] §f额外掏出了" + target.getDisplayName().getString() + "的腰子！"));
+            }
+            
+            // 通知目标玩家关于腰子
+            int remainingKidneys = maxKidneyCount - SanityManager.getKidneyCount(target);
+            target.sendSystemMessage(Component.literal("§c[十日终焉] §f你感受到剧烈的痛楚！" + player.getDisplayName().getString() + "掏走了你的一颗腰子！（剩余可掏取次数：" + remainingKidneys + "）"));
         }
         
         // 更新状态
