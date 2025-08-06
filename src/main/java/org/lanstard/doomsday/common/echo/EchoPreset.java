@@ -149,12 +149,6 @@ public enum EchoPreset {
         }
     },
 
-    QIAOWU("巧物", EchoType.PASSIVE, 0, 0) {
-        @Override
-        public Echo createEcho() {
-            return new QiaoWuEcho();
-        }
-    },
 
     YUEQIAN("跃迁", EchoType.ACTIVE, 50, 0) {
         @Override
