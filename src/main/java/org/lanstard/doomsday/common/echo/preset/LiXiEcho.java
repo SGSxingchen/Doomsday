@@ -189,12 +189,18 @@ public class LiXiEcho extends Echo {
         lastChargingTick = 0;
     }
     
+    // 公共方法供事件处理器调用来打断充能
+    public void interruptCharging(ServerPlayer player) {
+        resetCharging(player);
+    }
+    
+    // 检查是否正在充能
+    public boolean isCharging() {
+        return isCharging;
+    }
+    
     private boolean isChargingInterrupted(ServerPlayer player, long currentTick) {
-        // 检查玩家是否受到伤害
-        if (player.getHealth() < player.getMaxHealth() * 0.9f && chargingTicks > 0) {
-            return true;
-        }
-        
+        // 伤害检测已移至事件处理器，此处仅保留其他打断条件
         return false;
     }
     

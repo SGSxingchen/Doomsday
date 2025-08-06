@@ -11,6 +11,7 @@ import org.lanstard.doomsday.Doomsday;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoManager;
 import org.lanstard.doomsday.common.echo.preset.BuMieEcho;
+import org.lanstard.doomsday.common.echo.preset.LiXiEcho;
 import org.lanstard.doomsday.common.echo.preset.NaGouEcho;
 import org.lanstard.doomsday.common.echo.preset.ShuangShengHuaEcho;
 import org.lanstard.doomsday.common.echo.preset.TiZuiEcho;
@@ -57,6 +58,16 @@ public class EchoEffectEvents {
                 if (naGouEcho.tryAbsorbDamage(player, event.getSource(), event.getAmount())) {
                     event.setCanceled(true); // 完全阻挡伤害
                     return; // 伤害被完全吸收，不需要继续处理
+                }
+                break;
+            }
+        }
+        
+        // 检查离析回响充能是否需要打断
+        for (Echo echo : EchoManager.getPlayerEchoes(player)) {
+            if (echo instanceof LiXiEcho liXiEcho) {
+                if (liXiEcho.isCharging()) {
+                    liXiEcho.interruptCharging(player);
                 }
                 break;
             }
