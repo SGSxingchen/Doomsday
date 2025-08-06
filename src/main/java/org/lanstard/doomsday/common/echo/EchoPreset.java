@@ -267,6 +267,27 @@ public enum EchoPreset {
         public Echo createEcho() {
             return new TanNangEcho();
         }
+    },
+
+    LINGCHU("灵触", EchoType.ACTIVE, 20, 0) {
+        @Override
+        public Echo createEcho() {
+            return new LingChuEcho();
+        }
+    },
+
+    LINGXIU("灵嗅", EchoType.ACTIVE, 20, 0) {
+        @Override
+        public Echo createEcho() {
+            return new LingXiuEcho();
+        }
+    },
+
+    LINGWEN("灵闻", EchoType.ACTIVE, 20, 0) {
+        @Override
+        public Echo createEcho() {
+            return new LingWenEcho();
+        }
     };
 
     private final String name;

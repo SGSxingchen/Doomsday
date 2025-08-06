@@ -12,8 +12,8 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 
-public class LingShiEcho extends Echo {
-    private static final EchoPreset PRESET = EchoPreset.LINGSHI;
+public class LingChuEcho extends Echo {
+    private static final EchoPreset PRESET = EchoPreset.LINGCHU;
     private static final int SANITY_COST = 20;           // 使用消耗
     private static final int FREE_COST_THRESHOLD = 300;  // 免费释放阈值
     private static final int MIN_BELIEF = 10;            // 最小信念要求
@@ -22,13 +22,13 @@ public class LingShiEcho extends Echo {
     private static final int MID_RANGE = 20;             // 中等信念检测范围
     private static final int HIGH_RANGE = 30;            // 高等信念检测范围
 
-    public LingShiEcho() {
+    public LingChuEcho() {
         super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), SANITY_COST, 0);
     }
 
     @Override
     public void onActivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵视之力已觉醒..."));
+        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵触之力已觉醒..."));
     }
 
     @Override
@@ -38,7 +38,7 @@ public class LingShiEcho extends Echo {
 
     @Override
     public void onDeactivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵视之力已消散..."));
+        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵触之力已消散..."));
     }
 
     @Override
@@ -49,7 +49,7 @@ public class LingShiEcho extends Echo {
         
         // 如果不能免费释放，检查理智是否足够
         if (!isFree && currentSanity < SANITY_COST) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展灵视之术..."));
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展灵触之术..."));
             return false;
         }
         
@@ -78,7 +78,7 @@ public class LingShiEcho extends Echo {
         );
 
         if (hitResult == null || !(hitResult.getEntity() instanceof ServerPlayer target)) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...目光所及之处无可探查之人..."));
+            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...触不到任何生灵的气息..."));
             return;
         }
         
@@ -90,10 +90,10 @@ public class LingShiEcho extends Echo {
             int actualCost = faith >= MID_BELIEF ? SANITY_COST / 2 : SANITY_COST;
             SanityManager.modifySanity(player, -actualCost);
             String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，灵视之力(" + faithLevel + ")已生效..."));
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，灵触之力(" + faithLevel + ")已生效..."));
         } else {
             String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，灵视之力(" + faithLevel + ")已生效..."));
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，灵触之力(" + faithLevel + ")已生效..."));
         }
 
         // 获取目标的回响和理智值
@@ -101,18 +101,18 @@ public class LingShiEcho extends Echo {
         int targetMaxSanity = SanityManager.getMaxSanity(target);
         
         // 发送信息
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵视之下，透视出" + target.getName().getString() + "的心神为" + targetSanity + "/" + targetMaxSanity + "..."));
+        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵触之下，感受到" + target.getName().getString() + "的心神波动为" + targetSanity + "/" + targetMaxSanity + "..."));
         
         // 获取并显示目标的回响信息
         List<Echo> echoes = EchoManager.getPlayerEchoes(target);
         if (echoes.isEmpty()) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...此人身上看不到任何回响的光华..."));
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...此人身上没有任何回响的触感..."));
         } else {
-            StringBuilder message = new StringBuilder("§b[十日终焉] §f...看到此人身上的回响光华：\n");
+            StringBuilder message = new StringBuilder("§b[十日终焉] §f...触碰到此人身上的回响气息：\n");
             for (Echo echo : echoes) {
                 message.append(echo.getName());
                 if (echo.isActive()) {
-                    message.append(" §a[正在发光]§f");
+                    message.append(" §a[正在流转]§f");
                 }
                 message.append("\n");
             }
@@ -124,6 +124,6 @@ public class LingShiEcho extends Echo {
     @Override
     public void toggleContinuous(ServerPlayer player) {
         // 这是一个主动技能，不需要切换持续状态
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...灵视之术需要主动施展..."));
+        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...灵触之术需要主动施展..."));
     }
-} 
+}
