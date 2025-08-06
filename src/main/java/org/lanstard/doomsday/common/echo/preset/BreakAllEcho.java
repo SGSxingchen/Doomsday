@@ -114,8 +114,19 @@ public class BreakAllEcho extends Echo {
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...破万法摧毁了" + nearbySwords.size() + "把七黑剑..."));
         }
         
+        // 获取使用者的信念值
+        int userFaith = SanityManager.getFaith(player);
+        
         for (ServerPlayer target : nearbyPlayers) {
             if (target == player) continue; // 不影响自己
+            
+            // 检查目标信念值是否高于使用者
+            int targetFaith = SanityManager.getFaith(target);
+            if (targetFaith > userFaith) {
+                target.sendSystemMessage(Component.literal("§6[十日终焉] §f...你的信念护佑着你..."));
+                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...目标信念高于你，破万法无法生效..."));
+                continue; // 跳过这个目标
+            }
             
             // 获取目标玩家的所有回响
             List<Echo> targetEchoes = EchoManager.getPlayerEchoes(target);

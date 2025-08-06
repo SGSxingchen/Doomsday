@@ -18,7 +18,7 @@ public class MaoMuEcho extends Echo {
     private static final int MIN_FAITH = 10;
     private static final int MID_FAITH = 5;                  // 中等信念要求
     private static final int FREE_SANITY_THRESHOLD = 300;
-    private static final int COOLDOWN_TICKS = 200; // 10秒 = 10 * 20 ticks
+    private static final int COOLDOWN_TICKS = 100; // 5秒 = 5 * 20 ticks
     private long cooldownEndTime = 0;
     private static final EchoPreset PRESET = EchoPreset.MAOMU;
 

@@ -11,11 +11,9 @@ import net.minecraft.nbt.CompoundTag;
 public class YanPinEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.YANPIN;
     private static final int SANITY_COST = 200;              // 理智消耗
-    private static final int COOL_DOWN = 12000;              // 10分钟冷却
+    private static final int COOL_DOWN = 36000;              // 30分钟冷却
     private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
     private static final int MIN_FAITH_REQUIREMENT = 10;     // 最低信念要求
-    private static final int MAX_STACK_SIZE = 32;            // 最大堆叠数量
-    private static final int HIGH_FAITH_STACK_SIZE = 64;    // 高信念时最大堆叠数量
     
     private long lastUseTime = 0;
 
@@ -93,8 +91,7 @@ public class YanPinEcho extends Echo {
     private boolean canDuplicate(ItemStack item) {
         // 这里可以添加不允许复制的物品列表
         return !item.hasCustomHoverName() && // 不能复制改名物品
-               !item.isEnchanted() &&        // 不能复制附魔物品
-               item.getCount() <= MAX_STACK_SIZE; // 检查堆叠数量
+               !item.isEnchanted();           // 不能复制附魔物品
     }
 
     @Override
@@ -110,15 +107,9 @@ public class YanPinEcho extends Echo {
         int faith = SanityManager.getFaith(player);
         boolean freeCost = faith >= MIN_FAITH_REQUIREMENT && currentSanity < FREE_COST_THRESHOLD;
 
-        // 确定可复制的堆叠数量
-        int maxStackSize = faith >= 5 ? HIGH_FAITH_STACK_SIZE : MAX_STACK_SIZE;
-        if (offhandItem.getCount() > maxStackSize) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...物品数量过多，无法复制..."));
-            return;
-        }
-
-        // 创建物品副本
+        // 创建物品副本（只复制一个）
         ItemStack copy = offhandItem.copy();
+        copy.setCount(1);  // 设置数量为1，只复制一个
         if (!player.getInventory().add(copy)) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...背包已满，无法容纳赝品..."));
             return;

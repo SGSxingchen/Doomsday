@@ -86,21 +86,26 @@ public class HanBingEcho extends Echo {
             SanityManager.modifySanity(player, -actualCost);
         }
 
-        // 发射寒冰实体
+        // 发射3个寒冰实体（扇形分散）
         Level level = player.level();
-        IceBlockEntity iceBlock = new IceBlockEntity(level, player);
+        float[] yawOffsets = {-15.0F, 0.0F, 15.0F}; // 扇形分散角度
         
-        // 根据信念等级设置冰块特性
-        if (currentBelief >= MID_BELIEF) {
-            iceBlock.setEnhanced(true);  // 设置为增强状态
-            // 增加发射速度和精确度
-            iceBlock.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 2.0F, 0.5F);
-        } else {
-            iceBlock.setEnhanced(false);
-            iceBlock.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+        for (int i = 0; i < 3; i++) {
+            IceBlockEntity iceBlock = new IceBlockEntity(level, player);
+            
+            // 根据信念等级设置冰块特性
+            if (currentBelief >= MID_BELIEF) {
+                iceBlock.setEnhanced(true);  // 设置为增强状态
+                // 增加发射速度和精确度，带有扇形偏移
+                iceBlock.shootFromRotation(player, player.getXRot(), player.getYRot() + yawOffsets[i], 0.0F, 2.0F, 0.3F);
+            } else {
+                iceBlock.setEnhanced(false);
+                // 普通状态下也采用扇形发射，但精确度稍低
+                iceBlock.shootFromRotation(player, player.getXRot(), player.getYRot() + yawOffsets[i], 0.0F, 1.5F, 0.7F);
+            }
+            
+            level.addFreshEntity(iceBlock);
         }
-        
-        level.addFreshEntity(iceBlock);
 
         // 设置冷却时间
         int baseCoolDown = COOL_DOWN;
@@ -113,7 +118,7 @@ public class HanBingEcho extends Echo {
 
         // 发送使用提示
         String beliefLevel = currentBelief >= MIN_BELIEF ? "坚定" : (currentBelief >= MID_BELIEF ? "稳固" : "微弱");
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...寒冰(" + beliefLevel + ")之力爆发，冻结周围的一切..."));
+        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...寒冰(" + beliefLevel + ")之力爆发，三道冰霜齐射而出..."));
     }
 
     @Override
