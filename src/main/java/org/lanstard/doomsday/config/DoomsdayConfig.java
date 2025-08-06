@@ -14,6 +14,9 @@ public class DoomsdayConfig {
     // 本地聊天配置
     public static final ForgeConfigSpec.BooleanValue ENABLE_LOCAL_CHAT;
     public static final ForgeConfigSpec.DoubleValue LOCAL_CHAT_RANGE;
+    
+    // 眼球腐烂配置
+    public static final ForgeConfigSpec.IntValue EYE_DECAY_TIME_HOURS;
 
     static {
         BUILDER.comment("十日终焉 - 通用配置");
@@ -38,6 +41,13 @@ public class DoomsdayConfig {
         LOCAL_CHAT_RANGE = BUILDER
             .comment("本地聊天的可见范围（方块）")
             .defineInRange("range", 32.0, 1.0, 256.0);
+        BUILDER.pop();
+
+        // 眼球腐烂配置
+        BUILDER.push("眼球腐烂");
+        EYE_DECAY_TIME_HOURS = BUILDER
+            .comment("眼球腐烂时间（小时）")
+            .defineInRange("decayTimeHours", 3, 1, 24);
         BUILDER.pop();
 
         SPEC = BUILDER.build();

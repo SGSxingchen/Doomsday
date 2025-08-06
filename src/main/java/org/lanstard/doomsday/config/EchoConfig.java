@@ -53,6 +53,13 @@ public class EchoConfig {
     public static final ForgeConfigSpec.DoubleValue FIRE_BOMB_MID_INACCURACY;
     public static final ForgeConfigSpec.DoubleValue FIRE_BOMB_HIGH_INACCURACY;
 
+    // 硬化回响相关配置
+    public static final ForgeConfigSpec.IntValue YINGHUA_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue YINGHUA_CONTINUOUS_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue YINGHUA_HIGH_FAITH_THRESHOLD;
+    public static final ForgeConfigSpec.DoubleValue YINGHUA_REFLECT_DAMAGE;
+    public static final ForgeConfigSpec.IntValue YINGHUA_DAMAGE_SANITY_COST;
+
     static {
         BUILDER.comment("十日终焉 - 回响配置");
         
@@ -61,11 +68,11 @@ public class EchoConfig {
         
         WUGU_SANITY_COST = BUILDER
             .comment("无垢回响施法消耗的理智值")
-            .defineInRange("sanity_cost", 150, 0, 1000);
+            .defineInRange("sanity_cost", 100, 0, 1000);
             
         WUGU_SANITY_HEAL = BUILDER
             .comment("无垢回响恢复目标的理智值（高信念时会被倍率加成）")
-            .defineInRange("sanity_heal", 120, 0, 1000);
+            .defineInRange("sanity_heal", 400, 0, 1000);
             
         WUGU_MID_FAITH = BUILDER
             .comment("无垢回响的中等信念要求（达到此信念值时触发加成效果）")
@@ -73,7 +80,7 @@ public class EchoConfig {
             
         WUGU_COOLDOWN_TICKS = BUILDER
             .comment("无垢回响的冷却时间（tick，20tick = 1秒）")
-            .defineInRange("cooldown_ticks", 12000, 0, 72000);
+            .defineInRange("cooldown_ticks", 1200, 0, 72000);
             
         WUGU_BASE_REACH = BUILDER
             .comment("无垢回响的基础施法距离（方块）")
@@ -220,6 +227,31 @@ public class EchoConfig {
         FIRE_BOMB_HIGH_INACCURACY = BUILDER
             .comment("爆燃弹高等强化不精确度（越大越不精确）")
             .defineInRange("high_inaccuracy", 0.5, 0.0, 5.0);
+            
+        BUILDER.pop();
+
+        // 硬化回响配置
+        BUILDER.push("硬化回响");
+        
+        YINGHUA_SANITY_COST = BUILDER
+            .comment("硬化回响激活消耗的理智值")
+            .defineInRange("sanity_cost", 0, 0, 1000);
+            
+        YINGHUA_CONTINUOUS_SANITY_COST = BUILDER
+            .comment("硬化回响持续状态下每秒消耗的理智值")
+            .defineInRange("continuous_sanity_cost", 20, 0, 100);
+            
+        YINGHUA_HIGH_FAITH_THRESHOLD = BUILDER
+            .comment("硬化回响高信念要求（达到此信念值时获得抗性2）")
+            .defineInRange("high_faith_threshold", 5, 0, 100);
+            
+        YINGHUA_REFLECT_DAMAGE = BUILDER
+            .comment("硬化回响反弹的固定伤害值")
+            .defineInRange("reflect_damage", 4.0, 0.0, 20.0);
+            
+        YINGHUA_DAMAGE_SANITY_COST = BUILDER
+            .comment("硬化回响受到一次伤害扣除的理智值")
+            .defineInRange("damage_sanity_cost", 20, 0, 100);
             
         BUILDER.pop();
 

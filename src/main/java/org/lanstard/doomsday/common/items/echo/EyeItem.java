@@ -11,13 +11,13 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.level.ServerPlayer;
 import org.lanstard.doomsday.common.items.ModItem;
 import org.lanstard.doomsday.common.echo.Echo;
+import org.lanstard.doomsday.config.DoomsdayConfig;
 import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import net.minecraft.world.item.TooltipFlag;
 
 public class EyeItem extends AbstractEchoStorageItem {
     private static final String TAG_CREATION_TIME = "CreationTime";
-    private static final long DECAY_TIME = 3600000L; // 1小时 = 3600000毫秒
 
     public EyeItem(Properties properties) {
         super(properties.rarity(Rarity.COMMON).stacksTo(1));
@@ -63,7 +63,8 @@ public class EyeItem extends AbstractEchoStorageItem {
             if (tag != null && tag.contains(TAG_CREATION_TIME)) {
                 long creationTime = tag.getLong(TAG_CREATION_TIME);
                 long elapsedTime = System.currentTimeMillis() - creationTime;
-                int progress = (int) ((float) elapsedTime / DECAY_TIME * 100);
+                long decayTime = DoomsdayConfig.EYE_DECAY_TIME_HOURS.get() * 3600000L; // 小时转毫秒
+                int progress = (int) ((float) elapsedTime / decayTime * 100);
                 progress = Math.min(progress, 100);
                 
                 ChatFormatting color;
@@ -75,7 +76,7 @@ public class EyeItem extends AbstractEchoStorageItem {
                 tooltip.add(Component.literal("腐烂进度: " + progress + "%").withStyle(color));
                 
                 if (progress < 100) {
-                    long remainingTime = (DECAY_TIME - elapsedTime) / 1000;
+                    long remainingTime = (decayTime - elapsedTime) / 1000;
                     long minutes = remainingTime / 60;
                     long seconds = remainingTime % 60;
                     tooltip.add(Component.literal(String.format("剩余时间: %d分%d秒", minutes, seconds))
@@ -94,7 +95,8 @@ public class EyeItem extends AbstractEchoStorageItem {
             }
 
             long creationTime = tag.getLong(TAG_CREATION_TIME);
-            if (System.currentTimeMillis() - creationTime >= DECAY_TIME) {
+            long decayTime = DoomsdayConfig.EYE_DECAY_TIME_HOURS.get() * 3600000L; // 小时转毫秒
+            if (System.currentTimeMillis() - creationTime >= decayTime) {
                 ItemStack moldyEye = new ItemStack(ModItem.MOLDY_EYE.get());
                 if (entity instanceof ServerPlayer player) {
                     player.getInventory().setItem(slotId, moldyEye);

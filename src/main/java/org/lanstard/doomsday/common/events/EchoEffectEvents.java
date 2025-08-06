@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lanstard.doomsday.Doomsday;
@@ -12,6 +13,7 @@ import org.lanstard.doomsday.common.echo.EchoManager;
 import org.lanstard.doomsday.common.echo.preset.BuMieEcho;
 import org.lanstard.doomsday.common.echo.preset.ShuangShengHuaEcho;
 import org.lanstard.doomsday.common.echo.preset.TiZuiEcho;
+import org.lanstard.doomsday.common.echo.preset.YingHuaEcho;
 
 import java.util.List;
 
@@ -38,6 +40,15 @@ public class EchoEffectEvents {
     public static void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         
+        // 检查硬化回响效果
+        for (Echo echo : EchoManager.getPlayerEchoes(player)) {
+            if (echo instanceof YingHuaEcho yingHuaEcho) {
+                // 持续状态效果：反弹伤害和理智消耗
+                yingHuaEcho.onPlayerHurt(player, event.getSource(), event.getAmount());
+                break;
+            }
+        }
+        
         // 检查受伤玩家是否拥有双生花回响
         for (Echo echo : EchoManager.getPlayerEchoes(player)) {
             if (echo instanceof ShuangShengHuaEcho shuangShengHuaEcho) {
@@ -61,6 +72,20 @@ public class EchoEffectEvents {
                         return;
                     }
                 }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingKnockBack(LivingKnockBackEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        
+        // 检查硬化回响的永久效果：取消击退
+        for (Echo echo : EchoManager.getPlayerEchoes(player)) {
+            if (echo instanceof YingHuaEcho) {
+                // 取消击退事件
+                event.setCanceled(true);
+                break;
             }
         }
     }

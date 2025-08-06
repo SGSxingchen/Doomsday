@@ -218,6 +218,13 @@ public enum EchoPreset {
         public Echo createEcho() {
             return new MaoMuEcho();
         }
+    },
+
+    YINGHUA("硬化", EchoType.CONTINUOUS, 0, 20) {
+        @Override
+        public Echo createEcho() {
+            return new YingHuaEcho();
+        }
     };
 
     private final String name;
