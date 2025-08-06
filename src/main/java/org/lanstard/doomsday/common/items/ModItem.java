@@ -13,6 +13,7 @@ import org.lanstard.doomsday.common.items.combat.explosives.FireBombItem;
 import org.lanstard.doomsday.common.items.echo.EchoBallItem;
 import org.lanstard.doomsday.common.items.echo.EyeItem;
 import org.lanstard.doomsday.common.items.echo.MoldyEyeItem;
+import org.lanstard.doomsday.common.items.echo.HeartLockItem;
 import org.lanstard.doomsday.common.items.equipment.curios.SoulClockItem;
 import org.lanstard.doomsday.common.items.equipment.curios.SoulCompassItem;
 import org.lanstard.doomsday.common.items.equipment.armor.ShenJunArmorItem;
@@ -117,6 +118,9 @@ public class ModItem {
                 tooltip.add(Component.translatable("item.doomsday.growth_seed.tooltip").withStyle(ChatFormatting.GRAY));
             }
         });
+
+    public static final RegistryObject<Item> HEART_LOCK = ITEMS.register("heart_lock",
+        () -> new HeartLockItem(new Item.Properties()));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

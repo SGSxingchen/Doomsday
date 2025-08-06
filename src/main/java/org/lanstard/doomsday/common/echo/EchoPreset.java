@@ -239,6 +239,13 @@ public enum EchoPreset {
         public Echo createEcho() {
             return new WoLiuEcho();
         }
+    },
+
+    XINSUO("心锁", EchoType.ACTIVE, 100, 0) {
+        @Override
+        public Echo createEcho() {
+            return new XinSuoEcho();
+        }
     };
 
     private final String name;

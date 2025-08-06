@@ -17,6 +17,8 @@
   "item.doomsday.eye.tooltip": "普通的人类眼球",
   "item.doomsday.moldy_eye": "霉变的眼球",
   "item.doomsday.moldy_eye.tooltip": "被腐朽之力侵蚀的眼球",
+  "item.doomsday.heart_lock": "心锁",
+  "item.doomsday.heart_lock.tooltip": "被夺走的心",
   "item.doomsday.chisel": "凿子",
   "item.doomsday.belief_points": "信念点数",
   "item.doomsday.bombs": "爆闪弹",
@@ -46,6 +48,7 @@
   "effect.doomsday.right_eye_blind": "右眼失明",
   "effect.doomsday.full_blind": "全盲",
   "effect.doomsday.flash": "爆闪",
+  "effect.doomsday.heart_mark": "心之印",
   
   "item.doomsday.soul_compass.tooltip": "一个能显示方向的神秘指南针",
   "item.doomsday.soul_clock.tooltip": "一个能显示时间的神秘钟表",
@@ -126,5 +129,16 @@
   "message.doomsday.nagou.deactivate": "...纳垢之法消散，身躯恢复轻盈...",
   "message.doomsday.nagou.passive": "...纳垢乃持续之法，G键切换开启关闭...",
   "message.doomsday.nagou.absorb_damage": "...大地之力庇护，消耗了%s个泥土...",
-  "message.doomsday.nagou.insufficient_dirt": "...泥土不足，无法抵挡伤害，需要%s个泥土..."
+  "message.doomsday.nagou.insufficient_dirt": "...泥土不足，无法抵挡伤害，需要%s个泥土...",
+  
+  "echo.xinsuo": "心锁",
+  "message.doomsday.xinsuo.cooldown": "...心锁之力尚需%s秒恢复...",
+  "message.doomsday.xinsuo.low_sanity": "...心神不足，难以施展心锁之法...",
+  "message.doomsday.xinsuo.no_target": "...未找到合适的目标...",
+  "message.doomsday.xinsuo.self_target": "...无法对自己使用心锁之法...",
+  "message.doomsday.xinsuo.cast_success": "...心锁之法已成，目标 ",
+  "message.doomsday.xinsuo.marked_by": "...你被 ",
+  "message.doomsday.xinsuo.marked_by_suffix": " 施加了心之印...",
+  "message.doomsday.xinsuo.heart_lock_obtained": "...获得了心锁，来自 ",
+  "message.doomsday.xinsuo.not_continuous": "...心锁之法不支持持续施展..."
 } 

@@ -93,6 +93,13 @@ public class EchoConfig {
     public static final ForgeConfigSpec.IntValue LIXI_CHARGING_DURATION_TICKS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> LIXI_UNBREAKABLE_BLOCKS;
 
+    // 心锁回响相关配置
+    public static final ForgeConfigSpec.IntValue XINSUO_SANITY_COST;
+    public static final ForgeConfigSpec.IntValue XINSUO_COOLDOWN_TICKS;
+    public static final ForgeConfigSpec.IntValue XINSUO_EFFECT_DURATION_TICKS;
+    public static final ForgeConfigSpec.DoubleValue XINSUO_BASE_REACH;
+    public static final ForgeConfigSpec.DoubleValue XINSUO_TARGET_BOX_INFLATE;
+
     static {
         BUILDER.comment("十日终焉 - 回响配置");
         
@@ -402,6 +409,31 @@ public class EchoConfig {
             .defineListAllowEmpty("unbreakable_blocks", 
                 java.util.Arrays.asList("minecraft:bedrock", "minecraft:barrier", "minecraft:command_block", "minecraft:chain_command_block", "minecraft:repeating_command_block", "minecraft:structure_block", "minecraft:jigsaw", "minecraft:structure_void"),
                 obj -> obj instanceof String);
+            
+        BUILDER.pop();
+
+        // 心锁回响配置
+        BUILDER.push("心锁回响");
+        
+        XINSUO_SANITY_COST = BUILDER
+            .comment("心锁回响施法消耗的理智值")
+            .defineInRange("sanity_cost", 100, 0, 1000);
+            
+        XINSUO_COOLDOWN_TICKS = BUILDER
+            .comment("心锁回响的冷却时间（tick，20tick = 1秒）")
+            .defineInRange("cooldown_ticks", 12000, 0, 72000);
+            
+        XINSUO_EFFECT_DURATION_TICKS = BUILDER
+            .comment("心之印效果持续时间（tick，20tick = 1秒，6000tick = 5分钟）")
+            .defineInRange("effect_duration_ticks", 6000, 1200, 72000);
+            
+        XINSUO_BASE_REACH = BUILDER
+            .comment("心锁回响的基础施法距离（方块）")
+            .defineInRange("base_reach", 32.0, 1.0, 64.0);
+            
+        XINSUO_TARGET_BOX_INFLATE = BUILDER
+            .comment("心锁回响目标检测的碰撞箱扩展范围（方块）")
+            .defineInRange("target_box_inflate", 1.0, 0.1, 3.0);
             
         BUILDER.pop();
 

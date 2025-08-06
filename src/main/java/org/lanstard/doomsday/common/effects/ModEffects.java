@@ -23,6 +23,9 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> FLASH = MOB_EFFECTS.register(
         "flash", FlashEffect::new);
         
+    public static final RegistryObject<MobEffect> HEART_MARK = MOB_EFFECTS.register(
+        "heart_mark", HeartMarkEffect::new);
+        
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }
