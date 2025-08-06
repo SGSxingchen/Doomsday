@@ -42,21 +42,8 @@ public abstract class AbstractEchoStorageItem extends Item implements ICurioItem
             return InteractionResult.PASS;
         }
 
-        if (target instanceof ServerPlayer targetPlayer) {
-            ItemStack copyStack = stack.copy();
-            if (equipToPlayer(targetPlayer, copyStack)) {
-                stack.shrink(1);
-                if (player instanceof ServerPlayer serverPlayer) {
-                    serverPlayer.displayClientMessage(getEquipSuccessMessage(), true);
-                }
-                targetPlayer.displayClientMessage(getEquippedMessage(), true);
-                return InteractionResult.SUCCESS;
-            } else {
-                if (player instanceof ServerPlayer serverPlayer) {
-                    serverPlayer.displayClientMessage(getEquipFailMessage(), true);
-                }
-                return InteractionResult.FAIL;
-            }
+        if (target instanceof ServerPlayer && player instanceof ServerPlayer serverPlayer) {
+            return InteractionResult.FAIL;
         }
 
         return InteractionResult.PASS;
@@ -130,11 +117,8 @@ public abstract class AbstractEchoStorageItem extends Item implements ICurioItem
     @Override
     public boolean canEquip(SlotContext slotContext, ItemStack stack) {
         if (slotContext.entity() instanceof ServerPlayer player) {
-            if (!EchoManager.hasSpecificEcho(player, "jiajie")) {
-                player.displayClientMessage(Component.literal("§c...你需要嫁接之力才能装配此物..."), true);
-                return false;
-            }
-            return true;
+            player.displayClientMessage(Component.literal("§c...眼球装配功能已被禁用..."), true);
+            return false;
         }
         return false;
     }

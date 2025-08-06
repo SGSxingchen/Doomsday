@@ -218,13 +218,6 @@ public enum EchoPreset {
         public Echo createEcho() {
             return new MaoMuEcho();
         }
-    },
-
-    JIAJIE("嫁接", EchoType.PASSIVE, 0, 0) {
-        @Override
-        public Echo createEcho() {
-            return new JiaJieEcho();
-        }
     };
 
     private final String name;
