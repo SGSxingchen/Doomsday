@@ -18,9 +18,11 @@ import org.lanstard.doomsday.common.echo.preset.LiXiEcho;
 import org.lanstard.doomsday.common.echo.preset.NaGouEcho;
 import org.lanstard.doomsday.common.echo.preset.ShuangShengHuaEcho;
 import org.lanstard.doomsday.common.echo.preset.TiZuiEcho;
+import org.lanstard.doomsday.common.echo.preset.WangYouEcho;
 import org.lanstard.doomsday.common.echo.preset.YingHuaEcho;
 import org.lanstard.doomsday.common.effects.ModEffects;
 import org.lanstard.doomsday.common.data.HeartMarkData;
+import org.lanstard.doomsday.common.sanity.SanityManager;
 
 import java.util.List;
 
@@ -112,6 +114,34 @@ public class EchoEffectEvents {
                         return;
                     }
                 }
+            }
+        }
+        
+        // 检查忘忧回响效果 - 伤害减免
+        for (Echo echo : EchoManager.getPlayerEchoes(player)) {
+            if (echo instanceof WangYouEcho && echo.isActive()) {
+                int faith = SanityManager.getFaith(player);
+                float reduction = WangYouEcho.BASE_DAMAGE_REDUCTION + (faith / 2) * WangYouEcho.FAITH_DAMAGE_REDUCTION;
+                reduction = Math.min(0.9F, reduction);
+                
+                // 计算减免的伤害量
+                float originalDamage = event.getAmount();
+                float reducedDamage = originalDamage * (1 - reduction);
+                float blockedDamage = originalDamage - reducedDamage;
+                
+                // 设置减免后的伤害
+                event.setAmount(reducedDamage);
+                
+                // 消耗理智值（每减免1点伤害消耗2点理智）
+                int sanityCost = Math.round(blockedDamage * 2);
+                SanityManager.modifySanity(player, -sanityCost);
+                
+                // 显示减伤效果和理智消耗
+                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...忘忧之力减免了")
+                    .append(Component.literal(String.format("%.1f", reduction * 100)))
+                    .append(Component.literal("%的伤害"))
+                    .append(Component.literal(String.format("，消耗%d点心神...", sanityCost))));
+                break;
             }
         }
     }

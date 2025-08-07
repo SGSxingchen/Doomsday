@@ -173,12 +173,14 @@ public class WuZhongShouEcho extends Echo {
     
     @Override
     public void toggleContinuous(ServerPlayer player) {
-        if (isActive()) {
-            setActiveAndUpdate(player, false);
-            // onDeactivate会自动被调用，无需重复消息
-        } else {
+        if (!isActive()) {
+            // 开启时激活
             setActiveAndUpdate(player, true);
-            // onActivate会自动被调用，无需重复消息
+            onActivate(player);
+        } else {
+            // 关闭时停用
+            setActiveAndUpdate(player, false);
+            onDeactivate(player);
         }
     }
     
