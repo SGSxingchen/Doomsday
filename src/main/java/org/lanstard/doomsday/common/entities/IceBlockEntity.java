@@ -13,15 +13,11 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import org.lanstard.doomsday.config.EchoConfig;
 
 public class IceBlockEntity extends ThrowableItemProjectile {
-    private static final float DAMAGE = 10.7f;      // 原16.0 * 2/3
-    private static final float ENHANCED_DAMAGE = 16.0f;  // 原24.0 * 2/3
-    private static final float SPLIT_DAMAGE = 6.7f;     // 原10.0 * 2/3
-    private static final float ENHANCED_SPLIT_DAMAGE = 10.0f;  // 原15.0 * 2/3
-    private static final float SPLIT_SPEED_MULTIPLIER = 0.8f;
+    // 这些值现在从配置中获取
     private int splitCount = 0;  // 分裂次数计数
-    private static final int MAX_SPLIT = 2;  // 最大分裂次数
     private boolean enhanced = false;  // 增强状态标记
 
     public IceBlockEntity(EntityType<? extends ThrowableItemProjectile> type, Level level) {
@@ -64,8 +60,8 @@ public class IceBlockEntity extends ThrowableItemProjectile {
         if (!level().isClientSide && result.getEntity() instanceof LivingEntity target) {
             // 根据是否为分裂箭和增强状态决定伤害
             float damage = splitCount > 0 ? 
-                (enhanced ? ENHANCED_SPLIT_DAMAGE : SPLIT_DAMAGE) : 
-                (enhanced ? ENHANCED_DAMAGE : DAMAGE);
+                (enhanced ? EchoConfig.HANBING_ICE_ENHANCED_SPLIT_DAMAGE.get().floatValue() : EchoConfig.HANBING_ICE_SPLIT_DAMAGE.get().floatValue()) : 
+                (enhanced ? EchoConfig.HANBING_ICE_ENHANCED_DAMAGE.get().floatValue() : EchoConfig.HANBING_ICE_DAMAGE.get().floatValue());
             
             target.hurt(damageSources().freeze(), damage);
             
@@ -95,7 +91,7 @@ public class IceBlockEntity extends ThrowableItemProjectile {
 
     @Override
     protected void onHitBlock(BlockHitResult result) {
-        if (!level().isClientSide && splitCount < MAX_SPLIT) {
+        if (!level().isClientSide && splitCount < EchoConfig.HANBING_ICE_MAX_SPLIT.get()) {
             Direction hitFace = result.getDirection();
             Vec3 motion = getDeltaMovement();
             Vec3 normal = Vec3.atLowerCornerOf(hitFace.getNormal());
@@ -136,7 +132,9 @@ public class IceBlockEntity extends ThrowableItemProjectile {
                     .normalize();
                 
                 // 设置新的速度
-                double speedMultiplier = enhanced ? SPLIT_SPEED_MULTIPLIER * 1.2 : SPLIT_SPEED_MULTIPLIER;
+                double speedMultiplier = enhanced ? 
+                    EchoConfig.HANBING_ICE_SPLIT_SPEED_MULTIPLIER.get() * 1.2 : 
+                    EchoConfig.HANBING_ICE_SPLIT_SPEED_MULTIPLIER.get();
                 Vec3 newMotion = finalDirection.scale(motion.length() * speedMultiplier);
                 splitArrow.setDeltaMovement(newMotion);
                 

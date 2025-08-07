@@ -305,7 +305,7 @@ public enum EchoPreset {
         }
     },
 
-    WUZHONGSHOU("无终狩", EchoType.ACTIVE, 100, 0) {
+    WUZHONGSHOU("无终狩", EchoType.CONTINUOUS, 100, 0) {
         @Override
         public Echo createEcho() {
             return new WuZhongShouEcho();

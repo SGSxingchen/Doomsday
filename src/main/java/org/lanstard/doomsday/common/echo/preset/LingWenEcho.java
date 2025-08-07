@@ -2,6 +2,7 @@ package org.lanstard.doomsday.common.echo.preset;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
@@ -11,24 +12,18 @@ import org.lanstard.doomsday.common.echo.EchoManager;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import org.lanstard.doomsday.config.EchoConfig;
 
 public class LingWenEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.LINGWEN;
-    private static final int SANITY_COST = 20;           // 使用消耗
-    private static final int FREE_COST_THRESHOLD = 300;  // 免费释放阈值
-    private static final int MIN_BELIEF = 10;            // 最小信念要求
-    private static final int MID_BELIEF = 5;             // 中等信念要求
-    private static final int BASE_RANGE = 10;            // 基础检测范围
-    private static final int MID_RANGE = 20;             // 中等信念检测范围
-    private static final int HIGH_RANGE = 30;            // 高等信念检测范围
 
     public LingWenEcho() {
-        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), SANITY_COST, 0);
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), EchoConfig.LING_SANITY_COST.get(), 0);
     }
 
     @Override
     public void onActivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵闻之力已觉醒..."));
+        player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.activate"));
     }
 
     @Override
@@ -38,18 +33,18 @@ public class LingWenEcho extends Echo {
 
     @Override
     public void onDeactivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵闻之力已消散..."));
+        player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.deactivate"));
     }
 
     @Override
     protected boolean doCanUse(ServerPlayer player) {
         // 检查是否可以免费释放
         int currentSanity = SanityManager.getSanity(player);
-        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && currentSanity < FREE_COST_THRESHOLD;
+        boolean isFree = SanityManager.getFaith(player) >= EchoConfig.LING_MIN_FAITH.get() && currentSanity < EchoConfig.LING_FREE_COST_THRESHOLD.get();
         
         // 如果不能免费释放，检查理智是否足够
-        if (!isFree && currentSanity < SANITY_COST) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展灵闻之术..."));
+        if (!isFree && currentSanity < EchoConfig.LING_SANITY_COST.get()) {
+            player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.low_sanity"));
             return false;
         }
         
@@ -60,8 +55,8 @@ public class LingWenEcho extends Echo {
     protected void doUse(ServerPlayer player) {
         // 获取玩家视线中的目标
         int faith = SanityManager.getFaith(player);
-        double reach = faith >= MIN_BELIEF ? HIGH_RANGE : 
-                      (faith >= MID_BELIEF ? MID_RANGE : BASE_RANGE);
+        double reach = faith >= EchoConfig.LING_MIN_FAITH.get() ? EchoConfig.LING_HIGH_RANGE.get() : 
+                      (faith >= EchoConfig.LING_MID_FAITH.get() ? EchoConfig.LING_MID_RANGE.get() : EchoConfig.LING_BASE_RANGE.get());
                       
         Vec3 eyePosition = player.getEyePosition();
         Vec3 lookVector = player.getLookAngle();
@@ -78,22 +73,30 @@ public class LingWenEcho extends Echo {
         );
 
         if (hitResult == null || !(hitResult.getEntity() instanceof ServerPlayer target)) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...听不到任何生灵的心音..."));
+            player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.no_target"));
             return;
         }
         
         // 检查是否可以免费释放
-        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && SanityManager.getSanity(player) < FREE_COST_THRESHOLD;
+        boolean isFree = SanityManager.getFaith(player) >= EchoConfig.LING_MIN_FAITH.get() && SanityManager.getSanity(player) < EchoConfig.LING_FREE_COST_THRESHOLD.get();
         
         // 消耗理智
         if (!isFree) {
-            int actualCost = faith >= MID_BELIEF ? SANITY_COST / 2 : SANITY_COST;
+            int actualCost = faith >= EchoConfig.LING_MID_FAITH.get() ? EchoConfig.LING_SANITY_COST.get() / 2 : EchoConfig.LING_SANITY_COST.get();
             SanityManager.modifySanity(player, -actualCost);
-            String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，灵闻之力(" + faithLevel + ")已生效..."));
+            MutableComponent faithLevel = faith >= EchoConfig.LING_MIN_FAITH.get() ? 
+                Component.translatable("message.doomsday.faith_level.firm") : 
+                (faith >= EchoConfig.LING_MID_FAITH.get() ? 
+                    Component.translatable("message.doomsday.faith_level.stable") : 
+                    Component.translatable("message.doomsday.faith_level.weak"));
+            player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.use_cost", actualCost, faithLevel.getString()));
         } else {
-            String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，灵闻之力(" + faithLevel + ")已生效..."));
+            MutableComponent faithLevel = faith >= EchoConfig.LING_MIN_FAITH.get() ? 
+                Component.translatable("message.doomsday.faith_level.firm") : 
+                (faith >= EchoConfig.LING_MID_FAITH.get() ? 
+                    Component.translatable("message.doomsday.faith_level.stable") : 
+                    Component.translatable("message.doomsday.faith_level.weak"));
+            player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.use_free", faithLevel.getString()));
         }
 
         // 获取目标的回响和理智值
@@ -101,22 +104,23 @@ public class LingWenEcho extends Echo {
         int targetMaxSanity = SanityManager.getMaxSanity(target);
         
         // 发送信息
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...灵闻之下，听到" + target.getName().getString() + "的心神律动为" + targetSanity + "/" + targetMaxSanity + "..."));
+        player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.hear_info", 
+            target.getName().getString(), targetSanity, targetMaxSanity));
         
         // 获取并显示目标的回响信息
         List<Echo> echoes = EchoManager.getPlayerEchoes(target);
         if (echoes.isEmpty()) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...此人身上没有任何回响的声响..."));
+            player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.no_echoes"));
         } else {
-            StringBuilder message = new StringBuilder("§b[十日终焉] §f...听到此人身上的回响之音：\n");
+            MutableComponent message = Component.translatable("message.doomsday.lingwen.echoes_prefix");
             for (Echo echo : echoes) {
                 message.append(echo.getName());
                 if (echo.isActive()) {
-                    message.append(" §a[正在呼应]§f");
+                    message.append(Component.translatable("message.doomsday.lingwen.echo_active"));
                 }
                 message.append("\n");
             }
-            player.sendSystemMessage(Component.literal(message.toString()));
+            player.sendSystemMessage(message);
         }
         notifyEchoClocks(player);
     }
@@ -124,6 +128,6 @@ public class LingWenEcho extends Echo {
     @Override
     public void toggleContinuous(ServerPlayer player) {
         // 这是一个主动技能，不需要切换持续状态
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...灵闻之术需要主动施展..."));
+        player.sendSystemMessage(Component.translatable("message.doomsday.lingwen.not_continuous"));
     }
 }

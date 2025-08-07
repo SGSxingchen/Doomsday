@@ -13,16 +13,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerLevel;
 import org.lanstard.doomsday.common.entities.QiheiSwordEntity;
+import org.lanstard.doomsday.config.EchoConfig;
 
 import java.util.List;
 
 public class BreakAllEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.BREAKALL;
-    private static final int RANGE = 10;                       // 影响范围
-    private static final int DISABLE_DURATION = 5 * 60 * 20;   // 5分钟的tick数
-    private static final int COOLDOWN_DURATION = 30 * 60 * 20; // 30分钟的tick数
-    private static final int ACTIVE_SANITY_COST = 200;        // 主动使用消耗200点理智
-    private static final int FREE_COST_THRESHOLD = 300;       // 免费释放阈值
     private long lastUsedTime = 0;
     
     public BreakAllEcho() {
@@ -30,7 +26,7 @@ public class BreakAllEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            ACTIVE_SANITY_COST
+            EchoConfig.BREAKALL_SANITY_COST.get()
         );
     }
 
@@ -58,7 +54,7 @@ public class BreakAllEcho extends Echo {
         }
         
         // 检查冷却时间
-        long remainingCooldown = (lastUsedTime + COOLDOWN_DURATION * 50) - System.currentTimeMillis();
+        long remainingCooldown = (lastUsedTime + EchoConfig.BREAKALL_COOLDOWN_TICKS.get() * 50) - System.currentTimeMillis();
         if (remainingCooldown > 0) {
             int remainingSeconds = (int) (remainingCooldown / 1000);
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...破万法尚需积蓄，余下")
@@ -72,10 +68,10 @@ public class BreakAllEcho extends Echo {
         int faith = SanityManager.getFaith(player);
         
         // 如果信念大于等于10点且理智低于300，则可以免费释放
-        boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+        boolean freeCost = faith >= 10 && currentSanity < EchoConfig.BREAKALL_FREE_COST_THRESHOLD.get();
         
         // 如果不是免费释放且理智不足，则无法使用
-        if (!freeCost && currentSanity < ACTIVE_SANITY_COST) {
+        if (!freeCost && currentSanity < EchoConfig.BREAKALL_SANITY_COST.get()) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展仙法..."));
             return false;
         }
@@ -86,7 +82,7 @@ public class BreakAllEcho extends Echo {
     @Override
     protected void doUse(ServerPlayer player) {
         // 获取范围内的所有玩家
-        AABB box = player.getBoundingBox().inflate(RANGE);
+        AABB box = player.getBoundingBox().inflate(EchoConfig.BREAKALL_RANGE.get());
         List<ServerPlayer> nearbyPlayers = player.level().getEntitiesOfClass(ServerPlayer.class, box);
         
         // 移除范围内的七黑剑
@@ -138,7 +134,7 @@ public class BreakAllEcho extends Echo {
                 // 先关闭回响
                 echo.setActiveAndUpdate(target, false);
                 // 再禁用回响
-                echo.disable(DISABLE_DURATION);
+                echo.disable(EchoConfig.BREAKALL_DISABLE_DURATION.get());
                 // 最后触发停用效果
                 echo.onDeactivate(target);
                 hasDisabledAny = true;
@@ -161,12 +157,12 @@ public class BreakAllEcho extends Echo {
         int faith = SanityManager.getFaith(player);
         
         // 如果信念大于等于10点且理智低于300，则不消耗理智
-        boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+        boolean freeCost = faith >= 10 && currentSanity < EchoConfig.BREAKALL_FREE_COST_THRESHOLD.get();
         
         // 如果不是免费释放，消耗理智值
         if (!freeCost) {
-            SanityManager.modifySanity(player, -ACTIVE_SANITY_COST);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + ACTIVE_SANITY_COST + "点心神，施展破万法..."));
+            SanityManager.modifySanity(player, -EchoConfig.BREAKALL_SANITY_COST.get());
+            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + EchoConfig.BREAKALL_SANITY_COST.get() + "点心神，施展破万法..."));
         } else {
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，万法皆破..."));
         }
@@ -186,7 +182,7 @@ public class BreakAllEcho extends Echo {
     private void spawnRingParticles(ServerPlayer player) {
         Vec3 center = player.position();
         int particleCount = 36; // 每圈的粒子数
-        float maxRadius = RANGE; // 最大半径
+        float maxRadius = EchoConfig.BREAKALL_RANGE.get().floatValue(); // 最大半径
         
         // 在主线程中启动粒子生成
         new Thread(() -> {

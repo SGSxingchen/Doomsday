@@ -8,14 +8,11 @@ import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
 import org.lanstard.doomsday.common.entities.IceBlockEntity;
+import org.lanstard.doomsday.config.EchoConfig;
 
 public class HanBingEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.HANBING;
-    private static final int SANITY_COST = 10;               // 理智消耗
-    private static final int COOL_DOWN = 8 * 20;             // 8秒冷却
-    private static final int MID_BELIEF = 5;                 // 中等信念要求
-    private static final int MIN_BELIEF = 10;                // 最小信念要求
-    private static final int FREE_COST_THRESHOLD = 300;      // 免费释放阈值
+    // 这些值现在从配置中获取
     
     private long cooldownEndTime = 0;
 
@@ -24,14 +21,14 @@ public class HanBingEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            SANITY_COST,
+            EchoConfig.HANBING_SANITY_COST.get(),
             0
         );
     }
 
     @Override
     public void onActivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...寒冰之力在体内流转..."));
+        player.sendSystemMessage(Component.translatable("echo.doomsday.hanbing.activate"));
     }
 
     @Override
@@ -41,7 +38,7 @@ public class HanBingEcho extends Echo {
 
     @Override
     public void onDeactivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...寒冰之力消散..."));
+        player.sendSystemMessage(Component.translatable("echo.doomsday.hanbing.deactivate"));
     }
 
     @Override
@@ -49,20 +46,20 @@ public class HanBingEcho extends Echo {
         long timeMs = cooldownEndTime - System.currentTimeMillis();
         if (timeMs > 0) {
             long remainingSeconds = timeMs / 20 / 50;
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...寒冰之力尚需" + remainingSeconds + "秒恢复..."));
+            player.sendSystemMessage(Component.translatable("echo.doomsday.hanbing.cooldown", remainingSeconds));
             return false;
         }
 
         int currentSanity = SanityManager.getSanity(player);
         int beliefLevel = SanityManager.getBeliefLevel(player);
 
-        if (beliefLevel >= MIN_BELIEF && currentSanity <= FREE_COST_THRESHOLD) {
+        if (beliefLevel >= EchoConfig.HANBING_MIN_FAITH.get() && currentSanity <= EchoConfig.HANBING_FREE_COST_THRESHOLD.get()) {
             return true;
         }
 
         // 检查理智值是否足够
-        if (currentSanity < SANITY_COST) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...你的理智不足以释放寒冰之力..."));
+        if (currentSanity < EchoConfig.HANBING_SANITY_COST.get()) {
+            player.sendSystemMessage(Component.translatable("echo.doomsday.hanbing.insufficient_sanity"));
             return false;
         }
 
@@ -74,12 +71,12 @@ public class HanBingEcho extends Echo {
         // 消耗理智值（如果当前理智值低于阈值则免费释放）
         int currentSanity = SanityManager.getSanity(player);
         int currentBelief = SanityManager.getBeliefLevel(player);
-        boolean freeCost = currentSanity <= FREE_COST_THRESHOLD && currentBelief >= MIN_BELIEF;
+        boolean freeCost = currentSanity <= EchoConfig.HANBING_FREE_COST_THRESHOLD.get() && currentBelief >= EchoConfig.HANBING_MIN_FAITH.get();
         
         // 根据信念等级调整消耗
-        int actualCost = SANITY_COST;
-        if (currentBelief >= MID_BELIEF) {
-            actualCost = SANITY_COST / 2;  // 信念≥5时消耗减半
+        int actualCost = EchoConfig.HANBING_SANITY_COST.get();
+        if (currentBelief >= EchoConfig.HANBING_MID_FAITH.get()) {
+            actualCost = EchoConfig.HANBING_SANITY_COST.get() / 2;  // 信念≥5时消耗减半
         }
         
         if (!freeCost) {
@@ -94,7 +91,7 @@ public class HanBingEcho extends Echo {
             IceBlockEntity iceBlock = new IceBlockEntity(level, player);
             
             // 根据信念等级设置冰块特性
-            if (currentBelief >= MID_BELIEF) {
+            if (currentBelief >= EchoConfig.HANBING_MID_FAITH.get()) {
                 iceBlock.setEnhanced(true);  // 设置为增强状态
                 // 增加发射速度和精确度，带有扇形偏移
                 iceBlock.shootFromRotation(player, player.getXRot(), player.getYRot() + yawOffsets[i], 0.0F, 2.0F, 0.3F);
@@ -108,23 +105,23 @@ public class HanBingEcho extends Echo {
         }
 
         // 设置冷却时间
-        int baseCoolDown = COOL_DOWN;
-        if (currentBelief >= MID_BELIEF) {
-            baseCoolDown = (int)(COOL_DOWN * 0.75);  // 信念≥5时冷却时间减少25%
+        int baseCoolDown = EchoConfig.HANBING_COOLDOWN_TICKS.get();
+        if (currentBelief >= EchoConfig.HANBING_MID_FAITH.get()) {
+            baseCoolDown = (int)(EchoConfig.HANBING_COOLDOWN_TICKS.get() * 0.75);  // 信念≥5时冷却时间减少25%
         }
         cooldownEndTime = System.currentTimeMillis() + baseCoolDown * 50;
         notifyEchoClocks(player);
         updateState(player);
 
         // 发送使用提示
-        String beliefLevel = currentBelief >= MIN_BELIEF ? "坚定" : (currentBelief >= MID_BELIEF ? "稳固" : "微弱");
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...寒冰(" + beliefLevel + ")之力爆发，三道冰霜齐射而出..."));
+        String beliefLevel = currentBelief >= EchoConfig.HANBING_MIN_FAITH.get() ? "坚定" : (currentBelief >= EchoConfig.HANBING_MID_FAITH.get() ? "稳固" : "微弱");
+        player.sendSystemMessage(Component.translatable("echo.doomsday.hanbing.use_success", beliefLevel));
     }
 
     @Override
     public void toggleContinuous(ServerPlayer player) {
         // 这是一个主动技能，不需要切换状态
-        player.sendSystemMessage(Component.literal("§c[十日终焉] §f...寒冰之力只能主动释放..."));
+        player.sendSystemMessage(Component.translatable("echo.doomsday.hanbing.not_continuous"));
     }
 
     @Override

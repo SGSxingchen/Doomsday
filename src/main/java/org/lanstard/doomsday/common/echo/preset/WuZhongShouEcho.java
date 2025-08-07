@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.lanstard.doomsday.common.echo.BasicEcho;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.effects.ModEffects;
@@ -38,12 +39,25 @@ public class WuZhongShouEcho extends Echo {
     
     @Override
     public void onActivate(ServerPlayer player) {
-        // 激活时不做处理，主动使用时才标记目标
+        // 激活时开启狩猎本能效果
+        int faith = SanityManager.getFaith(player);
+        int huntInstinctLevel = Math.max(0, faith); // 信念值直接作为效果等级
+        
+        player.addEffect(new MobEffectInstance(
+            ModEffects.HUNT_INSTINCT.get(),
+            Integer.MAX_VALUE, // 无限持续，直到手动关闭
+            huntInstinctLevel,
+            false,
+            true,
+            true
+        ));
+        
+        player.sendSystemMessage(Component.translatable("message.doomsday.wuzhongshou.hunt_instinct_activated"));
     }
     
     @Override
     public void onUpdate(ServerPlayer player) {
-        // 如果处于持续状态，维持狩猎本能效果
+        // 如果处于激活状态，维持狩猎本能效果
         if (isActive()) {
             int faith = SanityManager.getFaith(player);
             int huntInstinctLevel = Math.max(0, faith); // 信念值直接作为效果等级
@@ -55,7 +69,7 @@ public class WuZhongShouEcho extends Echo {
                 // 先移除旧效果
                 player.removeEffect(ModEffects.HUNT_INSTINCT.get());
                 
-                // 添加新效果
+                // 添加新效果（无限持续）
                 player.addEffect(new MobEffectInstance(
                     ModEffects.HUNT_INSTINCT.get(),
                     Integer.MAX_VALUE,
@@ -72,6 +86,7 @@ public class WuZhongShouEcho extends Echo {
     public void onDeactivate(ServerPlayer player) {
         // 移除狩猎本能效果
         player.removeEffect(ModEffects.HUNT_INSTINCT.get());
+        player.sendSystemMessage(Component.translatable("message.doomsday.wuzhongshou.hunt_instinct_deactivated"));
     }
     
     @Override
@@ -81,6 +96,20 @@ public class WuZhongShouEcho extends Echo {
         if (sanity < EchoConfig.WUZHONGSHOU_MARK_SANITY_COST.get()) {
             player.sendSystemMessage(Component.translatable("message.doomsday.wuzhongshou.low_sanity"));
             return false;
+        }
+        
+        // 检查冷却
+        if (player.level() instanceof ServerLevel serverLevel) {
+            HuntData huntData = HuntData.get(serverLevel);
+            if (huntData.isOnMarkCooldown(player.getUUID())) {
+                long remainingMs = huntData.getMarkCooldownRemaining(player.getUUID());
+                long remainingMinutes = remainingMs / 60000;
+                long remainingSeconds = (remainingMs % 60000) / 1000;
+                
+                player.sendSystemMessage(Component.translatable("message.doomsday.wuzhongshou.on_cooldown",
+                    remainingMinutes, remainingSeconds));
+                return false;
+            }
         }
         
         return true;
@@ -120,17 +149,16 @@ public class WuZhongShouEcho extends Echo {
         );
         target.addEffect(huntedMarkEffect);
         
-        // 在HuntData中记录狩猎信息
+        // 在HuntData中记录狩猎信息并设置冷却
         if (player.level() instanceof ServerLevel serverLevel) {
             HuntData huntData = HuntData.get(serverLevel);
             huntData.startHunt(player.getUUID(), target.getUUID(), target.getDisplayName().getString(), System.currentTimeMillis());
+            // 设置标记冷却
+            huntData.setMarkCooldown(player.getUUID());
         }
         
         // 给予狩猎者道具
         giveHuntItems(player, target);
-        
-        // 激活持续效果
-        setActiveAndUpdate(player, true);
         
         // 发送消息
         player.sendSystemMessage(Component.translatable("message.doomsday.wuzhongshou.mark_success")
@@ -147,10 +175,10 @@ public class WuZhongShouEcho extends Echo {
     public void toggleContinuous(ServerPlayer player) {
         if (isActive()) {
             setActiveAndUpdate(player, false);
-            player.sendSystemMessage(Component.translatable("message.doomsday.wuzhongshou.deactivated"));
+            // onDeactivate会自动被调用，无需重复消息
         } else {
             setActiveAndUpdate(player, true);
-            player.sendSystemMessage(Component.translatable("message.doomsday.wuzhongshou.activated"));
+            // onActivate会自动被调用，无需重复消息
         }
     }
     
@@ -202,8 +230,9 @@ public class WuZhongShouEcho extends Echo {
         ItemStack cloak = InvisibilityCloakItem.createInvisibilityCloak();
         hunter.addItem(cloak);
         
-        // 4. 末影珍珠 x4
-        for (int i = 0; i < 4; i++) {
+        // 4. 末影珍珠（数量可配置）
+        int enderPearlCount = EchoConfig.WUZHONGSHOU_ENDER_PEARL_COUNT.get();
+        for (int i = 0; i < enderPearlCount; i++) {
             ItemStack enderPearl = new ItemStack(Items.ENDER_PEARL);
             // 标记为狩猎物品
             enderPearl.getOrCreateTag().putBoolean("hunt_item", true);

@@ -7,6 +7,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerPlayer;
 import org.lanstard.doomsday.common.data.HuntData;
+import org.lanstard.doomsday.config.EchoConfig;
 
 import java.util.UUID;
 
@@ -19,15 +20,23 @@ public class HuntedMarkEffect extends MobEffect {
     @Override
     public void applyEffectTick(LivingEntity livingEntity, int amplifier) {
         if (livingEntity instanceof ServerPlayer player) {
-            // 每秒检查并应用速度2和虚弱1效果
-            if (!player.hasEffect(MobEffects.MOVEMENT_SPEED) || 
-                player.getEffect(MobEffects.MOVEMENT_SPEED).getAmplifier() < 1) {
-                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 1, false, false));
+            int speedLevel = EchoConfig.WUZHONGSHOU_HUNTED_MARK_SPEED_LEVEL.get();
+            int weaknessLevel = EchoConfig.WUZHONGSHOU_HUNTED_MARK_WEAKNESS_LEVEL.get();
+            
+            // 应用速度效果
+            if (speedLevel > 0) {
+                if (!player.hasEffect(MobEffects.MOVEMENT_SPEED) || 
+                    player.getEffect(MobEffects.MOVEMENT_SPEED).getAmplifier() < speedLevel) {
+                    player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, speedLevel, false, false));
+                }
             }
             
-            if (!player.hasEffect(MobEffects.WEAKNESS) || 
-                player.getEffect(MobEffects.WEAKNESS).getAmplifier() < 0) {
-                player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 0, false, false));
+            // 应用虚弱效果
+            if (weaknessLevel >= 0) {
+                if (!player.hasEffect(MobEffects.WEAKNESS) || 
+                    player.getEffect(MobEffects.WEAKNESS).getAmplifier() < weaknessLevel) {
+                    player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, weaknessLevel, false, false));
+                }
             }
         }
     }

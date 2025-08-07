@@ -18,6 +18,9 @@ public class HuntData extends SavedData {
     // 存储狩猎数据的映射 hunter UUID -> HuntInfo
     private final Map<UUID, HuntInfo> activeHunts = new HashMap<>();
     
+    // 存储标记冷却数据的映射 hunter UUID -> 冷却结束时间戳
+    private final Map<UUID, Long> markCooldowns = new HashMap<>();
+    
     public HuntData() {
         super();
     }
@@ -46,6 +49,17 @@ public class HuntData extends SavedData {
             huntData.activeHunts.put(hunterUUID, huntInfo);
         }
         
+        // 加载标记冷却数据
+        ListTag cooldownList = tag.getList("cooldowns", Tag.TAG_COMPOUND);
+        for (int i = 0; i < cooldownList.size(); i++) {
+            CompoundTag cooldownTag = cooldownList.getCompound(i);
+            
+            UUID hunterUUID = cooldownTag.getUUID("hunter");
+            long endTime = cooldownTag.getLong("endTime");
+            
+            huntData.markCooldowns.put(hunterUUID, endTime);
+        }
+        
         return huntData;
     }
     
@@ -63,7 +77,63 @@ public class HuntData extends SavedData {
         }
         
         tag.put("hunts", huntList);
+        
+        // 保存标记冷却数据
+        ListTag cooldownList = new ListTag();
+        for (Map.Entry<UUID, Long> cooldownEntry : markCooldowns.entrySet()) {
+            CompoundTag cooldownTag = new CompoundTag();
+            cooldownTag.putUUID("hunter", cooldownEntry.getKey());
+            cooldownTag.putLong("endTime", cooldownEntry.getValue());
+            cooldownList.add(cooldownTag);
+        }
+        tag.put("cooldowns", cooldownList);
+        
         return tag;
+    }
+    
+    /**
+     * 检查玩家是否处于标记冷却中
+     */
+    public boolean isOnMarkCooldown(UUID hunterUUID) {
+        Long endTime = markCooldowns.get(hunterUUID);
+        if (endTime == null) {
+            return false;
+        }
+        
+        long currentTime = System.currentTimeMillis();
+        if (currentTime >= endTime) {
+            // 冷却已结束，清除记录
+            markCooldowns.remove(hunterUUID);
+            setDirty();
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * 获取标记冷却剩余时间（毫秒）
+     */
+    public long getMarkCooldownRemaining(UUID hunterUUID) {
+        Long endTime = markCooldowns.get(hunterUUID);
+        if (endTime == null) {
+            return 0;
+        }
+        
+        long currentTime = System.currentTimeMillis();
+        return Math.max(0, endTime - currentTime);
+    }
+    
+    /**
+     * 设置标记冷却
+     */
+    public void setMarkCooldown(UUID hunterUUID) {
+        long currentTime = System.currentTimeMillis();
+        long cooldownDuration = EchoConfig.WUZHONGSHOU_MARK_COOLDOWN_TICKS.get() * 50; // 转换为毫秒
+        long endTime = currentTime + cooldownDuration;
+        
+        markCooldowns.put(hunterUUID, endTime);
+        setDirty();
     }
     
     /**

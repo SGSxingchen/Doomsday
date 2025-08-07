@@ -20,24 +20,13 @@ import org.lanstard.doomsday.network.packet.DuoXinPoStatusPacket;
 import org.joml.Vector3f;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.MoverType;
+import org.lanstard.doomsday.config.EchoConfig;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DuoXinPoEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.DUOXINPO;
-    private static final int RANGE = 10; // 影响范围
-    private static final int CONTROL_RANGE = 15; // 控制距离
-    private static final int CONTROL_DURATION = 60 * 20; // 60秒的tick数（1分钟）
-    private static final int SANITY_DRAIN = 1; // 每秒降低的理智值
-    private static final int MIN_SANITY = 500; // 最低理智值限制
-    private static final int BELIEF_THRESHOLD = 6; // 信念阈值（无视最低理智限制）
-    private static final int FREE_COST_THRESHOLD = 300; // 免费释放阈值
-    private static final int CONTINUOUS_SANITY_COST = 5; // 每秒持续消耗的理智值
-    private static final int ACTIVE_SANITY_COST = 100; // 主动使用消耗的理智值
-    private static final int TOGGLE_SANITY_COST = 30; // 开启持续效果的消耗
-    private static final double BASE_MOVEMENT_SPEED = 0.4; // 基础移动速度调整为更合理的值
-    private static final double MOVEMENT_MULTIPLIER = 20.0; // 移动速度倍率
     private static final int SYNC_INTERVAL = 2; // 同步间隔（ticks）
     
     // 粒子效果相关
@@ -65,14 +54,14 @@ public class DuoXinPoEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            ACTIVE_SANITY_COST,  // 使用固定值100点理智消耗
+            EchoConfig.DUOXINPO_ACTIVE_SANITY_COST.get(),
             PRESET.getContinuousSanityConsumption()
         );
     }
 
     @Override
     public void onActivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...夺心入脑，心魔渐起..."));
+        player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.activate"));
     }
 
     @Override
@@ -90,19 +79,19 @@ public class DuoXinPoEcho extends Echo {
             int faith = SanityManager.getFaith(player);
             
             // 如果信念大于等于10点且理智低于300，则不消耗理智
-            boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+            boolean freeCost = faith >= 10 && currentSanity < EchoConfig.DUOXINPO_FREE_COST_THRESHOLD.get();
             
             // 如果不是免费释放且理智不足，则关闭效果
-            if (!freeCost && currentSanity < CONTINUOUS_SANITY_COST) {
+            if (!freeCost && currentSanity < EchoConfig.DUOXINPO_CONTINUOUS_SANITY_COST.get()) {
                 setActiveAndUpdate(player, false);
                 onDeactivate(player);
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神已竭，夺心之法难以为继..."));
+                player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.sanity_depleted"));
                 return;
             }
             
             // 如果不是免费释放，消耗理智
             if (!freeCost) {
-                SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
+                SanityManager.modifySanity(player, -EchoConfig.DUOXINPO_CONTINUOUS_SANITY_COST.get());
             }
             
             // 添加红色粒子效果
@@ -128,25 +117,25 @@ public class DuoXinPoEcho extends Echo {
 
     private void applyPassiveEffect(ServerPlayer player) {
         int beliefLevel = SanityManager.getBeliefLevel(player);
-        boolean noLimit = beliefLevel >= BELIEF_THRESHOLD;
+        boolean noLimit = beliefLevel >= EchoConfig.DUOXINPO_BELIEF_THRESHOLD.get();
         
-        AABB box = player.getBoundingBox().inflate(RANGE);
+        AABB box = player.getBoundingBox().inflate(EchoConfig.DUOXINPO_RANGE.get());
         List<ServerPlayer> nearbyPlayers = player.level().getEntitiesOfClass(ServerPlayer.class, box);
         
         for (ServerPlayer target : nearbyPlayers) {
             if (target == player) continue;
             
             int currentSanity = SanityManager.getSanity(target);
-            if (!noLimit && currentSanity <= MIN_SANITY) continue;
+            if (!noLimit && currentSanity <= EchoConfig.DUOXINPO_MIN_SANITY.get()) continue;
             
-            SanityManager.modifySanity(target, -SANITY_DRAIN);
+            SanityManager.modifySanity(target, -EchoConfig.DUOXINPO_SANITY_DRAIN.get());
         }
     }
 
     @Override
     public void onDeactivate(ServerPlayer player) {
         cleanup();
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...仙法消散，众生皆返本心..."));
+        player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.deactivate"));
     }
 
     @Override
@@ -154,7 +143,7 @@ public class DuoXinPoEcho extends Echo {
 
         // 检查是否被禁用
         if (this.isDisabled()) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...夺心之法暂失其效..."));
+            player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.disabled"));
             return false;
         }
         
@@ -163,18 +152,18 @@ public class DuoXinPoEcho extends Echo {
         int faith = SanityManager.getFaith(player);
         
         // 如果信念大于等于10点且理智低于300，则不消耗理智
-        if (faith >= 10 && currentSanity < FREE_COST_THRESHOLD) {
+        if (faith >= 10 && currentSanity < EchoConfig.DUOXINPO_FREE_COST_THRESHOLD.get()) {
             return true;
         }
         
         // 否则检查理智是否足够
-        if (currentSanity < ACTIVE_SANITY_COST) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展..."));
+        if (currentSanity < EchoConfig.DUOXINPO_ACTIVE_SANITY_COST.get()) {
+            player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.insufficient_sanity"));
             return false;
         }
 
         if(!isActive()){
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...必须先开启夺心之法..."));
+            player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.must_activate_first"));
         }
         
         return true;
@@ -185,7 +174,7 @@ public class DuoXinPoEcho extends Echo {
         // 获取玩家视线方向的目标
         Object target = getTarget(player);
         if (target == null) {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...夺心之法无处可施..."));
+            player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.no_target"));
             return;
         }
         
@@ -194,37 +183,31 @@ public class DuoXinPoEcho extends Echo {
         int faith = SanityManager.getFaith(player);
         
         // 如果信念大于等于10点且理智低于300，则不消耗理智
-        boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+        boolean freeCost = faith >= 10 && currentSanity < EchoConfig.DUOXINPO_FREE_COST_THRESHOLD.get();
         
         // 如果不是免费释放，消耗理智
         if (!freeCost) {
-            SanityManager.modifySanity(player, -ACTIVE_SANITY_COST);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + ACTIVE_SANITY_COST + "点心神，施展夺心之法..."));
+            SanityManager.modifySanity(player, -EchoConfig.DUOXINPO_ACTIVE_SANITY_COST.get());
+            player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.use_with_cost", EchoConfig.DUOXINPO_ACTIVE_SANITY_COST.get()));
         } else {
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念坚定，夺心之法不耗心神..."));
+            player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.use_free"));
         }
         
         // 添加到控制目标列表
-        long endTime = System.currentTimeMillis() + CONTROL_DURATION * 50;
+        long endTime = System.currentTimeMillis() + EchoConfig.DUOXINPO_CONTROL_DURATION.get() * 50;
         
         if (target instanceof ServerPlayer targetPlayer) {
             controlledTargets.put(targetPlayer.getUUID(), endTime);
             spawnConnectionParticles(player, targetPlayer);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...仙法已成，")
-                .append(targetPlayer.getDisplayName())
-                .append(Component.literal(" §f之心已为你所控...")));
-            targetPlayer.sendSystemMessage(Component.literal("§b[十日终焉] §f...你的心神已被 ")
-                .append(player.getDisplayName())
-                .append(Component.literal(" §f所夺...")));
+            player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.control_player", targetPlayer.getDisplayName()));
+            targetPlayer.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.controlled_by", player.getDisplayName()));
             updateState(player); // 更新状态
         } else if (target instanceof LivingEntity targetEntity) {
             UUID entityId = UUID.randomUUID();
             controlledEntities.put(entityId, targetEntity);
             controlledEntityEndTimes.put(entityId, endTime);
             spawnConnectionParticles(player, targetEntity);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...仙法已成，")
-                .append(targetEntity.getName())
-                .append(Component.literal(" §f已为你所控...")));
+            player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.control_entity", targetEntity.getName()));
             
             notifyEchoClocks(player);
             updateState(player); // 更新状态
@@ -319,7 +302,7 @@ public class DuoXinPoEcho extends Echo {
                 // 控制时间结束
                 ServerPlayer target = controller.getServer().getPlayerList().getPlayer(entry.getKey());
                 if (target != null) {
-                    target.sendSystemMessage(Component.literal("§b[十日终焉] §f你摆脱了夺心魄的控制！"));
+                    target.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.control_broken"));
                     // 清除状态显示
                     NetworkManager.getChannel().sendTo(
                         new DuoXinPoStatusPacket("clear", "", 0),
@@ -339,9 +322,9 @@ public class DuoXinPoEcho extends Echo {
             }
 
             // 检查距离
-            if (controller.distanceTo(target) > CONTROL_RANGE * 1.5) {
+            if (controller.distanceTo(target) > EchoConfig.DUOXINPO_CONTROL_RANGE.get() * 1.5) {
                 controlledTargets.remove(target.getUUID());
-                target.sendSystemMessage(Component.literal("§b[十日终焉] §f...距离过远，夺心之法已解除..."));
+                target.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.control_distance_broken"));
                 continue;
             }
 
@@ -397,7 +380,7 @@ public class DuoXinPoEcho extends Echo {
             }
             
             // 检查距离
-            if (controller.distanceTo(entity) > CONTROL_RANGE * 1.5) {
+            if (controller.distanceTo(entity) > EchoConfig.DUOXINPO_CONTROL_RANGE.get() * 1.5) {
                 controlledEntities.remove(entityId);
                 controlledEntityEndTimes.remove(entityId);
                 continue;
@@ -574,20 +557,20 @@ public class DuoXinPoEcho extends Echo {
             int faith = SanityManager.getFaith(player);
             
             // 如果信念大于等于10点且理智低于300，则不消耗理智
-            boolean freeCost = faith >= 10 && currentSanity < FREE_COST_THRESHOLD;
+            boolean freeCost = faith >= 10 && currentSanity < EchoConfig.DUOXINPO_FREE_COST_THRESHOLD.get();
             
             // 如果不是免费释放且理智不足，则无法开启
-            if (!freeCost && currentSanity < TOGGLE_SANITY_COST) {
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展夺心之法..."));
+            if (!freeCost && currentSanity < EchoConfig.DUOXINPO_TOGGLE_SANITY_COST.get()) {
+                player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.insufficient_sanity_toggle"));
                 return;
             }
             
             // 如果不是免费释放，消耗理智
             if (!freeCost) {
-                SanityManager.modifySanity(player, -TOGGLE_SANITY_COST);
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + TOGGLE_SANITY_COST + "点心神，施展夺心之法..."));
+                SanityManager.modifySanity(player, -EchoConfig.DUOXINPO_TOGGLE_SANITY_COST.get());
+                player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.toggle_with_cost", EchoConfig.DUOXINPO_TOGGLE_SANITY_COST.get()));
             } else {
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，夺心之法不耗心神..."));
+                player.sendSystemMessage(Component.translatable("echo.doomsday.duoxinpo.toggle_free"));
             }
             
             setActiveAndUpdate(player, true);

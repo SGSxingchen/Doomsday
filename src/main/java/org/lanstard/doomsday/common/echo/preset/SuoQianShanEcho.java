@@ -4,28 +4,20 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
+import org.lanstard.doomsday.config.EchoConfig;
 import org.joml.Vector3f;
 import net.minecraft.nbt.CompoundTag;
 
 public class SuoQianShanEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.SUOQIANSHAN;
-    private static final int TOGGLE_SANITY_COST = 50;             // 开启消耗
-    private static final int CONTINUOUS_SANITY_COST = 1;          // 每秒持续消耗
-    private static final int ACTIVE_SANITY_COST = 100;           // 主动技能消耗
-    private static final int FREE_COST_THRESHOLD = 300;          // 免费释放阈值
-    private static final int HIGH_FAITH = 10;                    // 高等信念要求
-    private static final int COOL_DOWN_TICKS = 1200;            // 冷却时间1分钟
-    
-    // 效果等级
-    private static final int SPEED_AMPLIFIER = 99;               // 速度100
-    private static final int JUMP_AMPLIFIER = 4;                 // 跳跃5
-    private static final int SLOW_FALLING_AMPLIFIER = 0;         // 缓降1
+    // 粒子效果保留不变
     
     // 粒子效果相关
     private static final float CYAN_RED = 0.0F;
@@ -43,15 +35,14 @@ public class SuoQianShanEcho extends Echo {
             PRESET.name().toLowerCase(),
             PRESET.getDisplayName(),
             PRESET.getType(),
-            
-            ACTIVE_SANITY_COST,
-            CONTINUOUS_SANITY_COST
+            EchoConfig.SUOQIANSHAN_ACTIVE_SANITY_COST.get(),
+            EchoConfig.SUOQIANSHAN_CONTINUOUS_SANITY_COST.get()
         );
     }
 
     @Override
     public void onActivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...缩地成寸，千山可越..."));
+        player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.activate"));
         applyEffects(player);
     }
 
@@ -74,19 +65,19 @@ public class SuoQianShanEcho extends Echo {
             int faith = SanityManager.getFaith(player);
             
             // 如果信念大于等于10点且理智低于300，则不消耗理智
-            boolean freeCost = faith >= HIGH_FAITH && currentSanity < FREE_COST_THRESHOLD;
+            boolean freeCost = faith >= EchoConfig.SUOQIANSHAN_HIGH_FAITH.get() && currentSanity < EchoConfig.SUOQIANSHAN_FREE_COST_THRESHOLD.get();
             
             // 如果不是免费释放且理智不足，则关闭效果
-            if (!freeCost && currentSanity < CONTINUOUS_SANITY_COST) {
+            if (!freeCost && currentSanity < EchoConfig.SUOQIANSHAN_CONTINUOUS_SANITY_COST.get()) {
                 setActive(false);
                 onDeactivate(player);
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神已竭，缩地之法难以为继..."));
+                player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.low_sanity_continuous"));
                 return;
             }
             
             // 如果不是免费释放，消耗理智值
             if (!freeCost) {
-                SanityManager.modifySanity(player, -CONTINUOUS_SANITY_COST);
+                SanityManager.modifySanity(player, -EchoConfig.SUOQIANSHAN_CONTINUOUS_SANITY_COST.get());
             }
             
             // 刷新效果
@@ -101,7 +92,7 @@ public class SuoQianShanEcho extends Echo {
 
     @Override
     public void onDeactivate(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§b[十日终焉] §f...缩地之法已解..."));
+        player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.deactivate"));
         removeEffects(player);
     }
 
@@ -109,14 +100,14 @@ public class SuoQianShanEcho extends Echo {
     protected boolean doCanUse(ServerPlayer player) {
         // 检查是否被禁用
         if (this.isDisabled()) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...缩地之法暂失其效..."));
+            player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.disabled"));
             return false;
         }
 
         // 检查冷却时间
         if (cooldownTicks > 0) {
             int remainingSeconds = cooldownTicks / 20;
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...缩地之力尚需积蓄，剩余" + remainingSeconds + "秒..."));
+            player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.cooldown", remainingSeconds));
             return false;
         }
         
@@ -125,13 +116,13 @@ public class SuoQianShanEcho extends Echo {
         int faith = SanityManager.getFaith(player);
         
         // 如果信念大于等于10点且理智低于300，则不消耗理智
-        if (faith >= HIGH_FAITH && currentSanity < FREE_COST_THRESHOLD) {
+        if (faith >= EchoConfig.SUOQIANSHAN_HIGH_FAITH.get() && currentSanity < EchoConfig.SUOQIANSHAN_FREE_COST_THRESHOLD.get()) {
             return true;
         }
         
         // 检查理智值
-        if (currentSanity < ACTIVE_SANITY_COST) {
-            player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展缩地之法..."));
+        if (currentSanity < EchoConfig.SUOQIANSHAN_ACTIVE_SANITY_COST.get()) {
+            player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.low_sanity"));
             return false;
         }
         
@@ -144,7 +135,7 @@ public class SuoQianShanEcho extends Echo {
         if (player.isShiftKeyDown() && markedPosition != null) {
             // 如果在潜行且有标记点，进行传送
             if (!player.level().dimension().location().toString().equals(markedDimensionKey)) {
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...所处维度不同，无法传送..."));
+                player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.dimension_mismatch"));
                 return;
             }
             
@@ -153,16 +144,16 @@ public class SuoQianShanEcho extends Echo {
             int faith = SanityManager.getFaith(player);
             
             // 如果信念大于等于10点且理智低于300，则不消耗理智
-            boolean freeCost = faith >= HIGH_FAITH && currentSanity < FREE_COST_THRESHOLD;
+            boolean freeCost = faith >= EchoConfig.SUOQIANSHAN_HIGH_FAITH.get() && currentSanity < EchoConfig.SUOQIANSHAN_FREE_COST_THRESHOLD.get();
             
             // 如果不是免费释放，消耗理智值
             if (!freeCost) {
                 // 根据信念等级减少消耗
-                int actualCost = faith >= HIGH_FAITH ? ACTIVE_SANITY_COST / 2 : ACTIVE_SANITY_COST;
+                int actualCost = faith >= EchoConfig.SUOQIANSHAN_HIGH_FAITH.get() ? EchoConfig.SUOQIANSHAN_ACTIVE_SANITY_COST.get() / 2 : EchoConfig.SUOQIANSHAN_ACTIVE_SANITY_COST.get();
                 SanityManager.modifySanity(player, -actualCost);
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，施展缩地之法..."));
+                player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.teleport_cost", actualCost));
             } else {
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，千山可达..."));
+                player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.teleport_free"));
             }
             
             // 生成传送前粒子效果
@@ -172,7 +163,7 @@ public class SuoQianShanEcho extends Echo {
             
             // 传送玩家
             player.teleportTo(markedPosition.x, markedPosition.y, markedPosition.z);
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...千山缩尽，刹那可至..."));
+            player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.teleport_success"));
             
             // 生成传送后粒子效果
             if (player.level() instanceof ServerLevel serverLevel) {
@@ -180,7 +171,7 @@ public class SuoQianShanEcho extends Echo {
             }
 
             // 设置冷却时间
-            cooldownTicks = faith >= HIGH_FAITH ? COOL_DOWN_TICKS / 2 : COOL_DOWN_TICKS;
+            cooldownTicks = faith >= EchoConfig.SUOQIANSHAN_HIGH_FAITH.get() ? EchoConfig.SUOQIANSHAN_COOLDOWN_TICKS.get() / 2 : EchoConfig.SUOQIANSHAN_COOLDOWN_TICKS.get();
             updateState(player);
             notifyEchoClocks(player);
         } else if (!player.isShiftKeyDown()) {
@@ -196,14 +187,14 @@ public class SuoQianShanEcho extends Echo {
                 spawnMarkParticles(serverLevel, markedPosition);
             }
             
-            player.sendSystemMessage(Component.literal("§b[十日终焉] §f...此处已记，伺机而返..."));
+            player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.mark_position"));
         }
     }
 
     private void applyEffects(ServerPlayer player) {
-        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, SPEED_AMPLIFIER, false, false));
-        player.addEffect(new MobEffectInstance(MobEffects.JUMP, 40, JUMP_AMPLIFIER, false, false));
-        player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 40, SLOW_FALLING_AMPLIFIER, false, false));
+        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 40, EchoConfig.SUOQIANSHAN_SPEED_LEVEL.get(), false, false));
+        player.addEffect(new MobEffectInstance(MobEffects.JUMP, 40, EchoConfig.SUOQIANSHAN_JUMP_LEVEL.get(), false, false));
+        player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 40, EchoConfig.SUOQIANSHAN_SLOW_FALLING_LEVEL.get(), false, false));
     }
 
     private void removeEffects(ServerPlayer player) {
@@ -277,20 +268,20 @@ public class SuoQianShanEcho extends Echo {
             int faith = SanityManager.getFaith(player);
             
             // 如果信念大于等于10点且理智低于300，则不消耗理智
-            boolean freeCost = faith >= HIGH_FAITH && currentSanity < FREE_COST_THRESHOLD;
+            boolean freeCost = faith >= EchoConfig.SUOQIANSHAN_HIGH_FAITH.get() && currentSanity < EchoConfig.SUOQIANSHAN_FREE_COST_THRESHOLD.get();
             
             // 如果不是免费释放且理智不足，则无法开启
-            if (!freeCost && currentSanity < TOGGLE_SANITY_COST) {
-                player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展缩地之法..."));
+            if (!freeCost && currentSanity < EchoConfig.SUOQIANSHAN_TOGGLE_SANITY_COST.get()) {
+                player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.low_sanity"));
                 return;
             }
             
             // 如果不是免费释放，消耗理智
             if (!freeCost) {
-                SanityManager.modifySanity(player, -TOGGLE_SANITY_COST);
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + TOGGLE_SANITY_COST + "点心神，施展缩地之法..."));
+                SanityManager.modifySanity(player, -EchoConfig.SUOQIANSHAN_TOGGLE_SANITY_COST.get());
+                player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.toggle_cost", EchoConfig.SUOQIANSHAN_TOGGLE_SANITY_COST.get()));
             } else {
-                player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，千山可达..."));
+                player.sendSystemMessage(Component.translatable("message.doomsday.suoqianshan.toggle_free"));
             }
             
             setActiveAndUpdate(player, true);

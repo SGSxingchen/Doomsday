@@ -5,6 +5,7 @@ import net.minecraft.network.chat.Component;
 import org.lanstard.doomsday.common.echo.Echo;
 import org.lanstard.doomsday.common.echo.EchoPreset;
 import org.lanstard.doomsday.common.sanity.SanityManager;
+import org.lanstard.doomsday.config.EchoConfig;
 import net.minecraft.world.phys.AABB;
 import java.util.List;
 import org.lanstard.doomsday.common.echo.EchoManager;
@@ -14,16 +15,9 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 
 public class LingXiuEcho extends Echo {
     private static final EchoPreset PRESET = EchoPreset.LINGXIU;
-    private static final int SANITY_COST = 20;           // 使用消耗
-    private static final int FREE_COST_THRESHOLD = 300;  // 免费释放阈值
-    private static final int MIN_BELIEF = 10;            // 最小信念要求
-    private static final int MID_BELIEF = 5;             // 中等信念要求
-    private static final int BASE_RANGE = 10;            // 基础检测范围
-    private static final int MID_RANGE = 20;             // 中等信念检测范围
-    private static final int HIGH_RANGE = 30;            // 高等信念检测范围
 
     public LingXiuEcho() {
-        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), SANITY_COST, 0);
+        super(PRESET.name().toLowerCase(), PRESET.getDisplayName(), PRESET.getType(), EchoConfig.LING_SANITY_COST.get(), 0);
     }
 
     @Override
@@ -45,10 +39,10 @@ public class LingXiuEcho extends Echo {
     protected boolean doCanUse(ServerPlayer player) {
         // 检查是否可以免费释放
         int currentSanity = SanityManager.getSanity(player);
-        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && currentSanity < FREE_COST_THRESHOLD;
+        boolean isFree = SanityManager.getFaith(player) >= EchoConfig.LING_MIN_FAITH.get() && currentSanity < EchoConfig.LING_FREE_COST_THRESHOLD.get();
         
         // 如果不能免费释放，检查理智是否足够
-        if (!isFree && currentSanity < SANITY_COST) {
+        if (!isFree && currentSanity < EchoConfig.LING_SANITY_COST.get()) {
             player.sendSystemMessage(Component.literal("§c[十日终焉] §f...心神不足，难以施展灵嗅之术..."));
             return false;
         }
@@ -60,8 +54,8 @@ public class LingXiuEcho extends Echo {
     protected void doUse(ServerPlayer player) {
         // 获取玩家视线中的目标
         int faith = SanityManager.getFaith(player);
-        double reach = faith >= MIN_BELIEF ? HIGH_RANGE : 
-                      (faith >= MID_BELIEF ? MID_RANGE : BASE_RANGE);
+        double reach = faith >= EchoConfig.LING_MIN_FAITH.get() ? EchoConfig.LING_HIGH_RANGE.get() : 
+                      (faith >= EchoConfig.LING_MID_FAITH.get() ? EchoConfig.LING_MID_RANGE.get() : EchoConfig.LING_BASE_RANGE.get());
                       
         Vec3 eyePosition = player.getEyePosition();
         Vec3 lookVector = player.getLookAngle();
@@ -83,16 +77,16 @@ public class LingXiuEcho extends Echo {
         }
         
         // 检查是否可以免费释放
-        boolean isFree = SanityManager.getFaith(player) >= MIN_BELIEF && SanityManager.getSanity(player) < FREE_COST_THRESHOLD;
+        boolean isFree = SanityManager.getFaith(player) >= EchoConfig.LING_MIN_FAITH.get() && SanityManager.getSanity(player) < EchoConfig.LING_FREE_COST_THRESHOLD.get();
         
         // 消耗理智
         if (!isFree) {
-            int actualCost = faith >= MID_BELIEF ? SANITY_COST / 2 : SANITY_COST;
+            int actualCost = faith >= EchoConfig.LING_MID_FAITH.get() ? EchoConfig.LING_SANITY_COST.get() / 2 : EchoConfig.LING_SANITY_COST.get();
             SanityManager.modifySanity(player, -actualCost);
-            String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
+            String faithLevel = faith >= EchoConfig.LING_MIN_FAITH.get() ? "坚定" : (faith >= EchoConfig.LING_MID_FAITH.get() ? "稳固" : "微弱");
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...消耗" + actualCost + "点心神，灵嗅之力(" + faithLevel + ")已生效..."));
         } else {
-            String faithLevel = faith >= MIN_BELIEF ? "坚定" : (faith >= MID_BELIEF ? "稳固" : "微弱");
+            String faithLevel = faith >= EchoConfig.LING_MIN_FAITH.get() ? "坚定" : (faith >= EchoConfig.LING_MID_FAITH.get() ? "稳固" : "微弱");
             player.sendSystemMessage(Component.literal("§b[十日终焉] §f...信念引导，灵嗅之力(" + faithLevel + ")已生效..."));
         }
 
